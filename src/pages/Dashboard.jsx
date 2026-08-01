@@ -20,6 +20,8 @@ export default function Dashboard({ activeView }) {
   const [submittedExpenses, setSubmittedExpenses] = useState(null);
   const [trackerRows, setTrackerRows] = useState([]);
   const [expenseRows, setExpenseRows] = useState([]);
+  const [summaryRange, setSummaryRange] = useState("overall");
+  const [summaryDate, setSummaryDate] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,20 +64,41 @@ export default function Dashboard({ activeView }) {
 
   const activeTracker = submittedTracker || tracker;
   const activeExpenses = submittedExpenses || expenses;
-  const summaryTracker = trackerRows[0] || submittedTracker || tracker;
   const summaryExpenses = expenseRows[0] || submittedExpenses || expenses;
-  const trackerTotal = useMemo(
-    () => Number(activeTracker.orderQuantity || 0) * Number(activeTracker.price || 0),
-    [activeTracker.orderQuantity, activeTracker.price]
-  );
-  const expensesTotal = useMemo(() => Number(activeExpenses.price || 0), [activeExpenses.price]);
+  const trackerTotal = useMemo(() => {
+    const qty = Number(activeTracker.orderQuantity ?? activeTracker.order_quantity ?? 0);
+    const price = Number(activeTracker.price ?? 0);
+    return qty * price;
+  }, [activeTracker.orderQuantity, activeTracker.order_quantity, activeTracker.price]);
+
+  const expensesTotal = useMemo(() => {
+    return Number(activeExpenses.price ?? 0);
+  }, [activeExpenses.price]);
+
+  const displayedTrackerRows = useMemo(() => {
+    if (summaryRange === "date" && summaryDate) {
+      return trackerRows.filter((r) => (r.date || "").slice(0, 10) === summaryDate);
+    }
+
+    return trackerRows;
+  }, [trackerRows, summaryRange, summaryDate]);
+
+  const displayedExpenseRows = useMemo(() => {
+    if (summaryRange === "date" && summaryDate) {
+      return expenseRows.filter((r) => (r.date || "").slice(0, 10) === summaryDate);
+    }
+
+    return expenseRows;
+  }, [expenseRows, summaryRange, summaryDate]);
+
   const summaryTrackerTotal = useMemo(
-    () => trackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
-    [trackerRows]
+    () => displayedTrackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
+    [displayedTrackerRows]
   );
+
   const summaryExpensesTotal = useMemo(
-    () => expenseRows.reduce((total, row) => total + Number(row.price || 0), 0),
-    [expenseRows]
+    () => displayedExpenseRows.reduce((total, row) => total + Number(row.price || 0), 0),
+    [displayedExpenseRows]
   );
 
   const handleTrackerSubmit = async (event) => {
@@ -269,6 +292,45 @@ export default function Dashboard({ activeView }) {
 
         {activeView === "summary" ? (
           <div className="mt-8 space-y-6">
+            <div className="flex items-center justify-end space-x-3">
+              <div className="inline-flex rounded-lg bg-[#f3efe9] p-1">
+                <button
+                  onClick={() => {
+                    setSummaryRange("overall");
+                    setSummaryDate("");
+                  }}
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    summaryRange === "overall" ? "bg-[#d8a66b] text-white" : "text-[#5A3A2E]"
+                  }`}
+                >
+                  Overall
+                </button>
+              </div>
+
+              <div className="inline-flex items-center space-x-2">
+                <input
+                  type="date"
+                  value={summaryDate}
+                  onChange={(e) => {
+                    setSummaryDate(e.target.value);
+                    setSummaryRange("date");
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm outline-none focus:border-[#d8a66b]"
+                />
+                {summaryRange === "date" && summaryDate ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSummaryDate("");
+                      setSummaryRange("overall");
+                    }}
+                    className="text-sm text-[#5A3A2E] underline"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+            </div>
             <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
               <h2 className="text-xl font-semibold text-[#5A3A2E]">Tracker</h2>
               <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -291,8 +353,8 @@ export default function Dashboard({ activeView }) {
                           Loading records...
                         </td>
                       </tr>
-                    ) : trackerRows.length > 0 ? (
-                      trackerRows.map((row) => (
+                    ) : displayedTrackerRows.length > 0 ? (
+                      displayedTrackerRows.map((row) => (
                         <tr key={row.id}>
                           <td className="px-4 py-3">{row.date || "—"}</td>
                           <td className="px-4 py-3">{row.name || "—"}</td>
@@ -329,9 +391,10 @@ export default function Dashboard({ activeView }) {
                         </td>
                       </tr>
                     )}
+
                     <tr className="bg-[#f8f5f2]">
                       <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="7">
-                        Status: {summaryTracker.status || "Pending"}
+                        Entries: {displayedTrackerRows.length}
                       </td>
                     </tr>
                   </tbody>
@@ -359,8 +422,8 @@ export default function Dashboard({ activeView }) {
                           Loading records...
                         </td>
                       </tr>
-                    ) : expenseRows.length > 0 ? (
-                      expenseRows.map((row) => (
+                    ) : displayedExpenseRows.length > 0 ? (
+                      displayedExpenseRows.map((row) => (
                         <tr key={row.id}>
                           <td className="px-4 py-3">{row.date || "—"}</td>
                           <td className="px-4 py-3">{row.product || "—"}</td>
