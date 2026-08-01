@@ -1,140 +1,45 @@
-import {
-  LayoutDashboard,
-  BookOpen,
-  Package,
-  Box,
-  Calculator,
-  ShoppingCart,
-  BarChart3,
-  Settings,
-} from "lucide-react";
-
-const menuItems = [
-  {
-    title: "Dashboard",
-    icon: <LayoutDashboard size={18} />,
-    active: true,
-  },
-  {
-    title: "Recipes",
-    icon: <BookOpen size={18} />,
-  },
-  {
-    title: "Ingredients",
-    icon: <Package size={18} />,
-  },
-  {
-    title: "Packaging",
-    icon: <Box size={18} />,
-  },
-  {
-    title: "Calculator",
-    icon: <Calculator size={18} />,
-  },
-  {
-    title: "Sales",
-    icon: <ShoppingCart size={18} />,
-  },
-  {
-    title: "Reports",
-    icon: <BarChart3 size={18} />,
-  },
-  {
-    title: "Settings",
-    icon: <Settings size={18} />,
-  },
-];
-
-export default function Sidebar() {
+export default function Sidebar({ activeView, onSelectView }) {
   return (
-    <aside className="w-72 bg-[#5A3A2E] text-white flex flex-col min-h-screen">
-
-      {/* Logo */}
-      <div className="p-8 border-b border-[#775346]">
-
-        <div className="flex items-center gap-4">
-
-          <div className="w-12 h-12 rounded-xl bg-[#D89A4C] flex items-center justify-center">
-
-            <span className="text-2xl">🥖</span>
-
-          </div>
-
-          <div>
-
-            <h1 className="text-2xl font-bold">
-              Churros
-            </h1>
-
-            <p className="text-sm text-gray-300">
-              Tracker
-            </p>
-
-          </div>
-
-        </div>
-
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-[#4b3028] text-white">
+      <div className="border-b border-[#6b4a3a] p-6">
+        <h1 className="text-2xl font-bold">ChurroZi</h1>
+        <p className="mt-1 text-sm text-gray-300">Tracker & Expenses</p>
       </div>
 
-      {/* Menu */}
+      <nav className="space-y-2 p-4">
+        <button
+          onClick={() => onSelectView("tracker")}
+          className={`w-full rounded-lg px-4 py-3 text-left transition ${
+            activeView === "tracker"
+              ? "bg-[#d8a66b] text-white"
+              : "hover:bg-[#5d3c32]"
+          }`}
+        >
+          Tracker
+        </button>
 
-      <nav className="flex-1 p-5">
+        <button
+          onClick={() => onSelectView("expenses")}
+          className={`w-full rounded-lg px-4 py-3 text-left transition ${
+            activeView === "expenses"
+              ? "bg-[#d8a66b] text-white"
+              : "hover:bg-[#5d3c32]"
+          }`}
+        >
+          Expenses
+        </button>
 
-        <div className="space-y-2">
-
-          {menuItems.map((item, index) => (
-
-            <button
-              key={index}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition
-              ${
-                item.active
-                  ? "bg-[#D89A4C] text-white"
-                  : "hover:bg-[#70493b]"
-              }`}
-            >
-              {item.icon}
-
-              <span className="font-medium">
-                {item.title}
-              </span>
-
-            </button>
-
-          ))}
-
-        </div>
-
+        <button
+          onClick={() => onSelectView("summary")}
+          className={`w-full rounded-lg px-4 py-3 text-left transition ${
+            activeView === "summary"
+              ? "bg-[#d8a66b] text-white"
+              : "hover:bg-[#5d3c32]"
+          }`}
+        >
+          Summary
+        </button>
       </nav>
-
-      {/* User */}
-
-      <div className="border-t border-[#775346] p-6">
-
-        <div className="flex items-center gap-4">
-
-          <div className="w-12 h-12 rounded-full bg-[#D89A4C] flex items-center justify-center font-bold">
-
-            JD
-
-          </div>
-
-          <div>
-
-            <h3 className="font-semibold">
-              John Doe
-            </h3>
-
-            <p className="text-sm text-gray-300">
-              Owner
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
     </aside>
   );
 }
