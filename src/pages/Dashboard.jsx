@@ -24,39 +24,39 @@ export default function Dashboard({ activeView }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      if (!supabase) {
-        setErrorMessage("Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const [{ data: trackerData, error: trackerError }, { data: expenseData, error: expenseError }] = await Promise.all([
-          supabase.from("tracker").select("*").order("date", { ascending: false }),
-          supabase.from("expenses").select("*").order("date", { ascending: false }),
-        ]);
-
-        if (trackerError) {
-          throw trackerError;
-        }
-
-        if (expenseError) {
-          throw expenseError;
-        }
-
-        setTrackerRows(trackerData || []);
-        setExpenseRows(expenseData || []);
-        setErrorMessage("");
-      } catch (error) {
-        console.error(error);
-        setErrorMessage(`Unable to load data from Supabase: ${error.message}`);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadData() {
+    if (!supabase) {
+      setErrorMessage("Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first.");
+      setIsLoading(false);
+      return;
     }
 
+    try {
+      const [{ data: trackerData, error: trackerError }, { data: expenseData, error: expenseError }] = await Promise.all([
+        supabase.from("tracker").select("*").order("date", { ascending: false }),
+        supabase.from("expenses").select("*").order("date", { ascending: false }),
+      ]);
+
+      if (trackerError) {
+        throw trackerError;
+      }
+
+      if (expenseError) {
+        throw expenseError;
+      }
+
+      setTrackerRows(trackerData || []);
+      setExpenseRows(expenseData || []);
+      setErrorMessage("");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(`Unable to load data from Supabase: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -165,6 +165,56 @@ export default function Dashboard({ activeView }) {
     }
   };
 
+  const handleDeleteTrackerRow = async (rowId) => {
+    if (!supabase) {
+      setErrorMessage("Supabase is not configured yet.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase.from("tracker").delete().eq("id", rowId);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(`Unable to delete tracker entry: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteExpenseRow = async (rowId) => {
+    if (!supabase) {
+      setErrorMessage("Supabase is not configured yet.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase.from("expenses").delete().eq("id", rowId);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(`Unable to delete expense entry: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f5f2] p-8">
       <div className="mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
@@ -202,12 +252,13 @@ export default function Dashboard({ activeView }) {
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Qty</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td className="px-4 py-3" colSpan="5">
+                        <td className="px-4 py-3" colSpan="6">
                           Loading records...
                         </td>
                       </tr>
@@ -219,17 +270,27 @@ export default function Dashboard({ activeView }) {
                           <td className="px-4 py-3">{row.order_quantity ?? "—"}</td>
                           <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
                           <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{(Number(row.order_quantity || 0) * Number(row.price || 0)).toFixed(2)}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTrackerRow(row.id)}
+                              disabled={isSubmitting}
+                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className="px-4 py-3" colSpan="5">
+                        <td className="px-4 py-3" colSpan="6">
                           No tracker rows yet.
                         </td>
                       </tr>
                     )}
                     <tr className="bg-[#f8f5f2]">
-                      <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="5">
+                      <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="6">
                         Status: {summaryTracker.status || "Pending"}
                       </td>
                     </tr>
@@ -248,12 +309,13 @@ export default function Dashboard({ activeView }) {
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Product</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td className="px-4 py-3" colSpan="4">
+                        <td className="px-4 py-3" colSpan="5">
                           Loading records...
                         </td>
                       </tr>
@@ -264,11 +326,21 @@ export default function Dashboard({ activeView }) {
                           <td className="px-4 py-3">{row.product || "—"}</td>
                           <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
                           <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{Number(row.price || 0).toFixed(2)}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExpenseRow(row.id)}
+                              disabled={isSubmitting}
+                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td className="px-4 py-3" colSpan="4">
+                        <td className="px-4 py-3" colSpan="5">
                           No expense rows yet.
                         </td>
                       </tr>
