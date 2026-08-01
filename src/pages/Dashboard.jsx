@@ -70,10 +70,13 @@ export default function Dashboard({ activeView }) {
   );
   const expensesTotal = useMemo(() => Number(activeExpenses.price || 0), [activeExpenses.price]);
   const summaryTrackerTotal = useMemo(
-    () => Number(summaryTracker.orderQuantity || 0) * Number(summaryTracker.price || 0),
-    [summaryTracker.orderQuantity, summaryTracker.price]
+    () => trackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
+    [trackerRows]
   );
-  const summaryExpensesTotal = useMemo(() => Number(summaryExpenses.price || 0), [summaryExpenses.price]);
+  const summaryExpensesTotal = useMemo(
+    () => expenseRows.reduce((total, row) => total + Number(row.price || 0), 0),
+    [expenseRows]
+  );
 
   const handleTrackerSubmit = async (event) => {
     event.preventDefault();
