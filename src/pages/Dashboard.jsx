@@ -51,7 +51,7 @@ export default function Dashboard({ activeView }) {
         setErrorMessage("");
       } catch (error) {
         console.error(error);
-        setErrorMessage("Unable to load data from Supabase. Make sure the tables exist and your keys are valid.");
+        setErrorMessage(`Unable to load data from Supabase: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -82,6 +82,11 @@ export default function Dashboard({ activeView }) {
       return;
     }
 
+    if (!tracker.date || !tracker.name || !tracker.orderQuantity || !tracker.price) {
+      setErrorMessage("Fill in all tracker fields before saving.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -89,7 +94,7 @@ export default function Dashboard({ activeView }) {
       const payload = {
         date: tracker.date,
         name: tracker.name,
-        order_quantity: tracker.orderQuantity,
+        order_quantity: Number(tracker.orderQuantity),
         price: Number(tracker.price || 0),
         status: tracker.status,
       };
@@ -110,7 +115,7 @@ export default function Dashboard({ activeView }) {
       setTracker({ date: "", name: "", orderQuantity: "", price: "", status: "Pending" });
     } catch (error) {
       console.error(error);
-      setErrorMessage("Unable to save tracker entry. Check your table name and RLS policies.");
+      setErrorMessage(`Unable to save tracker entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +125,11 @@ export default function Dashboard({ activeView }) {
     event.preventDefault();
     if (!supabase) {
       setErrorMessage("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!expenses.date || !expenses.product || !expenses.price) {
+      setErrorMessage("Fill in all expense fields before saving.");
       return;
     }
 
@@ -149,7 +159,7 @@ export default function Dashboard({ activeView }) {
       setExpenses({ date: "", product: "", price: "" });
     } catch (error) {
       console.error(error);
-      setErrorMessage("Unable to save expense entry. Check your table name and RLS policies.");
+      setErrorMessage(`Unable to save expense entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

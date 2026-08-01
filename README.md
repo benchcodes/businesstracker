@@ -1,16 +1,26 @@
-# React + Vite
+# ChurroZi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tracker and expenses app backed by Supabase.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Create a Supabase project.
+2. Open the SQL Editor in Supabase and run [supabase-setup.sql](supabase-setup.sql).
+3. Copy your project URL into [`.env.local`](.env.local) as `VITE_SUPABASE_URL`.
+4. Copy your publishable key into [`.env.local`](.env.local) as `VITE_SUPABASE_ANON_KEY`.
+5. Restart the Vite dev server with `npm run dev`.
 
-## React Compiler
+## If you see "Could not find the table 'public.tracker' in the schema cache"
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+That means Supabase has not loaded the `tracker` table yet.
 
-## Expanding the ESLint configuration
+Use this order:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Run [supabase-setup.sql](supabase-setup.sql) in the SQL Editor.
+2. Wait a moment for the schema cache to refresh.
+3. If needed, reload the API schema from the Supabase dashboard.
+
+## Tables expected by the app
+
+- `tracker` with columns: `id`, `created_at`, `date`, `name`, `order_quantity`, `price`, `status`
+- `expenses` with columns: `id`, `created_at`, `date`, `product`, `price`
