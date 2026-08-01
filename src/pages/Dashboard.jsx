@@ -245,7 +245,7 @@ export default function Dashboard({ activeView }) {
 
   return (
     <div className="min-h-screen bg-[#f8f5f2] p-8">
-      <div className="mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="mx-4 md:mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="text-3xl font-bold text-[#5A3A2E]">
           {activeView === "expenses"
             ? "Expenses"
