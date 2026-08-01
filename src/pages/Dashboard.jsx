@@ -193,6 +193,31 @@ export default function Dashboard({ activeView }) {
     }
   };
 
+  const handleTrackerStatusChange = async (rowId, status) => {
+    if (!supabase) {
+      setErrorMessage("Supabase is not configured yet.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase.from("tracker").update({ status }).eq("id", rowId);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(`Unable to update tracker status: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDeleteExpenseRow = async (rowId) => {
     if (!supabase) {
       setErrorMessage("Supabase is not configured yet.");
@@ -255,13 +280,14 @@ export default function Dashboard({ activeView }) {
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Qty</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
+                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Status</th>
                       <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isLoading ? (
                       <tr>
-                        <td className="px-4 py-3" colSpan="6">
+                        <td className="px-4 py-3" colSpan="7">
                           Loading records...
                         </td>
                       </tr>
@@ -273,6 +299,17 @@ export default function Dashboard({ activeView }) {
                           <td className="px-4 py-3">{row.order_quantity ?? "—"}</td>
                           <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
                           <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{(Number(row.order_quantity || 0) * Number(row.price || 0)).toFixed(2)}</td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={row.status || "Pending"}
+                              onChange={(e) => handleTrackerStatusChange(row.id, e.target.value)}
+                              disabled={isSubmitting}
+                              className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:border-[#d8a66b] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Completed">Completed</option>
+                            </select>
+                          </td>
                           <td className="px-4 py-3">
                             <button
                               type="button"
@@ -287,13 +324,13 @@ export default function Dashboard({ activeView }) {
                       ))
                     ) : (
                       <tr>
-                        <td className="px-4 py-3" colSpan="6">
+                        <td className="px-4 py-3" colSpan="7">
                           No tracker rows yet.
                         </td>
                       </tr>
                     )}
                     <tr className="bg-[#f8f5f2]">
-                      <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="6">
+                      <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="7">
                         Status: {summaryTracker.status || "Pending"}
                       </td>
                     </tr>
