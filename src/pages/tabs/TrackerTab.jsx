@@ -1,7 +1,18 @@
 export default function TrackerTab({ tracker, setTracker, trackerTotal, isSubmitting, onSubmit }) {
   return (
     <form className="mt-8 space-y-6" onSubmit={onSubmit}>
-        
+
+      {/* Welcome Banner */}
+      <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
+        <h1 className="text-3xl font-bold">
+          👋 Welcome to ChurroZi Tracker!
+        </h1>
+
+        <p className="mt-3 text-amber-100">
+          Easily manage your daily orders, calculate sales, and keep track of your churros business—all in one place.
+        </p>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm font-medium text-gray-700">
           <span>Date</span>
@@ -30,7 +41,9 @@ export default function TrackerTab({ tracker, setTracker, trackerTotal, isSubmit
             type="number"
             min="0"
             value={tracker.orderQuantity}
-            onChange={(e) => setTracker({ ...tracker, orderQuantity: e.target.value })}
+            onChange={(e) =>
+              setTracker({ ...tracker, orderQuantity: e.target.value })
+            }
             className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
           />
         </label>
@@ -61,7 +74,9 @@ export default function TrackerTab({ tracker, setTracker, trackerTotal, isSubmit
           <span>Status</span>
           <select
             value={tracker.status}
-            onChange={(e) => setTracker({ ...tracker, status: e.target.value })}
+            onChange={(e) =>
+              setTracker({ ...tracker, status: e.target.value })
+            }
             className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
           >
             <option value="Pending">Pending</option>
@@ -72,7 +87,9 @@ export default function TrackerTab({ tracker, setTracker, trackerTotal, isSubmit
 
       <div className="rounded-2xl bg-[#f8f5f2] p-5">
         <p className="text-sm font-medium text-gray-600">Total price</p>
-        <p className="mt-2 text-2xl font-bold text-[#5A3A2E]">₱{trackerTotal.toFixed(2)}</p>
+        <p className="mt-2 text-2xl font-bold text-[#5A3A2E]">
+          ₱{trackerTotal.toFixed(2)}
+        </p>
       </div>
 
       <button
