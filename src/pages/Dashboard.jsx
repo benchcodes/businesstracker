@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import TrackerTab from "./tabs/TrackerTab";
+import PendingOrdersTab from "./tabs/PendingOrdersTab";
+import ExpensesTab from "./tabs/ExpensesTab";
+import SummaryTab from "./tabs/SummaryTab";
 
 export default function Dashboard({ activeView }) {
   const [tracker, setTracker] = useState({
@@ -7,6 +11,7 @@ export default function Dashboard({ activeView }) {
     name: "",
     orderQuantity: "",
     price: "",
+    notes: "",
     status: "Pending",
   });
 
@@ -64,7 +69,6 @@ export default function Dashboard({ activeView }) {
 
   const activeTracker = submittedTracker || tracker;
   const activeExpenses = submittedExpenses || expenses;
-  const summaryExpenses = expenseRows[0] || submittedExpenses || expenses;
   const trackerTotal = useMemo(() => {
     const qty = Number(activeTracker.orderQuantity ?? activeTracker.order_quantity ?? 0);
     const price = Number(activeTracker.price ?? 0);
@@ -91,9 +95,22 @@ export default function Dashboard({ activeView }) {
     return expenseRows;
   }, [expenseRows, summaryRange, summaryDate]);
 
+  const pendingTrackerRows = useMemo(() => {
+    return trackerRows.filter((row) => (row.status || "Pending") === "Pending");
+  }, [trackerRows]);
+
+  const completedTrackerRows = useMemo(() => {
+    return displayedTrackerRows.filter((row) => (row.status || "Pending") === "Completed");
+  }, [displayedTrackerRows]);
+
+  const pendingTrackerTotal = useMemo(
+    () => pendingTrackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
+    [pendingTrackerRows]
+  );
+
   const summaryTrackerTotal = useMemo(
-    () => displayedTrackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
-    [displayedTrackerRows]
+    () => completedTrackerRows.reduce((total, row) => total + Number(row.order_quantity || 0) * Number(row.price || 0), 0),
+    [completedTrackerRows]
   );
 
   const summaryExpensesTotal = useMemo(
@@ -122,6 +139,7 @@ export default function Dashboard({ activeView }) {
         name: tracker.name,
         order_quantity: Number(tracker.orderQuantity),
         price: Number(tracker.price || 0),
+        notes: tracker.notes?.trim() || null,
         status: tracker.status,
       };
 
@@ -138,7 +156,7 @@ export default function Dashboard({ activeView }) {
 
       setTrackerRows(data || []);
       setSubmittedTracker(data?.[0] || payload);
-      setTracker({ date: "", name: "", orderQuantity: "", price: "", status: "Pending" });
+      setTracker({ date: "", name: "", orderQuantity: "", price: "", notes: "", status: "Pending" });
     } catch (error) {
       console.error(error);
       setErrorMessage(`Unable to save tracker entry: ${error.message}`);
@@ -266,22 +284,107 @@ export default function Dashboard({ activeView }) {
     }
   };
 
+  const confirmDeleteTrackerRow = (row) => {
+    const label = row?.name ? ` for ${row.name}` : "";
+    const isConfirmed = window.confirm(`Are you sure you want to delete this tracker entry${label}?`);
+
+    if (isConfirmed) {
+      handleDeleteTrackerRow(row.id);
+    }
+  };
+
+  const confirmDeleteExpenseRow = (row) => {
+    const label = row?.product ? ` for ${row.product}` : "";
+    const isConfirmed = window.confirm(`Are you sure you want to delete this expense entry${label}?`);
+
+    if (isConfirmed) {
+      handleDeleteExpenseRow(row.id);
+    }
+  };
+
+  const viewMeta = {
+    tracker: {
+      title: "Tracker",
+      description: "Log daily orders and calculate the total price for each entry.",
+    },
+    pending: {
+      title: "Pending Orders",
+      description: "Review all pending orders and mark them completed when done.",
+    },
+    expenses: {
+      title: "Expenses",
+      description: "Record product expenses and keep your costs organized.",
+    },
+    summary: {
+      title: "Summary",
+      description: "Review completed orders and expense data in a spreadsheet-style summary.",
+    },
+  };
+
+  const currentView = viewMeta[activeView] || viewMeta.tracker;
+
+  const renderActiveTab = () => {
+    if (activeView === "summary") {
+      return (
+        <SummaryTab
+          summaryRange={summaryRange}
+          setSummaryRange={setSummaryRange}
+          summaryDate={summaryDate}
+          setSummaryDate={setSummaryDate}
+          isLoading={isLoading}
+          completedTrackerRows={completedTrackerRows}
+          displayedExpenseRows={displayedExpenseRows}
+          isSubmitting={isSubmitting}
+          onDeleteTracker={confirmDeleteTrackerRow}
+          onDeleteExpense={confirmDeleteExpenseRow}
+          summaryTrackerTotal={summaryTrackerTotal}
+          summaryExpensesTotal={summaryExpensesTotal}
+        />
+      );
+    }
+
+    if (activeView === "pending") {
+      return (
+        <PendingOrdersTab
+          isLoading={isLoading}
+          pendingTrackerRows={pendingTrackerRows}
+          isSubmitting={isSubmitting}
+          onMarkComplete={(rowId) => handleTrackerStatusChange(rowId, "Completed")}
+          onDeleteTracker={confirmDeleteTrackerRow}
+          pendingTrackerTotal={pendingTrackerTotal}
+        />
+      );
+    }
+
+    if (activeView === "expenses") {
+      return (
+        <ExpensesTab
+          expenses={expenses}
+          setExpenses={setExpenses}
+          expensesTotal={expensesTotal}
+          isSubmitting={isSubmitting}
+          onSubmit={handleExpensesSubmit}
+        />
+      );
+    }
+
+    return (
+      <TrackerTab
+        tracker={tracker}
+        setTracker={setTracker}
+        trackerTotal={trackerTotal}
+        isSubmitting={isSubmitting}
+        onSubmit={handleTrackerSubmit}
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f5f2] p-8">
       <div className="mx-4 md:mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-bold text-[#5A3A2E]">
-          {activeView === "expenses"
-            ? "Expenses"
-            : activeView === "summary"
-            ? "Summary"
-            : "Tracker"}
-        </h1>
+        <h1 className="text-3xl font-bold text-[#5A3A2E]">{currentView.title}</h1>
         <p className="mt-3 text-lg text-gray-600">
-          {activeView === "expenses"
-            ? "Record product expenses and keep your costs organized."
-            : activeView === "summary"
-            ? "Review the tracker and expense data in a spreadsheet-style summary."
-            : "Log daily orders and calculate the total price for each entry."}
+          {currentView.description}
         </p>
 
         {errorMessage ? (
@@ -290,298 +393,7 @@ export default function Dashboard({ activeView }) {
           </div>
         ) : null}
 
-        {activeView === "summary" ? (
-          <div className="mt-8 space-y-6">
-            <div className="flex items-center justify-end space-x-3">
-              <div className="inline-flex rounded-lg bg-[#f3efe9] p-1">
-                <button
-                  onClick={() => {
-                    setSummaryRange("overall");
-                    setSummaryDate("");
-                  }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
-                    summaryRange === "overall" ? "bg-[#d8a66b] text-white" : "text-[#5A3A2E]"
-                  }`}
-                >
-                  Overall
-                </button>
-              </div>
-
-              <div className="inline-flex items-center space-x-2">
-                <input
-                  type="date"
-                  value={summaryDate}
-                  onChange={(e) => {
-                    setSummaryDate(e.target.value);
-                    setSummaryRange("date");
-                  }}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm outline-none focus:border-[#d8a66b]"
-                />
-                {summaryRange === "date" && summaryDate ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSummaryDate("");
-                      setSummaryRange("overall");
-                    }}
-                    className="text-sm text-[#5A3A2E] underline"
-                  >
-                    Clear
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-              <h2 className="text-xl font-semibold text-[#5A3A2E]">Tracker</h2>
-              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-[#f8f5f2]">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Date</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Name</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Qty</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Status</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
-                      <tr>
-                        <td className="px-4 py-3" colSpan="7">
-                          Loading records...
-                        </td>
-                      </tr>
-                    ) : displayedTrackerRows.length > 0 ? (
-                      displayedTrackerRows.map((row) => (
-                        <tr key={row.id}>
-                          <td className="px-4 py-3">{row.date || "—"}</td>
-                          <td className="px-4 py-3">{row.name || "—"}</td>
-                          <td className="px-4 py-3">{row.order_quantity ?? "—"}</td>
-                          <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{(Number(row.order_quantity || 0) * Number(row.price || 0)).toFixed(2)}</td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={row.status || "Pending"}
-                              onChange={(e) => handleTrackerStatusChange(row.id, e.target.value)}
-                              disabled={isSubmitting}
-                              className="w-full rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:border-[#d8a66b] disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Completed">Completed</option>
-                            </select>
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTrackerRow(row.id)}
-                              disabled={isSubmitting}
-                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="px-4 py-3" colSpan="7">
-                          No tracker rows yet.
-                        </td>
-                      </tr>
-                    )}
-
-                    <tr className="bg-[#f8f5f2]">
-                      <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="7">
-                        Entries: {displayedTrackerRows.length}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-              <h2 className="text-xl font-semibold text-[#5A3A2E]">Expenses</h2>
-              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-[#f8f5f2]">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Date</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Product</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
-                      <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading ? (
-                      <tr>
-                        <td className="px-4 py-3" colSpan="5">
-                          Loading records...
-                        </td>
-                      </tr>
-                    ) : displayedExpenseRows.length > 0 ? (
-                      displayedExpenseRows.map((row) => (
-                        <tr key={row.id}>
-                          <td className="px-4 py-3">{row.date || "—"}</td>
-                          <td className="px-4 py-3">{row.product || "—"}</td>
-                          <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{Number(row.price || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteExpenseRow(row.id)}
-                              disabled={isSubmitting}
-                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="px-4 py-3" colSpan="5">
-                          No expense rows yet.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-              <h2 className="text-xl font-semibold text-[#5A3A2E]">Profit</h2>
-              <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-lg font-semibold text-[#5A3A2E]">
-                ₱{(summaryTrackerTotal - summaryExpensesTotal).toFixed(2)}
-              </div>
-            </div>
-          </div>
-        ) : activeView === "expenses" ? (
-          <form className="mt-8 space-y-6" onSubmit={handleExpensesSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Date</span>
-                <input
-                  type="date"
-                  value={expenses.date}
-                  onChange={(e) => setExpenses({ ...expenses, date: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Product</span>
-                <input
-                  type="text"
-                  value={expenses.product}
-                  onChange={(e) => setExpenses({ ...expenses, product: e.target.value })}
-                  placeholder="Enter product"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Price</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={expenses.price}
-                  onChange={(e) => setExpenses({ ...expenses, price: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-            </div>
-
-            <div className="rounded-2xl bg-[#f8f5f2] p-5">
-              <p className="text-sm font-medium text-gray-600">Total expenses</p>
-              <p className="mt-2 text-2xl font-bold text-[#5A3A2E]">₱{expensesTotal.toFixed(2)}</p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-xl bg-[#d8a66b] px-4 py-3 font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSubmitting ? "Saving..." : "Submit Expense"}
-            </button>
-          </form>
-        ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleTrackerSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Date</span>
-                <input
-                  type="date"
-                  value={tracker.date}
-                  onChange={(e) => setTracker({ ...tracker, date: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Name</span>
-                <input
-                  type="text"
-                  value={tracker.name}
-                  onChange={(e) => setTracker({ ...tracker, name: e.target.value })}
-                  placeholder="Customer or order name"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Order quantity</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={tracker.orderQuantity}
-                  onChange={(e) => setTracker({ ...tracker, orderQuantity: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Price</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={tracker.price}
-                  onChange={(e) => setTracker({ ...tracker, price: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm font-medium text-gray-700">
-                <span>Status</span>
-                <select
-                  value={tracker.status}
-                  onChange={(e) => setTracker({ ...tracker, status: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-[#d8a66b]"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Completed">Completed</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="rounded-2xl bg-[#f8f5f2] p-5">
-              <p className="text-sm font-medium text-gray-600">Total price</p>
-              <p className="mt-2 text-2xl font-bold text-[#5A3A2E]">₱{trackerTotal.toFixed(2)}</p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-xl bg-[#d8a66b] px-4 py-3 font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isSubmitting ? "Saving..." : "Submit Tracker"}
-            </button>
-          </form>
-        )}
+        {renderActiveTab()}
       </div>
     </div>
   );

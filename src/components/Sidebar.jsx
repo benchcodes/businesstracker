@@ -39,6 +39,17 @@ export default function Sidebar({ activeView, onSelectView, isOpen = false, onCl
           </button>
 
           <button
+            onClick={() => onSelectView("pending")}
+            className={`w-full rounded-lg px-4 py-3 text-left transition ${
+              activeView === "pending"
+                ? "bg-[#d8a66b] text-white"
+                : "hover:bg-[#5d3c32]"
+            }`}
+          >
+            Pending Orders
+          </button>
+
+          <button
             onClick={() => onSelectView("expenses")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "expenses"
