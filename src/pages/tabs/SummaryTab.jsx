@@ -14,6 +14,7 @@ export default function SummaryTab({
 }) {
   return (
     <div className="mt-8 space-y-6">
+
       <div className="flex items-center justify-end space-x-3">
         <div className="inline-flex rounded-lg bg-[#f3efe9] p-1">
           <button
@@ -22,7 +23,9 @@ export default function SummaryTab({
               setSummaryDate("");
             }}
             className={`px-3 py-1 rounded-md text-sm font-medium ${
-              summaryRange === "overall" ? "bg-[#d8a66b] text-white" : "text-[#5A3A2E]"
+              summaryRange === "overall"
+                ? "bg-[#d8a66b] text-white"
+                : "text-[#5A3A2E]"
             }`}
           >
             Overall
@@ -39,6 +42,7 @@ export default function SummaryTab({
             }}
             className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm outline-none focus:border-[#d8a66b]"
           />
+
           {summaryRange === "date" && summaryDate ? (
             <button
               type="button"
@@ -54,21 +58,40 @@ export default function SummaryTab({
         </div>
       </div>
 
+      {/* Completed Orders */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <h2 className="text-xl font-semibold text-[#5A3A2E]">Completed Orders</h2>
+        <h2 className="text-xl font-semibold text-[#5A3A2E]">
+          Completed Orders
+        </h2>
+
         <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-[#f8f5f2]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Date</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Name</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Qty</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Status</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Date
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Qty
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Price
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Total
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Action
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {isLoading ? (
                 <tr>
@@ -81,16 +104,31 @@ export default function SummaryTab({
                   <tr key={row.id}>
                     <td className="px-4 py-3">{row.date || "—"}</td>
                     <td className="px-4 py-3">{row.name || "—"}</td>
-                    <td className="px-4 py-3">{row.order_quantity ?? "—"}</td>
-                    <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{(Number(row.order_quantity || 0) * Number(row.price || 0)).toFixed(2)}</td>
-                    <td className="px-4 py-3">{row.status || "Completed"}</td>
+                    <td className="px-4 py-3">
+                      {row.order_quantity ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      ₱{Number(row.price || 0).toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-3 font-semibold text-[#5A3A2E]">
+                      ₱
+                      {(
+                        Number(row.order_quantity || 0) *
+                        Number(row.price || 0)
+                      ).toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {row.status || "Completed"}
+                    </td>
+
                     <td className="px-4 py-3">
                       <button
                         type="button"
                         onClick={() => onDeleteTracker(row)}
                         disabled={isSubmitting}
-                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
                       >
                         Delete
                       </button>
@@ -105,9 +143,19 @@ export default function SummaryTab({
                 </tr>
               )}
 
+              {/* Footer */}
               <tr className="bg-[#f8f5f2]">
-                <td className="px-4 py-3 font-semibold text-[#5A3A2E]" colSpan="7">
-                  Entries: {completedTrackerRows.length}
+                <td colSpan="7" className="px-4 py-3 font-semibold">
+                  <div className="flex justify-between">
+                    <span>
+                      Entries: {completedTrackerRows.length}
+                    </span>
+
+                    <span className="text-green-700">
+                      Sales Total: ₱
+                      {summaryTrackerTotal.toFixed(2)}
+                    </span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -115,19 +163,32 @@ export default function SummaryTab({
         </div>
       </div>
 
+            {/* Expenses */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
         <h2 className="text-xl font-semibold text-[#5A3A2E]">Expenses</h2>
+
         <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-[#f8f5f2]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Date</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Product</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Price</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Total</th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">Action</th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Date
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Product
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Price
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Total
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
+                  Action
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {isLoading ? (
                 <tr>
@@ -139,9 +200,19 @@ export default function SummaryTab({
                 displayedExpenseRows.map((row) => (
                   <tr key={row.id}>
                     <td className="px-4 py-3">{row.date || "—"}</td>
-                    <td className="px-4 py-3">{row.product || "—"}</td>
-                    <td className="px-4 py-3">₱{Number(row.price || 0).toFixed(2)}</td>
-                    <td className="px-4 py-3 font-semibold text-[#5A3A2E]">₱{Number(row.price || 0).toFixed(2)}</td>
+
+                    <td className="px-4 py-3">
+                      {row.product || "—"}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      ₱{Number(row.price || 0).toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-3 font-semibold text-[#5A3A2E]">
+                      ₱{Number(row.price || 0).toFixed(2)}
+                    </td>
+
                     <td className="px-4 py-3">
                       <button
                         type="button"
@@ -161,17 +232,65 @@ export default function SummaryTab({
                   </td>
                 </tr>
               )}
+
+              {/* Footer */}
+              <tr className="bg-[#f8f5f2]">
+                <td colSpan="5" className="px-4 py-3 font-semibold">
+                  <div className="flex justify-between">
+                    <span>
+                      Entries: {displayedExpenseRows.length}
+                    </span>
+
+                    <span className="text-red-600">
+                      Expenses Total: ₱
+                      {summaryExpensesTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
+          {/* Cash on Hand */}
+        <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
+          <h2 className="text-xl font-semibold text-[#5A3A2E]">
+            Cash on Hand
+          </h2>
+
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-medium text-gray-600">
+                Total Cash Received
+              </span>
+
+              <span className="text-2xl font-bold text-green-700">
+                ₱{summaryTrackerTotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      {/* Profit */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <h2 className="text-xl font-semibold text-[#5A3A2E]">Profit</h2>
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-lg font-semibold text-[#5A3A2E]">
-          ₱{(summaryTrackerTotal - summaryExpensesTotal).toFixed(2)}
+        <h2 className="text-xl font-semibold text-[#5A3A2E]">
+          Profit
+        </h2>
+
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-medium text-gray-600">
+              Net Profit
+            </span>
+
+            <span className="text-2xl font-bold text-green-700">
+              ₱{(summaryTrackerTotal - summaryExpensesTotal).toFixed(2)}
+            </span>
+          </div>
         </div>
       </div>
+
     </div>
   );
 }
