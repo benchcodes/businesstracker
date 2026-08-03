@@ -253,6 +253,25 @@ export default function SummaryTab({
         </div>
       </div>
 
+      {/* Total Expenses */}
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
+        <h2 className="text-xl font-semibold text-[#5A3A2E]">
+          Total Expenses
+        </h2>
+
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-medium text-gray-600">
+              Total Expenses
+            </span>
+
+            <span className="text-2xl font-bold text-red-600">
+              ₱{summaryExpensesTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div>
+
           {/* Cash on Hand */}
         <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
           <h2 className="text-xl font-semibold text-[#5A3A2E]">
