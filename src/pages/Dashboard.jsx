@@ -40,7 +40,7 @@ export default function Dashboard({ activeView }) {
 
     try {
       const [{ data: trackerData, error: trackerError }, { data: expenseData, error: expenseError }] = await Promise.all([
-        supabase.from("tracker").select("*").order("date", { ascending: false }),
+        supabase.from("tracker").select("*").order("date", { ascending: true }),
         supabase.from("expenses").select("*").order("date", { ascending: false }),
       ]);
 
