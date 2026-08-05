@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+
 export default function SummaryTab({
   summaryRange,
   setSummaryRange,
@@ -16,7 +17,7 @@ export default function SummaryTab({
 }) {
 
   const [showSales, setShowSales] = useState(true);
-  const [showExpenses, setShowExpenses] = useState(false);
+  const [showExpenses, setShowExpenses] = useState(true);
 
   return (
     <div className="mt-8 space-y-6">
@@ -183,9 +184,24 @@ export default function SummaryTab({
 
             {/* Expenses */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <h2 className="text-xl font-semibold text-[#5A3A2E]">Expenses</h2>
+        <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setShowExpenses(!showExpenses)}
+          >
+            <h2 className="text-xl font-semibold text-[#5A3A2E]">
+              Expenses
+            </h2>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <button
+              type="button"
+              className="text-2xl font-bold text-[#5A3A2E]"
+            >
+              {showExpenses ? "−" : "+"}
+            </button>
+          </div>
+
+        {showExpenses && (
+         <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-[#f8f5f2]">
               <tr>
@@ -269,6 +285,7 @@ export default function SummaryTab({
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Total Expenses */}
@@ -329,4 +346,6 @@ export default function SummaryTab({
       </div>
     </div>
   );
+
+  
 }

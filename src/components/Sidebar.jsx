@@ -69,7 +69,18 @@ export default function Sidebar({ activeView, onSelectView, isOpen = false, onCl
             }`}
           >
             Summary
-          </button>
+            </button>
+
+            <button
+                onClick={() => onSelectView("tuition")}
+                className={`w-full rounded-lg px-4 py-3 text-left transition ${
+                  activeView === "tuition"
+                    ? "bg-[#d8a66b] text-white"
+                    : "hover:bg-[#5d3c32]"
+     }`}
+>
+  Tuition Fee Target
+</button>
         </nav>
       </aside>
     </>

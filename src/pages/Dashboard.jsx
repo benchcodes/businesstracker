@@ -4,6 +4,7 @@ import TrackerTab from "./tabs/TrackerTab";
 import PendingOrdersTab from "./tabs/PendingOrdersTab";
 import ExpensesTab from "./tabs/ExpensesTab";
 import SummaryTab from "./tabs/SummaryTab";
+import TuitionTargetTab from "./tabs/TuitionTargetTab";
 
 export default function Dashboard({ activeView }) {
   const [tracker, setTracker] = useState({
@@ -40,7 +41,7 @@ export default function Dashboard({ activeView }) {
 
     try {
       const [{ data: trackerData, error: trackerError }, { data: expenseData, error: expenseError }] = await Promise.all([
-        supabase.from("tracker").select("*").order("date", { ascending: true }),
+        supabase.from("tracker").select("*").order("created_at", { ascending: true }),
         supabase.from("expenses").select("*").order("date", { ascending: false }),
       ]);
 
@@ -319,6 +320,10 @@ export default function Dashboard({ activeView }) {
       title: "Summary",
       description: "Review completed orders and expense data in a spreadsheet-style summary.",
     },
+    tuition: {
+      title: "Tuition Fee Target",
+      description: "Track your tuition fee savings and monitor your progress.",
+},
   };
 
   const currentView = viewMeta[activeView] || viewMeta.tracker;
@@ -366,7 +371,11 @@ export default function Dashboard({ activeView }) {
           onSubmit={handleExpensesSubmit}
         />
       );
-    }
+}
+
+if (activeView === "tuition") {
+  return <TuitionTargetTab />;
+}
 
     return (
       <TrackerTab
