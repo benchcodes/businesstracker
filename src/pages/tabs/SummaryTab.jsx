@@ -14,6 +14,7 @@ export default function SummaryTab({
   onDeleteExpense,
   summaryTrackerTotal,
   summaryExpensesTotal,
+  availableCapital,
 }) {
 
   const [showSales, setShowSales] = useState(true);
@@ -307,35 +308,47 @@ export default function SummaryTab({
         </div>
       </div>
 
-          {/* Cash on Hand */}
-        <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-          <h2 className="text-xl font-semibold text-[#5A3A2E]">
-            Cash on Hand
-          </h2>
+          {/* Available Capital */}
+          <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
+            <h2 className="text-xl font-semibold text-[#5A3A2E]">
+              Available Capital
+            </h2>
 
-          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-medium text-gray-600">
-                Total Cash Received
-              </span>
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-6 space-y-4">
 
-              <span className="text-2xl font-bold text-green-700">
-                ₱{summaryTrackerTotal.toFixed(2)}
-              </span>
+              <div className="flex justify-between">
+                <span className="text-gray-600">
+                  Profit from Previous Days
+                </span>
+
+                <span className="font-bold text-blue-700">
+                  ₱{availableCapital.toFixed(2)}
+                </span>
+              </div>
+
+              <hr />
+
+              <div className="flex justify-between text-xl font-bold">
+                <span>Capital for Today's Business</span>
+
+                <span className="text-[#5A3A2E]">
+                  ₱{availableCapital.toFixed(2)}
+                </span>
+              </div>
+
             </div>
           </div>
-        </div>
 
       {/* Profit */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
         <h2 className="text-xl font-semibold text-[#5A3A2E]">
-          Profit
+          Net Business Profit
         </h2>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
           <div className="flex justify-between items-center">
             <span className="text-lg font-medium text-gray-600">
-              Net Profit
+              Business Profit
             </span>
 
             <span className="text-2xl font-bold text-green-700">
@@ -344,6 +357,25 @@ export default function SummaryTab({
           </div>
         </div>
       </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
+          <h2 className="text-xl font-semibold text-[#5A3A2E]">
+            Business Capital
+          </h2>
+
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-medium text-gray-600">
+                Available Capital
+              </span>
+
+              <span className="text-2xl font-bold text-blue-700">
+                ₱{availableCapital.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
     </div>
   );
 

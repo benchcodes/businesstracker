@@ -55,7 +55,9 @@ export default function Dashboard({ activeView }) {
 
       setTrackerRows(trackerData || []);
       setExpenseRows(expenseData || []);
+
       setErrorMessage("");
+
     } catch (error) {
       console.error(error);
       setErrorMessage(`Unable to load data from Supabase: ${error.message}`);
@@ -115,9 +117,58 @@ export default function Dashboard({ activeView }) {
   );
 
   const summaryExpensesTotal = useMemo(
-    () => displayedExpenseRows.reduce((total, row) => total + Number(row.price || 0), 0),
-    [displayedExpenseRows]
-  );
+  () =>
+    displayedExpenseRows.reduce(
+      (total, row) => total + Number(row.price || 0),
+      0
+    ),
+  [displayedExpenseRows]
+);
+
+
+  const availableCapital = useMemo(() => {
+  if (!summaryDate) {
+    return trackerRows
+      .filter((row) => row.status === "Completed")
+      .reduce(
+        (total, row) =>
+          total +
+            Number(row.order_quantity || 0) *
+            Number(row.price || 0),
+        0
+      ) -
+      expenseRows.reduce(
+        (total, row) => total + Number(row.price || 0),
+        0
+      );
+  }
+
+  const selectedDate = new Date(summaryDate);
+
+  const previousSales = trackerRows
+    .filter(
+      (row) =>
+        row.status === "Completed" &&
+        new Date(row.date) < selectedDate
+    )
+    .reduce(
+      (total, row) =>
+        total +
+        Number(row.order_quantity || 0) *
+        Number(row.price || 0),
+      0
+    );
+
+  const previousExpenses = expenseRows
+    .filter((row) => new Date(row.date) < selectedDate)
+    .reduce(
+      (total, row) =>
+        total + Number(row.price || 0),
+      0
+    );
+
+  return previousSales - previousExpenses;
+}, [summaryDate, trackerRows, expenseRows]);
 
   const handleTrackerSubmit = async (event) => {
     event.preventDefault();
@@ -194,6 +245,11 @@ export default function Dashboard({ activeView }) {
         throw error;
       }
 
+
+
+      // Deduct expense from Business Capital
+      
+
       const { data, error: fetchError } = await supabase.from("expenses").select("*").order("date", { ascending: false });
       if (fetchError) {
         throw fetchError;
@@ -252,6 +308,7 @@ export default function Dashboard({ activeView }) {
       }
 
       await loadData();
+
     } catch (error) {
       console.error(error);
       setErrorMessage(`Unable to update tracker status: ${error.message}`);
@@ -344,6 +401,7 @@ export default function Dashboard({ activeView }) {
           onDeleteExpense={confirmDeleteExpenseRow}
           summaryTrackerTotal={summaryTrackerTotal}
           summaryExpensesTotal={summaryExpensesTotal}
+          availableCapital={availableCapital}
         />
       );
     }
