@@ -432,7 +432,12 @@ export default function Dashboard({ activeView }) {
 }
 
 if (activeView === "tuition") {
-  return <TuitionTargetTab />;
+  return (
+    <TuitionTargetTab
+      summaryTrackerTotal={summaryTrackerTotal}
+      summaryExpensesTotal={summaryExpensesTotal}
+    />
+  );
 }
 
     return (

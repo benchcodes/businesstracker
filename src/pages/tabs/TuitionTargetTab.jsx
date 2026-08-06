@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function TuitionTargetTab() {
+export default function TuitionTargetTab({
+  summaryTrackerTotal,
+  summaryExpensesTotal,
+}) {
 
   // =========================
   // Tuition Goal
@@ -9,6 +12,7 @@ export default function TuitionTargetTab() {
 
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  const businessProfit = summaryTrackerTotal - summaryExpensesTotal;
 
   // =========================
   // Savings Form
@@ -82,15 +86,10 @@ export default function TuitionTargetTab() {
   // Total Saved
   // =========================
 
-  const totalSaved = useMemo(() => {
-
-    return rows.reduce(
-      (total, row) =>
-        total + Number(row.amount || 0),
-      0
-    );
-
-  }, [rows]);
+  const totalSaved = Math.max(
+  summaryTrackerTotal - summaryExpensesTotal,
+  0
+);
 
 
 
@@ -518,183 +517,49 @@ export default function TuitionTargetTab() {
 
       </form>
 
+{/* Savings History */}
 
+<div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
 
+  <h2 className="text-xl font-semibold text-[#5A3A2E]">
+    Savings History
+  </h2>
 
+  <div className="mt-4 overflow-x-auto">
 
+    <table className="w-full text-left">
 
-      {/* Savings History */}
+      <thead>
+        <tr className="border-b">
+          <th className="p-2">Date</th>
+          <th className="p-2">Amount</th>
+          <th className="p-2">Notes</th>
+        </tr>
+      </thead>
 
-      <div className="
-        rounded-2xl
-        border
-        border-gray-200
-        bg-[#f8f5f2]
-        p-5
-      ">
+      <tbody>
 
+        <tr>
+          <td className="p-2">
+            {new Date().toLocaleDateString()}
+          </td>
 
-        <h2 className="
-          text-xl
-          font-semibold
-          text-[#5A3A2E]
-        ">
+          <td className="p-2 font-semibold text-green-700">
+            ₱{totalSaved.toFixed(2)}
+          </td>
 
-          Savings History
+          <td className="p-2">
+            Overall Business Profit
+          </td>
+        </tr>
 
-        </h2>
+      </tbody>
 
+    </table>
 
+  </div>
 
-        {loading ? (
-
-          <p className="mt-4">
-            Loading...
-          </p>
-
-
-        ) : rows.length === 0 ? (
-
-          <p className="mt-4 text-gray-500">
-            No savings record yet.
-          </p>
-
-
-        ) : (
-
-          <div className="mt-4 overflow-x-auto">
-
-
-            <table className="
-              w-full
-              text-left
-            ">
-
-
-              <thead>
-
-                <tr className="
-                  border-b
-                ">
-
-                  <th className="p-2">
-                    Date
-                  </th>
-
-                  <th className="p-2">
-                    Amount
-                  </th>
-
-                  <th className="p-2">
-                    Notes
-                  </th>
-
-                  <th className="p-2">
-                    Action
-                  </th>
-
-
-                </tr>
-
-              </thead>
-
-
-
-              <tbody>
-
-
-                {rows.map((row)=>(
-
-
-                  <tr
-
-                    key={row.id}
-
-                    className="
-                      border-b
-                    "
-
-                  >
-
-
-                    <td className="p-2">
-                      {row.date}
-                    </td>
-
-
-
-                    <td className="
-                      p-2
-                      font-semibold
-                    ">
-
-                      ₱
-                      {Number(
-                        row.amount
-                      ).toFixed(2)}
-
-                    </td>
-
-
-
-                    <td className="p-2">
-
-                      {row.notes || "-"}
-
-                    </td>
-
-
-
-                    <td className="p-2">
-
-
-                      <button
-
-                        onClick={()=>
-                          handleDelete(
-                            row.id
-                          )
-                        }
-
-                        className="
-                          text-red-600
-                          hover:underline
-                        "
-
-                      >
-
-                        Delete
-
-                      </button>
-
-
-                    </td>
-
-
-
-                  </tr>
-
-
-                ))}
-
-
-              </tbody>
-
-
-            </table>
-
-
-          </div>
-
-        )}
-
-
-      </div>
-
-
-
-
-
+</div>
 
 
 
