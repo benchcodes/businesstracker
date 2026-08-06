@@ -15,13 +15,69 @@ export default function SummaryTab({
   summaryTrackerTotal,
   summaryExpensesTotal,
   availableCapital,
+  pendingOrdersCount,
+  completedOrdersCount,
 }) {
 
   const [showSales, setShowSales] = useState(true);
   const [showExpenses, setShowExpenses] = useState(true);
+  const netProfit = summaryTrackerTotal - summaryExpensesTotal;
 
   return (
     <div className="mt-8 space-y-6">
+
+      {/* Dashboard Cards */}
+      <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+
+        {/* Total Sales */}
+        <div className="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Total Sales</p>
+          <h2 className="mt-2 text-3xl font-bold text-green-700">
+            ₱{summaryTrackerTotal.toFixed(2)}
+          </h2>
+        </div>
+
+        {/* Total Expenses */}
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Total Expenses</p>
+          <h2 className="mt-2 text-3xl font-bold text-red-700">
+            ₱{summaryExpensesTotal.toFixed(2)}
+          </h2>
+        </div>
+
+        {/* Net Profit */}
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Net Profit</p>
+          <h2 className="mt-2 text-3xl font-bold text-blue-700">
+            ₱{netProfit.toFixed(2)}
+          </h2>
+        </div>
+
+        {/* Pending Orders */}
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Pending Orders</p>
+          <h2 className="mt-2 text-3xl font-bold text-yellow-700">
+            {pendingOrdersCount}
+          </h2>
+        </div>
+
+        {/* Completed Orders */}
+        <div className="rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Completed Orders</p>
+          <h2 className="mt-2 text-3xl font-bold text-purple-700">
+            {completedOrdersCount}
+          </h2>
+        </div>
+
+        {/* Business Capital */}
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 shadow-sm">
+          <p className="text-sm text-gray-600">Business Capital</p>
+          <h2 className="mt-2 text-3xl font-bold text-cyan-700">
+            ₱{availableCapital.toFixed(2)}
+          </h2>
+        </div>
+
+      </div>
 
       <div className="flex items-center justify-end space-x-3">
         <div className="inline-flex rounded-lg bg-[#f3efe9] p-1">

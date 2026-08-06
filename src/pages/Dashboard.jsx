@@ -31,6 +31,7 @@ export default function Dashboard({ activeView }) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   async function loadData() {
     if (!supabase) {
@@ -169,6 +170,12 @@ export default function Dashboard({ activeView }) {
 
   return previousSales - previousExpenses;
 }, [summaryDate, trackerRows, expenseRows]);
+
+    const pendingOrdersCount = pendingTrackerRows.length;
+
+    const completedOrdersCount = completedTrackerRows.length;
+
+    const netProfit = summaryTrackerTotal - summaryExpensesTotal;
 
   const handleTrackerSubmit = async (event) => {
     event.preventDefault();
@@ -402,6 +409,8 @@ export default function Dashboard({ activeView }) {
           summaryTrackerTotal={summaryTrackerTotal}
           summaryExpensesTotal={summaryExpensesTotal}
           availableCapital={availableCapital}
+          pendingOrdersCount={pendingTrackerRows.length}
+          completedOrdersCount={completedTrackerRows.length}
         />
       );
     }
@@ -452,21 +461,47 @@ if (activeView === "tuition") {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f5f2] p-8">
-      <div className="mx-4 md:mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-bold text-[#5A3A2E]">{currentView.title}</h1>
-        <p className="mt-3 text-lg text-gray-600">
-          {currentView.description}
-        </p>
+  <div
+  className={`min-h-screen p-8 transition-colors duration-300 ${
+    darkMode
+      ? "bg-gray-900 text-white"
+      : "bg-[#f8f5f2] text-black"
+  }`}
+>
+    <div
+    className={`mx-4 md:mx-auto max-w-4xl rounded-3xl p-8 shadow-sm transition-colors ${
+      darkMode
+        ? "bg-gray-800 border-gray-700"
+        : "bg-white border-gray-200"
+    } border`}
+  >
 
-        {errorMessage ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-            {errorMessage}
-          </div>
-        ) : null}
+      <h1 className="text-3xl font-bold text-[#5A3A2E]">
+        {currentView.title}
+      </h1>
 
-        {renderActiveTab()}
-      </div>
+  <div className="flex justify-end mt-4 mb-4">
+    <button
+      onClick={() => setDarkMode(!darkMode)}
+      className="rounded-lg bg-[#d8a66b] px-4 py-2 text-white hover:bg-[#c38f54]"
+    >
+      {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+    </button>
+  </div>
+
+      <p className="mt-3 text-lg text-gray-600">
+        {currentView.description}
+      </p>
+
+      {errorMessage ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {renderActiveTab()}
+
     </div>
-  );
+  </div>
+);
 }
