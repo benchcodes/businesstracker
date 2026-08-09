@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-
 export default function SummaryTab({
   summaryRange,
   setSummaryRange,
@@ -18,392 +17,479 @@ export default function SummaryTab({
   pendingOrdersCount,
   completedOrdersCount,
 }) {
-
   const [showSales, setShowSales] = useState(true);
   const [showExpenses, setShowExpenses] = useState(true);
+
   const netProfit = summaryTrackerTotal - summaryExpensesTotal;
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="space-y-6">
 
-      {/* Dashboard Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {/* ================= DASHBOARD CARDS ================= */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
 
         {/* Total Sales */}
-        <div className="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Total Sales</p>
-          <h2 className="mt-2 text-3xl font-bold text-green-700">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm dark:border-green-800 dark:bg-green-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Total Sales
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-green-700 dark:text-green-400">
             ₱{summaryTrackerTotal.toFixed(2)}
           </h2>
         </div>
 
         {/* Total Expenses */}
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Total Expenses</p>
-          <h2 className="mt-2 text-3xl font-bold text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm dark:border-red-800 dark:bg-red-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Total Expenses
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-red-700 dark:text-red-400">
             ₱{summaryExpensesTotal.toFixed(2)}
           </h2>
         </div>
 
         {/* Net Profit */}
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Net Profit</p>
-          <h2 className="mt-2 text-3xl font-bold text-blue-700">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm dark:border-blue-800 dark:bg-blue-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Net Profit
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-blue-700 dark:text-blue-400">
             ₱{netProfit.toFixed(2)}
           </h2>
         </div>
 
         {/* Pending Orders */}
-        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Pending Orders</p>
-          <h2 className="mt-2 text-3xl font-bold text-yellow-700">
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm dark:border-yellow-800 dark:bg-yellow-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Pending Orders
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-yellow-700 dark:text-yellow-400">
             {pendingOrdersCount}
           </h2>
         </div>
 
         {/* Completed Orders */}
-        <div className="rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Completed Orders</p>
-          <h2 className="mt-2 text-3xl font-bold text-purple-700">
+        <div className="rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm dark:border-purple-800 dark:bg-purple-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Completed Orders
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-purple-700 dark:text-purple-400">
             {completedOrdersCount}
           </h2>
         </div>
 
         {/* Business Capital */}
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 shadow-sm">
-          <p className="text-sm text-gray-600">Business Capital</p>
-          <h2 className="mt-2 text-3xl font-bold text-cyan-700">
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 shadow-sm dark:border-cyan-800 dark:bg-cyan-950">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Business Capital
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-cyan-700 dark:text-cyan-400">
             ₱{availableCapital.toFixed(2)}
           </h2>
         </div>
-
       </div>
 
-      <div className="flex items-center justify-end space-x-3">
-        <div className="inline-flex rounded-lg bg-[#f3efe9] p-1">
+      {/* ================= FILTER ================= */}
+      <div className="flex flex-wrap items-center justify-end gap-3">
+
+        <div className="inline-flex rounded-lg bg-[#f3efe9] p-1 dark:bg-gray-800">
           <button
+            type="button"
             onClick={() => {
               setSummaryRange("overall");
               setSummaryDate("");
             }}
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
+            className={`rounded-md px-3 py-1 text-sm font-medium transition ${
               summaryRange === "overall"
                 ? "bg-[#d8a66b] text-white"
-                : "text-[#5A3A2E]"
+                : "text-[#5A3A2E] hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700"
             }`}
           >
             Overall
           </button>
-        </div>
-      </div>
 
-      {/* Date Picker */}
-  <div className="flex items-center gap-2">
-    <input
-      type="date"
-      value={summaryDate}
-      onChange={(e) => {
-        setSummaryDate(e.target.value);
-        setSummaryRange("date");
-      }}
-      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#d8a66b]"
-    />
-
-    {summaryRange === "date" && summaryDate && (
-      <button
-        type="button"
-        onClick={() => {
-          setSummaryDate("");
-          setSummaryRange("overall");
-        }}
-        className="rounded-lg bg-red-500 px-3 py-2 text-sm text-white hover:bg-red-600"
-      >
-        Clear
-      </button>
-    )}
-  </div>
-
-        {/* Completed Orders */}
-        <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-          <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => setShowSales(!showSales)}
+          <button
+            type="button"
+            onClick={() => setSummaryRange("date")}
+            className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+              summaryRange === "date"
+                ? "bg-[#d8a66b] text-white"
+                : "text-[#5A3A2E] hover:bg-white dark:text-gray-300 dark:hover:bg-gray-700"
+            }`}
           >
-            <h2 className="text-xl font-semibold text-[#5A3A2E]">
-              Completed Orders
-            </h2>
-
-            <button
-              type="button"
-              className="text-2xl font-bold text-[#5A3A2E]"
-            >
-              {showSales ? "−" : "+"}
-            </button>
-          </div>
-
-  {showSales && (
-    <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <table className="min-w-full text-sm">
-        <thead className="bg-[#f8f5f2]">
-          <tr>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Date
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Name
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Qty
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Price
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Total
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Status
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-              Action
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {isLoading ? (
-            <tr>
-              <td className="px-4 py-3" colSpan="7">
-                Loading records...
-              </td>
-            </tr>
-          ) : completedTrackerRows.length > 0 ? (
-            completedTrackerRows.map((row) => (
-              <tr key={row.id}>
-                <td className="px-4 py-3">{row.date || "—"}</td>
-                <td className="px-4 py-3">{row.name || "—"}</td>
-                <td className="px-4 py-3">
-                  {row.order_quantity ?? "—"}
-                </td>
-
-                <td className="px-4 py-3">
-                  ₱{Number(row.price || 0).toFixed(2)}
-                </td>
-
-                <td className="px-4 py-3 font-semibold text-[#5A3A2E]">
-                  ₱
-                  {(
-                    Number(row.order_quantity || 0) *
-                    Number(row.price || 0)
-                  ).toFixed(2)}
-                </td>
-
-                <td className="px-4 py-3">
-                  {row.status || "Completed"}
-                </td>
-
-                <td className="px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={() => onDeleteTracker(row)}
-                    disabled={isSubmitting}
-                    className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td className="px-4 py-3" colSpan="7">
-                No completed orders yet.
-              </td>
-            </tr>
-          )}
-
-          <tr className="bg-[#f8f5f2]">
-            <td colSpan="7" className="px-4 py-3 font-semibold">
-              <div className="flex justify-between">
-                <span>Entries: {completedTrackerRows.length}</span>
-
-                <span className="text-green-700">
-                  Sales Total: ₱{summaryTrackerTotal.toFixed(2)}
-                </span>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  )}
-</div>
-
-            {/* Expenses */}
-      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <div
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => setShowExpenses(!showExpenses)}
-          >
-            <h2 className="text-xl font-semibold text-[#5A3A2E]">
-              Expenses
-            </h2>
-
-            <button
-              type="button"
-              className="text-2xl font-bold text-[#5A3A2E]"
-            >
-              {showExpenses ? "−" : "+"}
-            </button>
-          </div>
-
-        {showExpenses && (
-         <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <table className="min-w-full text-sm">
-            <thead className="bg-[#f8f5f2]">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-                  Product
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-                  Price
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-                  Total
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E]">
-                  Action
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td className="px-4 py-3" colSpan="5">
-                    Loading records...
-                  </td>
-                </tr>
-              ) : displayedExpenseRows.length > 0 ? (
-                displayedExpenseRows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="px-4 py-3">{row.date || "—"}</td>
-
-                    <td className="px-4 py-3">
-                      {row.product || "—"}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      ₱{Number(row.price || 0).toFixed(2)}
-                    </td>
-
-                    <td className="px-4 py-3 font-semibold text-[#5A3A2E]">
-                      ₱{Number(row.price || 0).toFixed(2)}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <button
-                        type="button"
-                        onClick={() => onDeleteExpense(row)}
-                        disabled={isSubmitting}
-                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-4 py-3" colSpan="5">
-                    No expense rows yet.
-                  </td>
-                </tr>
-              )}
-
-              {/* Footer */}
-              <tr className="bg-[#f8f5f2]">
-                <td colSpan="5" className="px-4 py-3 font-semibold">
-                  <div className="flex justify-between">
-                    <span>
-                      Entries: {displayedExpenseRows.length}
-                    </span>
-
-                    <span className="text-red-600">
-                      Expenses Total: ₱
-                      {summaryExpensesTotal.toFixed(2)}
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            By Date
+          </button>
         </div>
+
+        {summaryRange === "date" && (
+          <input
+            type="date"
+            value={summaryDate}
+            onChange={(e) => setSummaryDate(e.target.value)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+        )}
+
+        {summaryRange === "date" && summaryDate && (
+          <button
+            type="button"
+            onClick={() => {
+              setSummaryDate("");
+              setSummaryRange("overall");
+            }}
+            className="rounded-lg bg-red-500 px-3 py-2 text-sm text-white hover:bg-red-600"
+          >
+            Clear
+          </button>
         )}
       </div>
 
-      {/* Total Expenses */}
-      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <h2 className="text-xl font-semibold text-[#5A3A2E]">
+      {/* ================= COMPLETED ORDERS ================= */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
+
+        <div
+          className="flex cursor-pointer items-center justify-between"
+          onClick={() => setShowSales(!showSales)}
+        >
+          <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+            Completed Orders
+          </h2>
+
+          <button
+            type="button"
+            className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]"
+          >
+            {showSales ? "−" : "+"}
+          </button>
+        </div>
+
+        {showSales && (
+          <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+            <table className="min-w-full text-sm">
+
+              <thead className="bg-[#f3efe9] dark:bg-gray-800">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Date
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Name
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Qty
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Price
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Total
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Status
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="bg-white dark:bg-gray-900">
+
+                {isLoading ? (
+                  <tr>
+                    <td
+                      className="px-4 py-3 text-gray-600 dark:text-gray-300"
+                      colSpan="7"
+                    >
+                      Loading records...
+                    </td>
+                  </tr>
+                ) : completedTrackerRows.length > 0 ? (
+                  completedTrackerRows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-t border-gray-100 dark:border-gray-700"
+                    >
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.date || "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.name || "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.order_quantity ?? "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        ₱{Number(row.price || 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-3 font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+                        ₱
+                        {(
+                          Number(row.order_quantity || 0) *
+                          Number(row.price || 0)
+                        ).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.status || "Completed"}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => onDeleteTracker(row)}
+                          disabled={isSubmitting}
+                          className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      className="px-4 py-3 text-gray-600 dark:text-gray-300"
+                      colSpan="7"
+                    >
+                      No completed orders yet.
+                    </td>
+                  </tr>
+                )}
+
+                <tr className="bg-[#f8f5f2] dark:bg-gray-800">
+                  <td
+                    colSpan="7"
+                    className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex justify-between">
+                      <span>
+                        Entries: {completedTrackerRows.length}
+                      </span>
+
+                      <span className="text-green-700 dark:text-green-400">
+                        Sales Total: ₱
+                        {summaryTrackerTotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ================= EXPENSES ================= */}
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
+
+        <div
+          className="flex cursor-pointer items-center justify-between"
+          onClick={() => setShowExpenses(!showExpenses)}
+        >
+          <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+            Expenses
+          </h2>
+
+          <button
+            type="button"
+            className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]"
+          >
+            {showExpenses ? "−" : "+"}
+          </button>
+        </div>
+
+        {showExpenses && (
+          <div className="mt-4 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+            <table className="min-w-full text-sm">
+
+              <thead className="bg-[#f3efe9] dark:bg-gray-800">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Date
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Product
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Price
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Total
+                  </th>
+
+                  <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="bg-white dark:bg-gray-900">
+
+                {isLoading ? (
+                  <tr>
+                    <td
+                      className="px-4 py-3 text-gray-600 dark:text-gray-300"
+                      colSpan="5"
+                    >
+                      Loading records...
+                    </td>
+                  </tr>
+                ) : displayedExpenseRows.length > 0 ? (
+                  displayedExpenseRows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-t border-gray-100 dark:border-gray-700"
+                    >
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.date || "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {row.product || "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        ₱{Number(row.price || 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-3 font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+                        ₱{Number(row.price || 0).toFixed(2)}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => onDeleteExpense(row)}
+                          disabled={isSubmitting}
+                          className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      className="px-4 py-3 text-gray-600 dark:text-gray-300"
+                      colSpan="5"
+                    >
+                      No expense rows yet.
+                    </td>
+                  </tr>
+                )}
+
+                <tr className="bg-[#f8f5f2] dark:bg-gray-800">
+                  <td
+                    colSpan="5"
+                    className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300"
+                  >
+                    <div className="flex justify-between">
+                      <span>
+                        Entries: {displayedExpenseRows.length}
+                      </span>
+
+                      <span className="text-red-600 dark:text-red-400">
+                        Expenses Total: ₱
+                        {summaryExpensesTotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ================= TOTAL EXPENSES ================= */}
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
+
+        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Total Expenses
         </h2>
 
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-600">
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+
+            <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Total Expenses
             </span>
 
-            <span className="text-2xl font-bold text-red-600">
+            <span className="text-2xl font-bold text-red-600 dark:text-red-400">
               ₱{summaryExpensesTotal.toFixed(2)}
             </span>
+
           </div>
         </div>
       </div>
 
+      {/* ================= PROFIT ================= */}
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
 
-      {/* Profit */}
-      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-        <h2 className="text-xl font-semibold text-[#5A3A2E]">
+        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Net Business Profit
         </h2>
 
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-600">
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+
+            <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Business Profit
             </span>
 
-            <span className="text-2xl font-bold text-green-700">
-              ₱{(summaryTrackerTotal - summaryExpensesTotal).toFixed(2)}
+            <span className="text-2xl font-bold text-green-700 dark:text-green-400">
+              ₱{netProfit.toFixed(2)}
             </span>
+
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5">
-          <h2 className="text-xl font-semibold text-[#5A3A2E]">
-            Business Capital
-          </h2>
+      {/* ================= BUSINESS CAPITAL ================= */}
+      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
 
-          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-medium text-gray-600">
-                Available Capital
-              </span>
+        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Business Capital
+        </h2>
 
-              <span className="text-2xl font-bold text-blue-700">
-                ₱{availableCapital.toFixed(2)}
-              </span>
-            </div>
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+
+            <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
+              Available Capital
+            </span>
+
+            <span className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+              ₱{availableCapital.toFixed(2)}
+            </span>
+
           </div>
         </div>
+      </div>
 
     </div>
   );
-
-  
 }
