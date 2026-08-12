@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function TuitionTargetTab({
@@ -8,415 +8,704 @@ export default function TuitionTargetTab({
   // =========================
   // TUITION GOAL
   // =========================
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetDate, setTargetDate] = useState("");
+  const [targetAmount, setTargetAmount] = useState(() => {
+    return localStorage.getItem("churrozi-tuition-target") || "";
+  });
+
+  const [targetDate, setTargetDate] = useState(() => {
+    return localStorage.getItem("churrozi-tuition-date") || "";
+  });
 
   // =========================
-  // SAVINGS FORM
+  // CHURROS PRICE
   // =========================
-  const [date, setDate] = useState("");
-  const [amount, setAmount] = useState("");
-  const [notes, setNotes] = useState("");
+  const [churrosPrice, setChurrosPrice] = useState(() => {
+    return localStorage.getItem("churrozi-churros-price") || "";
+  });
+
+  const [priceInput, setPriceInput] = useState(churrosPrice);
 
   // =========================
-  // SAVINGS RECORDS
+  // SAVINGS
   // =========================
-  const [rows, setRows] = useState([]);
+  const [savingsDate, setSavingsDate] = useState("");
+  const [savingsAmount, setSavingsAmount] = useState("");
+  const [savingsNotes, setSavingsNotes] = useState("");
+
+  const [savingsRows, setSavingsRows] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // =========================
-  // LOADING / ERROR
+  // SAVE GOAL
   // =========================
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const saveGoal = () => {
+    localStorage.setItem(
+      "churrozi-tuition-target",
+      targetAmount
+    );
+
+    localStorage.setItem(
+      "churrozi-tuition-date",
+      targetDate
+    );
+  };
 
   // =========================
-  // BUSINESS PROFIT
+  // SAVE CHURROS PRICE
   // =========================
-  const businessProfit = Math.max(
-    Number(summaryTrackerTotal || 0) -
-      Number(summaryExpensesTotal || 0),
-    0
-  );
+  const saveChurrosPrice = () => {
+    const price = Number(priceInput);
 
-  // =========================
-  // LOAD SAVINGS DATA
-  // =========================
-  async function loadData() {
-    setLoading(true);
-    setError("");
-
-    const { data, error } = await supabase
-      .from("tuition_savings")
-      .select("*")
-      .order("created_at", {
-        ascending: true,
-      });
-
-    if (error) {
-      console.error(error);
-      setError("Failed to load savings data.");
-      setLoading(false);
+    if (!price || price <= 0) {
       return;
     }
 
-    setRows(data || []);
-    setLoading(false);
-  }
+    localStorage.setItem(
+      "churrozi-churros-price",
+      String(price)
+    );
+
+    setChurrosPrice(String(price));
+  };
 
   // =========================
-  // INITIAL LOAD
+  // LOAD SAVINGS
   // =========================
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // =========================
-  // LOAD TUITION GOAL
-  // =========================
-  useEffect(() => {
-    const savedGoal = localStorage.getItem("tuitionGoal");
-
-    if (savedGoal) {
-      try {
-        const goal = JSON.parse(savedGoal);
-
-        setTargetAmount(goal.amount || "");
-        setTargetDate(goal.date || "");
-      } catch (error) {
-        console.error("Invalid tuition goal:", error);
-      }
+  const loadSavings = async () => {
+    if (!supabase) {
+      setIsLoading(false);
+      return;
     }
+
+    try {
+      const { data, error } = await supabase
+        .from("tuition_savings")
+        .select("*")
+        .order("created_at", {
+          ascending: true,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setSavingsRows(data || []);
+    } catch (error) {
+      console.error(
+        "Unable to load tuition savings:",
+        error
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSavings();
   }, []);
 
   // =========================
   // TOTAL SAVED
   // =========================
-  const totalSaved = businessProfit;
+  const savingsHistoryTotal = useMemo(() => {
+    return savingsRows.reduce(
+      (total, row) =>
+        total + Number(row.amount || 0),
+      0
+    );
+  }, [savingsRows]);
 
   // =========================
-  // GOAL COMPUTATION
+  // AUTOMATIC PROFIT
   // =========================
-  const target = Number(targetAmount || 0);
-
-  const remaining = Math.max(
-    target - totalSaved,
-    0
-  );
-
-  const progress =
-    target > 0
-      ? Math.min((totalSaved / target) * 100, 100)
-      : 0;
-
-  // =========================
-  // SAVE TUITION GOAL
-  // =========================
-  function saveGoal() {
-    if (!targetAmount || !targetDate) {
-      setError(
-        "Please enter target amount and target date."
-      );
-      return;
-    }
-
-    setError("");
-
-    localStorage.setItem(
-      "tuitionGoal",
-      JSON.stringify({
-        amount: targetAmount,
-        date: targetDate,
-      })
+  const automaticProfit = useMemo(() => {
+    const sales = Number(
+      summaryTrackerTotal || 0
     );
 
-    alert("Tuition goal saved!");
-  }
-
-  // =========================
-  // ADD SAVINGS RECORD
-  // =========================
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    if (!date || !amount) {
-      setError(
-        "Please complete the required fields."
-      );
-      return;
-    }
-
-    if (Number(amount) <= 0) {
-      setError(
-        "Amount must be greater than zero."
-      );
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    const { error } = await supabase
-      .from("tuition_savings")
-      .insert([
-        {
-          date,
-          amount: Number(amount),
-          notes: notes.trim() || null,
-        },
-      ]);
-
-    if (error) {
-      console.error(error);
-      setError("Failed to save savings record.");
-      setLoading(false);
-      return;
-    }
-
-    setDate("");
-    setAmount("");
-    setNotes("");
-
-    await loadData();
-  }
-
-  // =========================
-  // DELETE SAVINGS
-  // =========================
-  async function handleDelete(id) {
-    const confirmDelete = window.confirm(
-      "Delete this savings record?"
+    const expenses = Number(
+      summaryExpensesTotal || 0
     );
 
-    if (!confirmDelete) return;
+    return Math.max(sales - expenses, 0);
+  }, [
+    summaryTrackerTotal,
+    summaryExpensesTotal,
+  ]);
 
-    setLoading(true);
-    setError("");
+  // =========================
+  // TOTAL SAVED
+  // =========================
+  const totalSaved = useMemo(() => {
+    /*
+      Automatic profit is reflected in Total Saved.
+      Manual savings are also included.
+    */
 
-    const { error } = await supabase
-      .from("tuition_savings")
-      .delete()
-      .eq("id", id);
+    return Math.max(
+      automaticProfit + savingsHistoryTotal,
+      0
+    );
+  }, [
+    automaticProfit,
+    savingsHistoryTotal,
+  ]);
 
-    if (error) {
-      console.error(error);
-      setError("Failed to delete savings record.");
-      setLoading(false);
+  // =========================
+  // REMAINING TUITION
+  // =========================
+  const remainingTuition = useMemo(() => {
+    const target = Number(
+      targetAmount || 0
+    );
+
+    return Math.max(
+      target - totalSaved,
+      0
+    );
+  }, [
+    targetAmount,
+    totalSaved,
+  ]);
+
+  // =========================
+  // PACKS NEEDED
+  // =========================
+  const packsNeeded = useMemo(() => {
+    const price = Number(
+      churrosPrice || 0
+    );
+
+    if (
+      price <= 0 ||
+      remainingTuition <= 0
+    ) {
+      return 0;
+    }
+
+    return Math.ceil(
+      remainingTuition / price
+    );
+  }, [
+    churrosPrice,
+    remainingTuition,
+  ]);
+
+  // =========================
+  // DAYS REMAINING
+  // =========================
+  const daysRemaining = useMemo(() => {
+    if (!targetDate) {
+      return 0;
+    }
+
+    const today = new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    const deadline = new Date(
+      `${targetDate}T00:00:00`
+    );
+
+    deadline.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    const difference =
+      deadline.getTime() -
+      today.getTime();
+
+    if (difference < 0) {
+      return 0;
+    }
+
+    /*
+      +1 means today is included.
+
+      Example:
+      Aug 13 → Aug 29
+
+      Aug 13, 14, 15 ... Aug 29
+      = 17 days
+    */
+    return (
+      Math.floor(
+        difference /
+          (1000 * 60 * 60 * 24)
+      ) + 1
+    );
+  }, [targetDate]);
+
+  // =========================
+  // PACKS PER DAY
+  // =========================
+  const packsPerDay = useMemo(() => {
+    if (
+      packsNeeded <= 0 ||
+      daysRemaining <= 0
+    ) {
+      return 0;
+    }
+
+    return Math.ceil(
+      packsNeeded / daysRemaining
+    );
+  }, [
+    packsNeeded,
+    daysRemaining,
+  ]);
+
+  // =========================
+  // PROGRESS
+  // =========================
+  const progress = useMemo(() => {
+    const target = Number(
+      targetAmount || 0
+    );
+
+    if (target <= 0) {
+      return 0;
+    }
+
+    return Math.min(
+      (totalSaved / target) * 100,
+      100
+    );
+  }, [
+    targetAmount,
+    totalSaved,
+  ]);
+
+  // =========================
+  // ADD MANUAL SAVING
+  // =========================
+  const handleSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    if (!supabase) {
       return;
     }
 
-    await loadData();
-  }
+    if (
+      !savingsDate ||
+      !savingsAmount
+    ) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        date: savingsDate,
+        amount: Number(
+          savingsAmount
+        ),
+        notes:
+          savingsNotes.trim() ||
+          null,
+      };
+
+      const { error } =
+        await supabase
+          .from("tuition_savings")
+          .insert([payload]);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadSavings();
+
+      setSavingsDate("");
+      setSavingsAmount("");
+      setSavingsNotes("");
+    } catch (error) {
+      console.error(
+        "Unable to save tuition saving:",
+        error
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // =========================
+  // DELETE SAVING
+  // =========================
+  const handleDelete = async (
+    rowId
+  ) => {
+    if (!supabase) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this saving?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } =
+        await supabase
+          .from("tuition_savings")
+          .delete()
+          .eq("id", rowId);
+
+      if (error) {
+        throw error;
+      }
+
+      await loadSavings();
+    } catch (error) {
+      console.error(
+        "Unable to delete saving:",
+        error
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* =========================
-          ERROR MESSAGE
+          HEADER
       ========================= */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-100 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* =========================
-          TUITION GOAL
-      ========================= */}
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 transition-colors dark:border-gray-700 dark:bg-gray-900">
-
-        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-          Tuition Goal
+      <div>
+        <h2 className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Tuition Fee Target
         </h2>
 
-        <input
-          type="number"
-          min="0"
-          placeholder="Target Amount"
-          value={targetAmount}
-          onChange={(e) =>
-            setTargetAmount(e.target.value)
-          }
-          className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
-        />
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
+          Track your tuition fee savings and
+          monitor your progress.
+        </p>
+      </div>
 
-        <input
-          type="date"
-          value={targetDate}
-          onChange={(e) =>
-            setTargetDate(e.target.value)
-          }
-          className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
+      {/* =========================
+          TUITION TARGET
+      ========================= */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+
+        <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Tuition Fee Target
+        </h3>
+
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Set your tuition target and calculate
+          how many packs of churros you need to sell.
+        </p>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+
+          {/* TARGET */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold">
+              Tuition Fee Target
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              value={targetAmount}
+              onChange={(e) =>
+                setTargetAmount(
+                  e.target.value
+                )
+              }
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              placeholder="₱7,160"
+            />
+          </div>
+
+          {/* DATE */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold">
+              Target Date
+            </label>
+
+            <input
+              type="date"
+              value={targetDate}
+              onChange={(e) =>
+                setTargetDate(
+                  e.target.value
+                )
+              }
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+        </div>
 
         <button
           type="button"
           onClick={saveGoal}
-          className="rounded-lg bg-[#5A3A2E] px-5 py-3 text-white transition hover:bg-[#6b4737]"
+          className="mt-4 rounded-xl bg-[#d8a66b] px-5 py-3 font-semibold text-white transition hover:bg-[#c38f54]"
         >
-          Save Goal
+          💾 Save Tuition Goal
         </button>
+
       </div>
 
       {/* =========================
-          TUITION SAVINGS
+          CHURROS PRICE
       ========================= */}
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 transition-colors dark:border-gray-700 dark:bg-gray-900"
-      >
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
-        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-          Tuition Savings
-        </h2>
+        <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+          🥨 Churros Sales Calculator
+        </h3>
 
-        <input
-          type="date"
-          value={date}
-          onChange={(e) =>
-            setDate(e.target.value)
-          }
-          required
-          className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        />
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Enter the selling price of one pack
+          of churros.
+        </p>
 
-        <input
-          type="number"
-          min="0"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) =>
-            setAmount(e.target.value)
-          }
-          required
-          className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
-        />
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-semibold">
+            Churros Price per Pack
+          </label>
 
-        <input
-          type="text"
-          placeholder="Notes"
-          value={notes}
-          onChange={(e) =>
-            setNotes(e.target.value)
-          }
-          className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
-        />
+          <div className="flex">
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-[#5A3A2E] px-5 py-3 text-white transition hover:bg-[#6b4737] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? "Saving..." : "Save Savings"}
-        </button>
-      </form>
+            <span className="flex items-center rounded-l-xl border border-r-0 border-gray-300 bg-gray-100 px-4 dark:border-gray-600 dark:bg-gray-800">
+              ₱
+            </span>
 
-      {/* =========================
-          SAVINGS HISTORY
-      ========================= */}
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white transition-colors dark:border-gray-700 dark:bg-gray-900">
+            <input
+              type="number"
+              min="1"
+              value={priceInput}
+              onChange={(e) =>
+                setPriceInput(
+                  e.target.value
+                )
+              }
+              className="w-full rounded-r-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              placeholder="69"
+            />
 
-        <div className="border-b border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-            Savings History
-          </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={saveChurrosPrice}
+            className="mt-3 rounded-xl bg-[#d8a66b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#c38f54]"
+          >
+            💾 Save Churros Price
+          </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+      </div>
 
-            <thead className="border-b border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
-              <tr>
-                <th className="p-3 text-gray-700 dark:text-gray-200">
-                  Date
-                </th>
+      {/* =========================
+          CALCULATOR RESULTS
+      ========================= */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
-                <th className="p-3 text-gray-700 dark:text-gray-200">
-                  Amount
-                </th>
+        <div className="grid gap-3 sm:grid-cols-3">
 
-                <th className="p-3 text-gray-700 dark:text-gray-200">
-                  Notes
-                </th>
+          {/* TARGET */}
+          <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Tuition Target
+            </p>
 
-                <th className="p-3 text-gray-700 dark:text-gray-200">
-                  Action
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="p-4 text-center text-gray-600 dark:text-gray-300"
-                  >
-                    Loading...
-                  </td>
-                </tr>
-              ) : rows.length > 0 ? (
-                rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="border-b border-gray-200 dark:border-gray-700"
-                  >
-                    <td className="p-3 text-gray-700 dark:text-gray-200">
-                      {row.date || "—"}
-                    </td>
-
-                    <td className="p-3 font-semibold text-green-700 dark:text-green-400">
-                      ₱
-                      {Number(
-                        row.amount || 0
-                      ).toFixed(2)}
-                    </td>
-
-                    <td className="p-3 text-gray-700 dark:text-gray-200">
-                      {row.notes || "—"}
-                    </td>
-
-                    <td className="p-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(row.id)
-                        }
-                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="p-4 text-center text-gray-500 dark:text-gray-400"
-                  >
-                    No savings records yet.
-                  </td>
-                </tr>
+            <p className="mt-2 text-2xl font-bold text-[#d8a66b]">
+              ₱
+              {Number(
+                targetAmount || 0
+              ).toLocaleString(
+                "en-PH",
+                {
+                  minimumFractionDigits: 2,
+                }
               )}
-            </tbody>
-          </table>
+            </p>
+          </div>
+
+          {/* SAVED */}
+          <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Total Saved
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-green-500">
+              ₱
+              {totalSaved.toLocaleString(
+                "en-PH",
+                {
+                  minimumFractionDigits: 2,
+                }
+              )}
+            </p>
+
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Includes automatic profit
+            </p>
+          </div>
+
+          {/* REMAINING */}
+          <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Remaining Tuition
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-orange-500">
+              ₱
+              {remainingTuition.toLocaleString(
+                "en-PH",
+                {
+                  minimumFractionDigits: 2,
+                }
+              )}
+            </p>
+          </div>
+
         </div>
+
+        {/* =========================
+            PACKS NEEDED
+        ========================= */}
+        <div className="mt-4 rounded-xl border border-green-700 bg-green-950 p-5">
+
+          <p className="text-sm font-semibold text-green-400">
+            Packs of Churros Needed
+          </p>
+
+          <div className="mt-2 flex items-baseline gap-2">
+
+            <span className="text-4xl font-bold text-green-400">
+              {packsNeeded}
+            </span>
+
+            <span className="text-lg text-green-300">
+              packs
+            </span>
+
+          </div>
+
+          <p className="mt-2 text-sm text-green-300">
+            At ₱
+            {Number(
+              churrosPrice || 0
+            ).toFixed(2)}
+            {" "}per pack, you need to sell{" "}
+            <strong>
+              {packsNeeded} packs
+            </strong>{" "}
+            to cover the remaining{" "}
+            <strong>
+              ₱
+              {remainingTuition.toLocaleString(
+                "en-PH",
+                {
+                  minimumFractionDigits: 2,
+                }
+              )}
+            </strong>
+            .
+          </p>
+
+        </div>
+
+        {/* =========================
+            DAYS + PACKS PER DAY
+        ========================= */}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
+          {/* DAYS */}
+          <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-800">
+
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Days Until Target
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-[#d8a66b]">
+              {daysRemaining}
+              <span className="ml-2 text-base font-medium">
+                days
+              </span>
+            </p>
+
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {targetDate
+                ? `Target date: ${targetDate}`
+                : "Set a target date first."}
+            </p>
+
+          </div>
+
+          {/* PACKS PER DAY */}
+          <div className="rounded-xl border border-blue-700 bg-blue-950 p-5">
+
+            <p className="text-sm font-semibold text-blue-300">
+              🥨 Packs Needed Per Day
+            </p>
+
+            <p className="mt-2 text-4xl font-bold text-blue-300">
+              {packsPerDay}
+              <span className="ml-2 text-lg font-medium">
+                packs/day
+              </span>
+            </p>
+
+            <p className="mt-2 text-sm text-blue-200">
+              You need to sell at least{" "}
+              <strong>
+                {packsPerDay} packs per day
+              </strong>{" "}
+              to reach your tuition target
+              before the target date.
+            </p>
+
+          </div>
+
+        </div>
+
       </div>
 
       {/* =========================
-          TUITION PROGRESS
+          SAVINGS PROGRESS
       ========================= */}
-      <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 transition-colors dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
-        <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-          Tuition Progress
-        </h2>
+        <div className="flex items-center justify-between">
 
-        {/* Progress Bar */}
-        <div className="mt-5 h-6 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+            Savings Progress
+          </h3>
+
+          <span className="font-bold text-green-500">
+            {progress.toFixed(0)}%
+          </span>
+
+        </div>
+
+        <div className="mt-4 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
 
           <div
-            className="h-full bg-green-600 transition-all duration-500"
+            className="h-full rounded-full bg-green-500 transition-all duration-500"
             style={{
               width: `${progress}%`,
             }}
@@ -424,48 +713,251 @@ export default function TuitionTargetTab({
 
         </div>
 
-        {/* Progress Details */}
-        <div className="mt-6 space-y-3">
+        <div className="mt-3 flex justify-between text-sm text-gray-500 dark:text-gray-400">
 
-          <div className="flex justify-between text-gray-700 dark:text-gray-200">
-            <span>Target Amount</span>
+          <span>
+            Saved: ₱
+            {totalSaved.toLocaleString(
+              "en-PH",
+              {
+                minimumFractionDigits: 2,
+              }
+            )}
+          </span>
 
-            <span className="font-semibold">
-              ₱{target.toFixed(2)}
-            </span>
+          <span>
+            Target: ₱
+            {Number(
+              targetAmount || 0
+            ).toLocaleString(
+              "en-PH",
+              {
+                minimumFractionDigits: 2,
+              }
+            )}
+          </span>
+
+        </div>
+
+        {targetDate && (
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            Target date: {targetDate}
+          </p>
+        )}
+
+      </div>
+
+      {/* =========================
+          ADD SAVINGS
+      ========================= */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
+
+        <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Add Savings
+        </h3>
+
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Add a manual saving if you want to record
+          money deposited directly toward tuition.
+        </p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-5 space-y-4"
+        >
+
+          <div className="grid gap-4 sm:grid-cols-2">
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold">
+                Date
+              </label>
+
+              <input
+                type="date"
+                value={savingsDate}
+                onChange={(e) =>
+                  setSavingsDate(
+                    e.target.value
+                  )
+                }
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold">
+                Amount
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                value={savingsAmount}
+                onChange={(e) =>
+                  setSavingsAmount(
+                    e.target.value
+                  )
+                }
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
+                placeholder="₱500"
+              />
+            </div>
+
           </div>
 
-          <div className="flex justify-between text-gray-700 dark:text-gray-200">
-            <span>Target Date</span>
+          <div>
+            <label className="mb-2 block text-sm font-semibold">
+              Notes
+            </label>
 
-            <span className="font-semibold">
-              {targetDate || "-"}
-            </span>
+            <input
+              type="text"
+              value={savingsNotes}
+              onChange={(e) =>
+                setSavingsNotes(
+                  e.target.value
+                )
+              }
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
+              placeholder="Example: Savings from churros sales"
+            />
           </div>
 
-          <div className="flex justify-between text-gray-700 dark:text-gray-200">
-            <span>Total Saved</span>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-xl bg-[#d8a66b] px-5 py-3 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
+          >
+            {isSubmitting
+              ? "Saving..."
+              : "💾 Save Savings"}
+          </button>
 
-            <span className="font-semibold text-green-700 dark:text-green-400">
-              ₱{totalSaved.toFixed(2)}
-            </span>
-          </div>
+        </form>
 
-          <div className="flex justify-between text-gray-700 dark:text-gray-200">
-            <span>Remaining</span>
+      </div>
 
-            <span className="font-semibold text-red-600 dark:text-red-400">
-              ₱{remaining.toFixed(2)}
-            </span>
-          </div>
+      {/* =========================
+          SAVINGS HISTORY
+      ========================= */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
 
-          <div className="flex justify-between text-gray-700 dark:text-gray-200">
-            <span>Progress</span>
+        <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Savings History
+        </h3>
 
-            <span className="font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-              {progress.toFixed(1)}%
-            </span>
-          </div>
+        <div className="mt-4 overflow-x-auto">
+
+          <table className="min-w-full text-sm">
+
+            <thead className="bg-[#f8f5f2] dark:bg-gray-800">
+
+              <tr>
+
+                <th className="px-4 py-3 text-left">
+                  Date
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Amount
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Notes
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Action
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {isLoading ? (
+
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-4 py-6 text-center"
+                  >
+                    Loading...
+                  </td>
+                </tr>
+
+              ) : savingsRows.length === 0 ? (
+
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-4 py-6 text-center text-gray-500"
+                  >
+                    No savings records yet.
+                  </td>
+                </tr>
+
+              ) : (
+
+                savingsRows.map(
+                  (row) => (
+
+                    <tr
+                      key={row.id}
+                      className="border-t border-gray-200 dark:border-gray-700"
+                    >
+
+                      <td className="px-4 py-3">
+                        {row.date}
+                      </td>
+
+                      <td className="px-4 py-3 font-semibold text-green-500">
+                        ₱
+                        {Number(
+                          row.amount || 0
+                        ).toLocaleString(
+                          "en-PH",
+                          {
+                            minimumFractionDigits: 2,
+                          }
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {row.notes || "—"}
+                      </td>
+
+                      <td className="px-4 py-3">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDelete(
+                              row.id
+                            )
+                          }
+                          disabled={
+                            isSubmitting
+                          }
+                          className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                        >
+                          Delete
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )
+
+              )}
+
+            </tbody>
+
+          </table>
 
         </div>
 
