@@ -8,7 +8,6 @@ export default function Welcome({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // Trigger entrance animation after page loads
     const timer = setTimeout(() => {
       setLoaded(true);
     }, 100);
@@ -18,38 +17,47 @@ export default function Welcome({
 
   return (
     <div
-      className={`relative flex min-h-screen items-center justify-center overflow-hidden px-6 transition-colors duration-300 ${
+      className={`relative flex min-h-screen items-center justify-center overflow-hidden px-6 transition-colors duration-500 ${
         darkMode
-          ? "bg-[#111827] text-white"
+          ? "bg-[#080d18] text-white"
           : "bg-[#faf8f5] text-gray-900"
       }`}
     >
-      {/* Dark Mode */}
+
+      {/* Background Glow */}
+      <div
+        className={`pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${
+          darkMode
+            ? "bg-[#d8a66b]/10"
+            : "bg-[#d8a66b]/20"
+        }`}
+      />
+
+      {/* DARK / LIGHT BUTTON */}
       <button
         type="button"
         onClick={() =>
-          setDarkMode((previous) => !previous)
+          setDarkMode(
+            (previous) => !previous
+          )
         }
-        className={`absolute right-6 top-6 rounded-xl px-4 py-2 font-semibold text-white shadow-sm transition hover:scale-105 ${
-          darkMode
-            ? "bg-[#d8a66b] hover:bg-[#c38f54]"
-            : "bg-[#d8a66b] hover:bg-[#c38f54]"
-        }`}
+        className="absolute right-6 top-6 rounded-xl bg-[#d8a66b] px-4 py-2 font-semibold text-white shadow-lg transition duration-200 hover:scale-105 hover:bg-[#c38f54]"
       >
         {darkMode
           ? "☀️ Light Mode"
           : "🌙 Dark Mode"}
       </button>
 
-      {/* Welcome Content */}
+      {/* CONTENT */}
       <div
-        className={`flex w-full max-w-lg flex-col items-center text-center transition-all duration-1000 ease-out ${
+        className={`relative flex w-full max-w-lg flex-col items-center text-center transition-all duration-1000 ease-out ${
           loaded
             ? "translate-y-0 opacity-100"
             : "translate-y-10 opacity-0"
         }`}
       >
-        {/* Logo */}
+
+        {/* LOGO */}
         <div
           className={`mb-8 transition-all duration-1000 ease-out ${
             loaded
@@ -60,11 +68,11 @@ export default function Welcome({
           <img
             src="/churrozi-logo.jpg"
             alt="ChurroZi Logo"
-            className="h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-[#d8a66b]/40 transition-transform duration-500 hover:scale-105 sm:h-72 sm:w-72"
+            className="h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-[#d8a66b]/50 transition-transform duration-500 hover:scale-105 sm:h-72 sm:w-72"
           />
         </div>
 
-        {/* Brand Name */}
+        {/* BRAND */}
         <h1
           className={`text-4xl font-extrabold tracking-tight transition-all delay-300 duration-700 sm:text-5xl ${
             loaded
@@ -79,7 +87,7 @@ export default function Welcome({
           ChurroZi
         </h1>
 
-        {/* Subtitle */}
+        {/* SUBTITLE */}
         <p
           className={`mt-3 text-lg transition-all delay-500 duration-700 ${
             loaded
@@ -94,7 +102,7 @@ export default function Welcome({
           Churros Business &amp; Financial Tracker
         </p>
 
-        {/* Description */}
+        {/* DESCRIPTION */}
         <p
           className={`mt-2 max-w-md text-sm leading-relaxed transition-all delay-700 duration-700 ${
             loaded
@@ -110,7 +118,7 @@ export default function Welcome({
           savings, and tuition fee goals in one place.
         </p>
 
-        {/* Start Button */}
+        {/* START BUTTON */}
         <button
           type="button"
           onClick={onStart}
@@ -123,7 +131,7 @@ export default function Welcome({
           Start
         </button>
 
-        {/* Tagline */}
+        {/* TAGLINE */}
         <p
           className={`mt-6 text-xs tracking-widest transition-all delay-[1200ms] duration-700 ${
             loaded
@@ -137,6 +145,7 @@ export default function Welcome({
         >
           CRISPY OUTSIDE, SWEET INSIDE
         </p>
+
       </div>
     </div>
   );

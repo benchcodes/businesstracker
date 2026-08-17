@@ -14,19 +14,29 @@ export default function App() {
 
   // =========================
   // DARK MODE
+  // Dark is DEFAULT
   // =========================
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
+    const savedMode = localStorage.getItem("darkMode");
+
+    // If no preference has been saved,
+    // default to dark mode.
+    return savedMode === null
+      ? true
+      : savedMode === "true";
   });
 
   // =========================
   // APPLY DARK MODE
+  // TO ENTIRE WEBSITE
   // =========================
   useEffect(() => {
+    const root = document.documentElement;
+
     if (darkMode) {
-      document.documentElement.classList.add("dark");
+      root.classList.add("dark");
     } else {
-      document.documentElement.classList.remove("dark");
+      root.classList.remove("dark");
     }
 
     localStorage.setItem(
@@ -36,11 +46,11 @@ export default function App() {
   }, [darkMode]);
 
   // =========================
-  // START APPLICATION
+  // START WEBSITE
   // =========================
   const handleStart = () => {
-  setStarted(true);
-};
+    setStarted(true);
+  };
 
   // =========================
   // WELCOME PAGE
@@ -60,15 +70,13 @@ export default function App() {
   // =========================
   return (
     <div
-      className={`min-h-screen ${
+      className={`min-h-screen transition-colors duration-300 ${
         darkMode
-          ? "bg-[#111827] text-white"
+          ? "bg-[#080d18] text-white"
           : "bg-[#faf8f5] text-gray-900"
       }`}
     >
-      {/* =========================
-          MOBILE HAMBURGER
-      ========================= */}
+      {/* MOBILE HAMBURGER */}
       <button
         aria-label="Toggle sidebar"
         aria-expanded={sidebarOpen}
@@ -82,7 +90,7 @@ export default function App() {
         }
       >
         <div className="relative h-6 w-6">
-          {/* Top */}
+
           <span
             className={`absolute left-0 top-1/2 h-0.5 w-6 -translate-y-2 transform transition-all duration-200 ${
               sidebarOpen
@@ -95,7 +103,6 @@ export default function App() {
             }`}
           />
 
-          {/* Middle */}
           <span
             className={`absolute left-0 top-1/2 h-0.5 w-6 transform transition-all duration-200 ${
               sidebarOpen
@@ -108,7 +115,6 @@ export default function App() {
             }`}
           />
 
-          {/* Bottom */}
           <span
             className={`absolute left-0 top-1/2 h-0.5 w-6 translate-y-2 transform transition-all duration-200 ${
               sidebarOpen
@@ -120,12 +126,10 @@ export default function App() {
                 : "bg-gray-900"
             }`}
           />
+
         </div>
       </button>
 
-      {/* =========================
-          APP LAYOUT
-      ========================= */}
       <div className="flex min-h-screen">
 
         {/* SIDEBAR */}
@@ -141,11 +145,11 @@ export default function App() {
           }
         />
 
-        {/* MAIN CONTENT */}
+        {/* MAIN */}
         <main
           className={`min-h-screen flex-1 transition-colors duration-300 md:pl-64 ${
             darkMode
-              ? "bg-[#111827]"
+              ? "bg-[#080d18]"
               : "bg-[#faf8f5]"
           }`}
         >
@@ -155,6 +159,7 @@ export default function App() {
             setDarkMode={setDarkMode}
           />
         </main>
+
       </div>
     </div>
   );
