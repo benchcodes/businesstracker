@@ -75,10 +75,7 @@ export default function Dashboard({ activeView }) {
       root.classList.remove("dark");
     }
 
-    localStorage.setItem(
-      "churrozi-dark-mode",
-      String(darkMode)
-    );
+    localStorage.setItem("churrozi-dark-mode", String(darkMode));
   }, [darkMode]);
 
   // =========================
@@ -87,7 +84,7 @@ export default function Dashboard({ activeView }) {
   async function loadData() {
     if (!supabase) {
       setErrorMessage(
-        "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first."
+        "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first.",
       );
 
       setIsLoading(false);
@@ -99,19 +96,13 @@ export default function Dashboard({ activeView }) {
         { data: trackerData, error: trackerError },
         { data: expenseData, error: expenseError },
       ] = await Promise.all([
-        supabase
-          .from("tracker")
-          .select("*")
-          .order("created_at", {
-            ascending: true,
-          }),
+        supabase.from("tracker").select("*").order("created_at", {
+          ascending: true,
+        }),
 
-        supabase
-          .from("expenses")
-          .select("*")
-          .order("date", {
-            ascending: false,
-          }),
+        supabase.from("expenses").select("*").order("date", {
+          ascending: false,
+        }),
       ]);
 
       if (trackerError) {
@@ -128,9 +119,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to load data from Supabase: ${error.message}`
-      );
+      setErrorMessage(`Unable to load data from Supabase: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -143,25 +132,19 @@ export default function Dashboard({ activeView }) {
   // =========================
   // ACTIVE FORM DATA
   // =========================
-  const activeTracker =
-    submittedTracker || tracker;
+  const activeTracker = submittedTracker || tracker;
 
-  const activeExpenses =
-    submittedExpenses || expenses;
+  const activeExpenses = submittedExpenses || expenses;
 
   // =========================
   // TRACKER TOTAL
   // =========================
   const trackerTotal = useMemo(() => {
     const quantity = Number(
-      activeTracker.orderQuantity ??
-        activeTracker.order_quantity ??
-        0
+      activeTracker.orderQuantity ?? activeTracker.order_quantity ?? 0,
     );
 
-    const price = Number(
-      activeTracker.price ?? 0
-    );
+    const price = Number(activeTracker.price ?? 0);
 
     return quantity * price;
   }, [
@@ -174,64 +157,40 @@ export default function Dashboard({ activeView }) {
   // EXPENSE TOTAL
   // =========================
   const expensesTotal = useMemo(() => {
-    return Number(
-      activeExpenses.price ?? 0
-    );
+    return Number(activeExpenses.price ?? 0);
   }, [activeExpenses.price]);
 
   // =========================
   // DISPLAYED TRACKER ROWS
   // =========================
   const displayedTrackerRows = useMemo(() => {
-    if (
-      summaryRange === "date" &&
-      summaryDate
-    ) {
+    if (summaryRange === "date" && summaryDate) {
       return trackerRows.filter(
-        (row) =>
-          (row.date || "").slice(0, 10) ===
-          summaryDate
+        (row) => (row.date || "").slice(0, 10) === summaryDate,
       );
     }
 
     return trackerRows;
-  }, [
-    trackerRows,
-    summaryRange,
-    summaryDate,
-  ]);
+  }, [trackerRows, summaryRange, summaryDate]);
 
   // =========================
   // DISPLAYED EXPENSE ROWS
   // =========================
   const displayedExpenseRows = useMemo(() => {
-    if (
-      summaryRange === "date" &&
-      summaryDate
-    ) {
+    if (summaryRange === "date" && summaryDate) {
       return expenseRows.filter(
-        (row) =>
-          (row.date || "").slice(0, 10) ===
-          summaryDate
+        (row) => (row.date || "").slice(0, 10) === summaryDate,
       );
     }
 
     return expenseRows;
-  }, [
-    expenseRows,
-    summaryRange,
-    summaryDate,
-  ]);
+  }, [expenseRows, summaryRange, summaryDate]);
 
   // =========================
   // PENDING ORDERS
   // =========================
   const pendingTrackerRows = useMemo(() => {
-    return trackerRows.filter(
-      (row) =>
-        (row.status || "Pending") ===
-        "Pending"
-    );
+    return trackerRows.filter((row) => (row.status || "Pending") === "Pending");
   }, [trackerRows]);
 
   // =========================
@@ -239,9 +198,7 @@ export default function Dashboard({ activeView }) {
   // =========================
   const completedTrackerRows = useMemo(() => {
     return displayedTrackerRows.filter(
-      (row) =>
-        (row.status || "Pending") ===
-        "Completed"
+      (row) => (row.status || "Pending") === "Completed",
     );
   }, [displayedTrackerRows]);
 
@@ -251,12 +208,8 @@ export default function Dashboard({ activeView }) {
   const pendingTrackerTotal = useMemo(() => {
     return pendingTrackerRows.reduce(
       (total, row) =>
-        total +
-        Number(
-          row.order_quantity || 0
-        ) *
-          Number(row.price || 0),
-      0
+        total + Number(row.order_quantity || 0) * Number(row.price || 0),
+      0,
     );
   }, [pendingTrackerRows]);
 
@@ -266,12 +219,8 @@ export default function Dashboard({ activeView }) {
   const summaryTrackerTotal = useMemo(() => {
     return completedTrackerRows.reduce(
       (total, row) =>
-        total +
-        Number(
-          row.order_quantity || 0
-        ) *
-          Number(row.price || 0),
-      0
+        total + Number(row.order_quantity || 0) * Number(row.price || 0),
+      0,
     );
   }, [completedTrackerRows]);
 
@@ -280,10 +229,8 @@ export default function Dashboard({ activeView }) {
   // =========================
   const summaryExpensesTotal = useMemo(() => {
     return displayedExpenseRows.reduce(
-      (total, row) =>
-        total +
-        Number(row.price || 0),
-      0
+      (total, row) => total + Number(row.price || 0),
+      0,
     );
   }, [displayedExpenseRows]);
 
@@ -294,101 +241,57 @@ export default function Dashboard({ activeView }) {
     // Overall capital
     if (!summaryDate) {
       const totalSales = trackerRows
-        .filter(
-          (row) =>
-            row.status === "Completed"
-        )
+        .filter((row) => row.status === "Completed")
         .reduce(
           (total, row) =>
-            total +
-            Number(
-              row.order_quantity || 0
-            ) *
-              Number(row.price || 0),
-          0
+            total + Number(row.order_quantity || 0) * Number(row.price || 0),
+          0,
         );
 
-      const totalExpenses =
-        expenseRows.reduce(
-          (total, row) =>
-            total +
-            Number(row.price || 0),
-          0
-        );
-
-      return (
-        totalSales -
-        totalExpenses
+      const totalExpenses = expenseRows.reduce(
+        (total, row) => total + Number(row.price || 0),
+        0,
       );
+
+      return totalSales - totalExpenses;
     }
 
     // Capital before selected date
-    const selectedDate =
-      new Date(summaryDate);
+    const selectedDate = new Date(summaryDate);
 
-    const previousSales =
-      trackerRows
-        .filter(
-          (row) =>
-            row.status === "Completed" &&
-            new Date(row.date) <
-              selectedDate
-        )
-        .reduce(
-          (total, row) =>
-            total +
-            Number(
-              row.order_quantity || 0
-            ) *
-              Number(row.price || 0),
-          0
-        );
+    const previousSales = trackerRows
+      .filter(
+        (row) =>
+          row.status === "Completed" && new Date(row.date) < selectedDate,
+      )
+      .reduce(
+        (total, row) =>
+          total + Number(row.order_quantity || 0) * Number(row.price || 0),
+        0,
+      );
 
-    const previousExpenses =
-      expenseRows
-        .filter(
-          (row) =>
-            new Date(row.date) <
-            selectedDate
-        )
-        .reduce(
-          (total, row) =>
-            total +
-            Number(row.price || 0),
-          0
-        );
+    const previousExpenses = expenseRows
+      .filter((row) => new Date(row.date) < selectedDate)
+      .reduce((total, row) => total + Number(row.price || 0), 0);
 
-    return (
-      previousSales -
-      previousExpenses
-    );
-  }, [
-    summaryDate,
-    trackerRows,
-    expenseRows,
-  ]);
+    return previousSales - previousExpenses;
+  }, [summaryDate, trackerRows, expenseRows]);
 
   // =========================
   // COUNTS
   // =========================
-  const pendingOrdersCount =
-    pendingTrackerRows.length;
+  const pendingOrdersCount = pendingTrackerRows.length;
 
-  const completedOrdersCount =
-    completedTrackerRows.length;
+  const completedOrdersCount = completedTrackerRows.length;
 
   // =========================
   // TRACKER SUBMIT
   // =========================
-  const handleTrackerSubmit = async (
-    event
-  ) => {
+  const handleTrackerSubmit = async (event) => {
     event.preventDefault();
 
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -398,9 +301,7 @@ export default function Dashboard({ activeView }) {
       !tracker.orderQuantity ||
       !tracker.price
     ) {
-      setErrorMessage(
-        "Fill in all tracker fields before saving."
-      );
+      setErrorMessage("Fill in all tracker fields before saving.");
       return;
     }
 
@@ -411,31 +312,22 @@ export default function Dashboard({ activeView }) {
       const payload = {
         date: tracker.date,
         name: tracker.name,
-        order_quantity: Number(
-          tracker.orderQuantity
-        ),
-        price: Number(
-          tracker.price || 0
-        ),
-        notes:
-          tracker.notes?.trim() || null,
+        order_quantity: Number(tracker.orderQuantity),
+        price: Number(tracker.price || 0),
+        notes: tracker.notes?.trim() || null,
         status: tracker.status,
       };
 
-      const { error } =
-        await supabase
-          .from("tracker")
-          .insert([payload])
-          .select();
+      const { error } = await supabase
+        .from("tracker")
+        .insert([payload])
+        .select();
 
       if (error) {
         throw error;
       }
 
-      const {
-        data,
-        error: fetchError,
-      } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("tracker")
         .select("*")
         .order("date", {
@@ -448,9 +340,7 @@ export default function Dashboard({ activeView }) {
 
       setTrackerRows(data || []);
 
-      setSubmittedTracker(
-        data?.[0] || payload
-      );
+      setSubmittedTracker(data?.[0] || payload);
 
       setTracker({
         date: "",
@@ -463,9 +353,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to save tracker entry: ${error.message}`
-      );
+      setErrorMessage(`Unable to save tracker entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -474,26 +362,16 @@ export default function Dashboard({ activeView }) {
   // =========================
   // EXPENSE SUBMIT
   // =========================
-  const handleExpensesSubmit = async (
-    event
-  ) => {
+  const handleExpensesSubmit = async (event) => {
     event.preventDefault();
 
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
-    if (
-      !expenses.date ||
-      !expenses.product ||
-      !expenses.price
-    ) {
-      setErrorMessage(
-        "Fill in all expense fields before saving."
-      );
+    if (!expenses.date || !expenses.product || !expenses.price) {
+      setErrorMessage("Fill in all expense fields before saving.");
       return;
     }
 
@@ -504,25 +382,19 @@ export default function Dashboard({ activeView }) {
       const payload = {
         date: expenses.date,
         product: expenses.product,
-        price: Number(
-          expenses.price || 0
-        ),
+        price: Number(expenses.price || 0),
       };
 
-      const { error } =
-        await supabase
-          .from("expenses")
-          .insert([payload])
-          .select();
+      const { error } = await supabase
+        .from("expenses")
+        .insert([payload])
+        .select();
 
       if (error) {
         throw error;
       }
 
-      const {
-        data,
-        error: fetchError,
-      } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("expenses")
         .select("*")
         .order("date", {
@@ -535,9 +407,7 @@ export default function Dashboard({ activeView }) {
 
       setExpenseRows(data || []);
 
-      setSubmittedExpenses(
-        data?.[0] || payload
-      );
+      setSubmittedExpenses(data?.[0] || payload);
 
       setExpenses({
         date: "",
@@ -547,9 +417,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to save expense entry: ${error.message}`
-      );
+      setErrorMessage(`Unable to save expense entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -558,13 +426,9 @@ export default function Dashboard({ activeView }) {
   // =========================
   // DELETE TRACKER
   // =========================
-  const handleDeleteTrackerRow = async (
-    rowId
-  ) => {
+  const handleDeleteTrackerRow = async (rowId) => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -572,11 +436,7 @@ export default function Dashboard({ activeView }) {
     setErrorMessage("");
 
     try {
-      const { error } =
-        await supabase
-          .from("tracker")
-          .delete()
-          .eq("id", rowId);
+      const { error } = await supabase.from("tracker").delete().eq("id", rowId);
 
       if (error) {
         throw error;
@@ -586,9 +446,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to delete tracker entry: ${error.message}`
-      );
+      setErrorMessage(`Unable to delete tracker entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -597,14 +455,9 @@ export default function Dashboard({ activeView }) {
   // =========================
   // CHANGE TRACKER STATUS
   // =========================
-  const handleTrackerStatusChange = async (
-    rowId,
-    status
-  ) => {
+  const handleTrackerStatusChange = async (rowId, status) => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -612,11 +465,10 @@ export default function Dashboard({ activeView }) {
     setErrorMessage("");
 
     try {
-      const { error } =
-        await supabase
-          .from("tracker")
-          .update({ status })
-          .eq("id", rowId);
+      const { error } = await supabase
+        .from("tracker")
+        .update({ status })
+        .eq("id", rowId);
 
       if (error) {
         throw error;
@@ -626,9 +478,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to update tracker status: ${error.message}`
-      );
+      setErrorMessage(`Unable to update tracker status: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -637,13 +487,9 @@ export default function Dashboard({ activeView }) {
   // =========================
   // DELETE EXPENSE
   // =========================
-  const handleDeleteExpenseRow = async (
-    rowId
-  ) => {
+  const handleDeleteExpenseRow = async (rowId) => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -651,11 +497,10 @@ export default function Dashboard({ activeView }) {
     setErrorMessage("");
 
     try {
-      const { error } =
-        await supabase
-          .from("expenses")
-          .delete()
-          .eq("id", rowId);
+      const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", rowId);
 
       if (error) {
         throw error;
@@ -665,9 +510,7 @@ export default function Dashboard({ activeView }) {
     } catch (error) {
       console.error(error);
 
-      setErrorMessage(
-        `Unable to delete expense entry: ${error.message}`
-      );
+      setErrorMessage(`Unable to delete expense entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -676,44 +519,30 @@ export default function Dashboard({ activeView }) {
   // =========================
   // CONFIRM DELETE TRACKER
   // =========================
-  const confirmDeleteTrackerRow = (
-    row
-  ) => {
-    const label = row?.name
-      ? ` for ${row.name}`
-      : "";
+  const confirmDeleteTrackerRow = (row) => {
+    const label = row?.name ? ` for ${row.name}` : "";
 
-    const isConfirmed =
-      window.confirm(
-        `Are you sure you want to delete this tracker entry${label}?`
-      );
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete this tracker entry${label}?`,
+    );
 
     if (isConfirmed) {
-      handleDeleteTrackerRow(
-        row.id
-      );
+      handleDeleteTrackerRow(row.id);
     }
   };
 
   // =========================
   // CONFIRM DELETE EXPENSE
   // =========================
-  const confirmDeleteExpenseRow = (
-    row
-  ) => {
-    const label = row?.product
-      ? ` for ${row.product}`
-      : "";
+  const confirmDeleteExpenseRow = (row) => {
+    const label = row?.product ? ` for ${row.product}` : "";
 
-    const isConfirmed =
-      window.confirm(
-        `Are you sure you want to delete this expense entry${label}?`
-      );
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete this expense entry${label}?`,
+    );
 
     if (isConfirmed) {
-      handleDeleteExpenseRow(
-        row.id
-      );
+      handleDeleteExpenseRow(row.id);
     }
   };
 
@@ -735,8 +564,7 @@ export default function Dashboard({ activeView }) {
 
     expenses: {
       title: "Expenses",
-      description:
-        "Record product expenses and keep your costs organized.",
+      description: "Record product expenses and keep your costs organized.",
     },
 
     summary: {
@@ -747,14 +575,11 @@ export default function Dashboard({ activeView }) {
 
     tuition: {
       title: "Tuition Fee Target",
-      description:
-        "Track your tuition fee savings and monitor your progress.",
+      description: "Track your tuition fee savings and monitor your progress.",
     },
   };
 
-  const currentView =
-    viewMeta[activeView] ||
-    viewMeta.tracker;
+  const currentView = viewMeta[activeView] || viewMeta.tracker;
 
   // =========================
   // RENDER ACTIVE TAB
@@ -765,44 +590,20 @@ export default function Dashboard({ activeView }) {
       return (
         <SummaryTab
           summaryRange={summaryRange}
-          setSummaryRange={
-            setSummaryRange
-          }
+          setSummaryRange={setSummaryRange}
           summaryDate={summaryDate}
-          setSummaryDate={
-            setSummaryDate
-          }
+          setSummaryDate={setSummaryDate}
           isLoading={isLoading}
-          completedTrackerRows={
-            completedTrackerRows
-          }
-          displayedExpenseRows={
-            displayedExpenseRows
-          }
-          isSubmitting={
-            isSubmitting
-          }
-          onDeleteTracker={
-            confirmDeleteTrackerRow
-          }
-          onDeleteExpense={
-            confirmDeleteExpenseRow
-          }
-          summaryTrackerTotal={
-            summaryTrackerTotal
-          }
-          summaryExpensesTotal={
-            summaryExpensesTotal
-          }
-          availableCapital={
-            availableCapital
-          }
-          pendingOrdersCount={
-            pendingOrdersCount
-          }
-          completedOrdersCount={
-            completedOrdersCount
-          }
+          completedTrackerRows={completedTrackerRows}
+          displayedExpenseRows={displayedExpenseRows}
+          isSubmitting={isSubmitting}
+          onDeleteTracker={confirmDeleteTrackerRow}
+          onDeleteExpense={confirmDeleteExpenseRow}
+          summaryTrackerTotal={summaryTrackerTotal}
+          summaryExpensesTotal={summaryExpensesTotal}
+          availableCapital={availableCapital}
+          pendingOrdersCount={pendingOrdersCount}
+          completedOrdersCount={completedOrdersCount}
         />
       );
     }
@@ -812,26 +613,13 @@ export default function Dashboard({ activeView }) {
       return (
         <PendingOrdersTab
           isLoading={isLoading}
-          pendingTrackerRows={
-            pendingTrackerRows
+          pendingTrackerRows={pendingTrackerRows}
+          isSubmitting={isSubmitting}
+          onMarkComplete={(rowId) =>
+            handleTrackerStatusChange(rowId, "Completed")
           }
-          isSubmitting={
-            isSubmitting
-          }
-          onMarkComplete={(
-            rowId
-          ) =>
-            handleTrackerStatusChange(
-              rowId,
-              "Completed"
-            )
-          }
-          onDeleteTracker={
-            confirmDeleteTrackerRow
-          }
-          pendingTrackerTotal={
-            pendingTrackerTotal
-          }
+          onDeleteTracker={confirmDeleteTrackerRow}
+          pendingTrackerTotal={pendingTrackerTotal}
         />
       );
     }
@@ -842,15 +630,9 @@ export default function Dashboard({ activeView }) {
         <ExpensesTab
           expenses={expenses}
           setExpenses={setExpenses}
-          expensesTotal={
-            expensesTotal
-          }
-          isSubmitting={
-            isSubmitting
-          }
-          onSubmit={
-            handleExpensesSubmit
-          }
+          expensesTotal={expensesTotal}
+          isSubmitting={isSubmitting}
+          onSubmit={handleExpensesSubmit}
         />
       );
     }
@@ -859,12 +641,8 @@ export default function Dashboard({ activeView }) {
     if (activeView === "tuition") {
       return (
         <TuitionTargetTab
-          summaryTrackerTotal={
-            summaryTrackerTotal
-          }
-          summaryExpensesTotal={
-            summaryExpensesTotal
-          }
+          summaryTrackerTotal={summaryTrackerTotal}
+          summaryExpensesTotal={summaryExpensesTotal}
         />
       );
     }
@@ -875,12 +653,8 @@ export default function Dashboard({ activeView }) {
         tracker={tracker}
         setTracker={setTracker}
         trackerTotal={trackerTotal}
-        isSubmitting={
-          isSubmitting
-        }
-        onSubmit={
-          handleTrackerSubmit
-        }
+        isSubmitting={isSubmitting}
+        onSubmit={handleTrackerSubmit}
       />
     );
   };
@@ -891,16 +665,12 @@ export default function Dashboard({ activeView }) {
   return (
     <div
       className={`min-h-screen p-4 transition-colors duration-300 sm:p-6 md:p-8 ${
-        darkMode
-          ? "bg-gray-950 text-white"
-          : "bg-[#f8f5f2] text-gray-900"
+        darkMode ? "bg-gray-950 text-white" : "bg-[#f8f5f2] text-gray-900"
       }`}
     >
       <div
         className={`mx-auto max-w-4xl rounded-3xl border p-5 shadow-sm transition-colors duration-300 sm:p-6 md:p-8 ${
-          darkMode
-            ? "border-gray-700 bg-gray-900"
-            : "border-gray-200 bg-white"
+          darkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"
         }`}
       >
         {/* HEADER */}
@@ -908,9 +678,7 @@ export default function Dashboard({ activeView }) {
           <div>
             <h1
               className={`text-2xl font-bold sm:text-3xl ${
-                darkMode
-                  ? "text-[#e8bd85]"
-                  : "text-[#5A3A2E]"
+                darkMode ? "text-[#e8bd85]" : "text-[#5A3A2E]"
               }`}
             >
               {currentView.title}
@@ -918,9 +686,7 @@ export default function Dashboard({ activeView }) {
 
             <p
               className={`mt-2 text-base sm:mt-3 sm:text-lg ${
-                darkMode
-                  ? "text-gray-300"
-                  : "text-gray-600"
+                darkMode ? "text-gray-300" : "text-gray-600"
               }`}
             >
               {currentView.description}
@@ -930,20 +696,14 @@ export default function Dashboard({ activeView }) {
           {/* DARK / LIGHT MODE BUTTON */}
           <button
             type="button"
-            onClick={() =>
-              setDarkMode(
-                (previous) => !previous
-              )
-            }
+            onClick={() => setDarkMode((previous) => !previous)}
             className={`w-fit shrink-0 rounded-lg px-4 py-2 font-medium text-white transition ${
               darkMode
                 ? "bg-[#d8a66b] hover:bg-[#c38f54]"
                 : "bg-[#5A3A2E] hover:bg-[#43291f]"
             }`}
           >
-            {darkMode
-              ? "☀️ Light Mode"
-              : "🌙 Dark Mode"}
+            {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
           </button>
         </div>
 
@@ -961,9 +721,7 @@ export default function Dashboard({ activeView }) {
         ) : null}
 
         {/* ACTIVE COMPONENT */}
-        <div className="mt-6">
-          {renderActiveTab()}
-        </div>
+        <div className="mt-6">{renderActiveTab()}</div>
       </div>
     </div>
   );
