@@ -22,11 +22,9 @@ export default function SummaryTab({
 
   // Show older records toggle
   const [showOlderSales, setShowOlderSales] = useState(false);
-  const [showOlderExpenses, setShowOlderExpenses] =
-    useState(false);
+  const [showOlderExpenses, setShowOlderExpenses] = useState(false);
 
-  const netProfit =
-    summaryTrackerTotal - summaryExpensesTotal;
+  const netProfit = summaryTrackerTotal - summaryExpensesTotal;
 
   // =====================================================
   // LAST 10 DAYS
@@ -49,9 +47,7 @@ export default function SummaryTab({
     const cutoffDate = new Date(today);
 
     // LAST 10 DAYS
-    cutoffDate.setDate(
-      cutoffDate.getDate() - 9
-    );
+    cutoffDate.setDate(cutoffDate.getDate() - 9);
 
     const recent = [];
     const older = [];
@@ -62,9 +58,7 @@ export default function SummaryTab({
         return;
       }
 
-      const rowDate = new Date(
-        `${row.date.slice(0, 10)}T00:00:00`
-      );
+      const rowDate = new Date(`${row.date.slice(0, 10)}T00:00:00`);
 
       if (rowDate >= cutoffDate) {
         recent.push(row);
@@ -77,11 +71,7 @@ export default function SummaryTab({
       recentSales: recent,
       olderSales: older,
     };
-  }, [
-    completedTrackerRows,
-    summaryRange,
-    summaryDate,
-  ]);
+  }, [completedTrackerRows, summaryRange, summaryDate]);
 
   // =====================================================
   // DISPLAYED SALES
@@ -112,9 +102,7 @@ export default function SummaryTab({
     const cutoffDate = new Date(today);
 
     // LAST 10 DAYS
-    cutoffDate.setDate(
-      cutoffDate.getDate() - 9
-    );
+    cutoffDate.setDate(cutoffDate.getDate() - 9);
 
     const recent = [];
     const older = [];
@@ -125,9 +113,7 @@ export default function SummaryTab({
         return;
       }
 
-      const rowDate = new Date(
-        `${row.date.slice(0, 10)}T00:00:00`
-      );
+      const rowDate = new Date(`${row.date.slice(0, 10)}T00:00:00`);
 
       if (rowDate >= cutoffDate) {
         recent.push(row);
@@ -140,11 +126,7 @@ export default function SummaryTab({
       recentExpenses: recent,
       olderExpenses: older,
     };
-  }, [
-    displayedExpenseRows,
-    summaryRange,
-    summaryDate,
-  ]);
+  }, [displayedExpenseRows, summaryRange, summaryDate]);
 
   // =====================================================
   // DISPLAYED EXPENSES
@@ -156,14 +138,11 @@ export default function SummaryTab({
 
   return (
     <div className="space-y-6">
-
       {/* ================= DASHBOARD CARDS ================= */}
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-
         {/* Total Sales */}
         <div className="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm dark:border-green-800 dark:bg-green-950">
-
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Total Sales
           </p>
@@ -171,12 +150,10 @@ export default function SummaryTab({
           <h2 className="mt-2 text-3xl font-bold text-green-700 dark:text-green-400">
             ₱{summaryTrackerTotal.toFixed(2)}
           </h2>
-
         </div>
 
         {/* Total Expenses */}
         <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm dark:border-red-800 dark:bg-red-950">
-
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Total Expenses
           </p>
@@ -184,25 +161,19 @@ export default function SummaryTab({
           <h2 className="mt-2 text-3xl font-bold text-red-700 dark:text-red-400">
             ₱{summaryExpensesTotal.toFixed(2)}
           </h2>
-
         </div>
 
         {/* Net Profit */}
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm dark:border-blue-800 dark:bg-blue-950">
-
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Net Profit
-          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Net Profit</p>
 
           <h2 className="mt-2 text-3xl font-bold text-blue-700 dark:text-blue-400">
             ₱{netProfit.toFixed(2)}
           </h2>
-
         </div>
 
         {/* Pending Orders */}
         <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm dark:border-yellow-800 dark:bg-yellow-950">
-
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Pending Orders
           </p>
@@ -210,12 +181,10 @@ export default function SummaryTab({
           <h2 className="mt-2 text-3xl font-bold text-yellow-700 dark:text-yellow-400">
             {pendingOrdersCount}
           </h2>
-
         </div>
 
         {/* Completed Orders */}
         <div className="rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm dark:border-purple-800 dark:bg-purple-950">
-
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Completed Orders
           </p>
@@ -223,12 +192,10 @@ export default function SummaryTab({
           <h2 className="mt-2 text-3xl font-bold text-purple-700 dark:text-purple-400">
             {completedOrdersCount}
           </h2>
-
         </div>
 
         {/* Business Capital */}
         <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 shadow-sm dark:border-cyan-800 dark:bg-cyan-950">
-
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Business Capital
           </p>
@@ -236,17 +203,13 @@ export default function SummaryTab({
           <h2 className="mt-2 text-3xl font-bold text-cyan-700 dark:text-cyan-400">
             ₱{availableCapital.toFixed(2)}
           </h2>
-
         </div>
-
       </div>
 
       {/* ================= FILTER ================= */}
 
       <div className="flex flex-wrap items-center justify-end gap-3">
-
         <div className="inline-flex rounded-lg bg-[#f3efe9] p-1 dark:bg-gray-800">
-
           <button
             type="button"
             onClick={() => {
@@ -264,9 +227,7 @@ export default function SummaryTab({
 
           <button
             type="button"
-            onClick={() =>
-              setSummaryRange("date")
-            }
+            onClick={() => setSummaryRange("date")}
             className={`rounded-md px-3 py-1 text-sm font-medium transition ${
               summaryRange === "date"
                 ? "bg-[#d8a66b] text-white"
@@ -275,49 +236,39 @@ export default function SummaryTab({
           >
             By Date
           </button>
-
         </div>
 
         {summaryRange === "date" && (
           <input
             type="date"
             value={summaryDate}
-            onChange={(e) =>
-              setSummaryDate(e.target.value)
-            }
+            onChange={(e) => setSummaryDate(e.target.value)}
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
         )}
 
-        {summaryRange === "date" &&
-          summaryDate && (
-            <button
-              type="button"
-              onClick={() => {
-                setSummaryDate("");
-                setSummaryRange("overall");
-              }}
-              className="rounded-lg bg-red-500 px-3 py-2 text-sm text-white hover:bg-red-600"
-            >
-              Clear
-            </button>
-          )}
-
+        {summaryRange === "date" && summaryDate && (
+          <button
+            type="button"
+            onClick={() => {
+              setSummaryDate("");
+              setSummaryRange("overall");
+            }}
+            className="rounded-lg bg-red-500 px-3 py-2 text-sm text-white hover:bg-red-600"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* ================= COMPLETED ORDERS ================= */}
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <div
           className="flex cursor-pointer items-center justify-between"
-          onClick={() =>
-            setShowSales(!showSales)
-          }
+          onClick={() => setShowSales(!showSales)}
         >
-
           <div>
-
             <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
               Completed Orders
             </h2>
@@ -327,7 +278,6 @@ export default function SummaryTab({
                 Showing sales from the last 10 days
               </p>
             )}
-
           </div>
 
           <button
@@ -336,63 +286,42 @@ export default function SummaryTab({
           >
             {showSales ? "−" : "+"}
           </button>
-
         </div>
 
         {showSales && (
           <div className="mt-4">
-
             {/* OLD SALES */}
 
-            {summaryRange === "overall" &&
-              olderSales.length > 0 && (
+            {summaryRange === "overall" && olderSales.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    Older Sales Hidden
+                  </p>
 
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-
-                  <div>
-
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      Older Sales Hidden
-                    </p>
-
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {olderSales.length} older{" "}
-                      {olderSales.length === 1
-                        ? "sale"
-                        : "sales"}{" "}
-                      are hidden from the list.
-                    </p>
-
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowOlderSales(
-                        (previous) => !previous
-                      )
-                    }
-                    className="rounded-lg bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c38f54]"
-                  >
-                    {showOlderSales
-                      ? "Hide Older Sales"
-                      : "Show Older Sales"}
-                  </button>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {olderSales.length} older{" "}
+                    {olderSales.length === 1 ? "sale" : "sales"} are hidden from
+                    the list.
+                  </p>
                 </div>
 
-              )}
+                <button
+                  type="button"
+                  onClick={() => setShowOlderSales((previous) => !previous)}
+                  className="rounded-lg bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c38f54]"
+                >
+                  {showOlderSales ? "Hide Older Sales" : "Show Older Sales"}
+                </button>
+              </div>
+            )}
 
             {/* SALES TABLE */}
 
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-
               <table className="min-w-full text-sm">
-
                 <thead className="bg-[#f3efe9] dark:bg-gray-800">
-
                   <tr>
-
                     <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
                       Date
                     </th>
@@ -420,15 +349,11 @@ export default function SummaryTab({
                     <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
                       Action
                     </th>
-
                   </tr>
-
                 </thead>
 
                 <tbody className="bg-white dark:bg-gray-900">
-
                   {isLoading ? (
-
                     <tr>
                       <td
                         className="px-4 py-3 text-gray-600 dark:text-gray-300"
@@ -437,16 +362,12 @@ export default function SummaryTab({
                         Loading records...
                       </td>
                     </tr>
-
                   ) : displayedSalesRows.length > 0 ? (
-
                     displayedSalesRows.map((row) => (
-
                       <tr
                         key={row.id}
                         className="border-t border-gray-100 dark:border-gray-700"
                       >
-
                         <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                           {row.date || "—"}
                         </td>
@@ -476,26 +397,18 @@ export default function SummaryTab({
                         </td>
 
                         <td className="px-4 py-3">
-
                           <button
                             type="button"
-                            onClick={() =>
-                              onDeleteTracker(row)
-                            }
+                            onClick={() => onDeleteTracker(row)}
                             disabled={isSubmitting}
                             className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
                           >
                             Delete
                           </button>
-
                         </td>
-
                       </tr>
-
                     ))
-
                   ) : (
-
                     <tr>
                       <td
                         className="px-4 py-3 text-gray-600 dark:text-gray-300"
@@ -504,58 +417,39 @@ export default function SummaryTab({
                         No completed orders yet.
                       </td>
                     </tr>
-
                   )}
 
                   <tr className="bg-[#f8f5f2] dark:bg-gray-800">
-
                     <td
                       colSpan="7"
                       className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300"
                     >
-
                       <div className="flex justify-between">
-
                         <span>
-                          Showing:{" "}
-                          {displayedSalesRows.length} entries
+                          Showing: {displayedSalesRows.length} entries
                         </span>
 
                         <span className="text-green-700 dark:text-green-400">
-                          Sales Total: ₱
-                          {summaryTrackerTotal.toFixed(2)}
+                          Sales Total: ₱{summaryTrackerTotal.toFixed(2)}
                         </span>
-
                       </div>
-
                     </td>
-
                   </tr>
-
                 </tbody>
-
               </table>
-
             </div>
-
           </div>
         )}
-
       </div>
 
       {/* ================= EXPENSES ================= */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <div
           className="flex cursor-pointer items-center justify-between"
-          onClick={() =>
-            setShowExpenses(!showExpenses)
-          }
+          onClick={() => setShowExpenses(!showExpenses)}
         >
-
           <div>
-
             <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
               Expenses
             </h2>
@@ -565,7 +459,6 @@ export default function SummaryTab({
                 Showing expenses from the last 10 days
               </p>
             )}
-
           </div>
 
           <button
@@ -574,63 +467,44 @@ export default function SummaryTab({
           >
             {showExpenses ? "−" : "+"}
           </button>
-
         </div>
 
         {showExpenses && (
           <div className="mt-4">
-
             {/* OLD EXPENSES */}
 
-            {summaryRange === "overall" &&
-              olderExpenses.length > 0 && (
+            {summaryRange === "overall" && olderExpenses.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    Older Expenses Hidden
+                  </p>
 
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-
-                  <div>
-
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      Older Expenses Hidden
-                    </p>
-
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {olderExpenses.length} older{" "}
-                      {olderExpenses.length === 1
-                        ? "expense"
-                        : "expenses"}{" "}
-                      are hidden from the list.
-                    </p>
-
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowOlderExpenses(
-                        (previous) => !previous
-                      )
-                    }
-                    className="rounded-lg bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c38f54]"
-                  >
-                    {showOlderExpenses
-                      ? "Hide Older Expenses"
-                      : "Show Older Expenses"}
-                  </button>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {olderExpenses.length} older{" "}
+                    {olderExpenses.length === 1 ? "expense" : "expenses"} are
+                    hidden from the list.
+                  </p>
                 </div>
 
-              )}
+                <button
+                  type="button"
+                  onClick={() => setShowOlderExpenses((previous) => !previous)}
+                  className="rounded-lg bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c38f54]"
+                >
+                  {showOlderExpenses
+                    ? "Hide Older Expenses"
+                    : "Show Older Expenses"}
+                </button>
+              </div>
+            )}
 
             {/* EXPENSE TABLE */}
 
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-
               <table className="min-w-full text-sm">
-
                 <thead className="bg-[#f3efe9] dark:bg-gray-800">
-
                   <tr>
-
                     <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
                       Date
                     </th>
@@ -650,15 +524,11 @@ export default function SummaryTab({
                     <th className="px-4 py-3 text-left font-semibold text-[#5A3A2E] dark:text-gray-200">
                       Action
                     </th>
-
                   </tr>
-
                 </thead>
 
                 <tbody className="bg-white dark:bg-gray-900">
-
                   {isLoading ? (
-
                     <tr>
                       <td
                         className="px-4 py-3 text-gray-600 dark:text-gray-300"
@@ -667,16 +537,12 @@ export default function SummaryTab({
                         Loading records...
                       </td>
                     </tr>
-
                   ) : displayedExpenses.length > 0 ? (
-
                     displayedExpenses.map((row) => (
-
                       <tr
                         key={row.id}
                         className="border-t border-gray-100 dark:border-gray-700"
                       >
-
                         <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                           {row.date || "—"}
                         </td>
@@ -694,26 +560,18 @@ export default function SummaryTab({
                         </td>
 
                         <td className="px-4 py-3">
-
                           <button
                             type="button"
-                            onClick={() =>
-                              onDeleteExpense(row)
-                            }
+                            onClick={() => onDeleteExpense(row)}
                             disabled={isSubmitting}
                             className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
                           >
                             Delete
                           </button>
-
                         </td>
-
                       </tr>
-
                     ))
-
                   ) : (
-
                     <tr>
                       <td
                         className="px-4 py-3 text-gray-600 dark:text-gray-300"
@@ -722,57 +580,38 @@ export default function SummaryTab({
                         No expense rows yet.
                       </td>
                     </tr>
-
                   )}
 
                   <tr className="bg-[#f8f5f2] dark:bg-gray-800">
-
                     <td
                       colSpan="5"
                       className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300"
                     >
-
                       <div className="flex justify-between">
-
-                        <span>
-                          Showing:{" "}
-                          {displayedExpenses.length} entries
-                        </span>
+                        <span>Showing: {displayedExpenses.length} entries</span>
 
                         <span className="text-red-600 dark:text-red-400">
-                          Expenses Total: ₱
-                          {summaryExpensesTotal.toFixed(2)}
+                          Expenses Total: ₱{summaryExpensesTotal.toFixed(2)}
                         </span>
-
                       </div>
-
                     </td>
-
                   </tr>
-
                 </tbody>
-
               </table>
-
             </div>
-
           </div>
         )}
-
       </div>
 
       {/* ================= TOTAL EXPENSES ================= */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Total Expenses
         </h2>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-
           <div className="flex items-center justify-between">
-
             <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Total Expenses
             </span>
@@ -780,25 +619,19 @@ export default function SummaryTab({
             <span className="text-2xl font-bold text-red-600 dark:text-red-400">
               ₱{summaryExpensesTotal.toFixed(2)}
             </span>
-
           </div>
-
         </div>
-
       </div>
 
       {/* ================= PROFIT ================= */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Net Business Profit
         </h2>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-
           <div className="flex items-center justify-between">
-
             <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Business Profit
             </span>
@@ -806,25 +639,19 @@ export default function SummaryTab({
             <span className="text-2xl font-bold text-green-700 dark:text-green-400">
               ₱{netProfit.toFixed(2)}
             </span>
-
           </div>
-
         </div>
-
       </div>
 
       {/* ================= BUSINESS CAPITAL ================= */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Business Capital
         </h2>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-
           <div className="flex items-center justify-between">
-
             <span className="text-lg font-medium text-gray-600 dark:text-gray-300">
               Available Capital
             </span>
@@ -832,13 +659,9 @@ export default function SummaryTab({
             <span className="text-2xl font-bold text-blue-700 dark:text-blue-400">
               ₱{availableCapital.toFixed(2)}
             </span>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

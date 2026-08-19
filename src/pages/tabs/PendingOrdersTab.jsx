@@ -28,7 +28,7 @@ export default function PendingOrdersTab({
                 groups[date].push(row);
 
                 return groups;
-              }, {})
+              }, {}),
             ).map(([date, orders]) => (
               <div
                 key={date}
@@ -60,13 +60,9 @@ export default function PendingOrdersTab({
                           key={row.id}
                           className="text-gray-800 dark:text-gray-200"
                         >
-                          <td className="px-4 py-3">
-                            {row.name}
-                          </td>
+                          <td className="px-4 py-3">{row.name}</td>
 
-                          <td className="px-4 py-3">
-                            {row.order_quantity}
-                          </td>
+                          <td className="px-4 py-3">{row.order_quantity}</td>
 
                           <td className="px-4 py-3">
                             ₱{Number(row.price).toFixed(2)}
@@ -75,14 +71,11 @@ export default function PendingOrdersTab({
                           <td className="px-4 py-3 font-semibold">
                             ₱
                             {(
-                              Number(row.order_quantity) *
-                              Number(row.price)
+                              Number(row.order_quantity) * Number(row.price)
                             ).toFixed(2)}
                           </td>
 
-                          <td className="px-4 py-3">
-                            {row.notes || "—"}
-                          </td>
+                          <td className="px-4 py-3">{row.notes || "—"}</td>
 
                           <td className="px-4 py-3">
                             <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
@@ -123,9 +116,8 @@ export default function PendingOrdersTab({
                             .reduce(
                               (sum, row) =>
                                 sum +
-                                Number(row.order_quantity) *
-                                  Number(row.price),
-                              0
+                                Number(row.order_quantity) * Number(row.price),
+                              0,
                             )
                             .toFixed(2)}
                         </td>

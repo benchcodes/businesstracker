@@ -39,9 +39,7 @@ export default function TuitionTargetTab({
   // =========================
   const loadTuitionSettings = async () => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -61,39 +59,29 @@ export default function TuitionTargetTab({
 
       if (data) {
         setTargetAmount(
-          data.target_amount !== null &&
-            data.target_amount !== undefined
+          data.target_amount !== null && data.target_amount !== undefined
             ? String(data.target_amount)
-            : ""
+            : "",
         );
 
-        setTargetDate(
-          data.target_date || ""
-        );
+        setTargetDate(data.target_date || "");
 
         setChurrosPrice(
-          data.churros_price !== null &&
-            data.churros_price !== undefined
+          data.churros_price !== null && data.churros_price !== undefined
             ? String(data.churros_price)
-            : ""
+            : "",
         );
 
         setPriceInput(
-          data.churros_price !== null &&
-            data.churros_price !== undefined
+          data.churros_price !== null && data.churros_price !== undefined
             ? String(data.churros_price)
-            : ""
+            : "",
         );
       }
     } catch (error) {
-      console.error(
-        "Unable to load tuition settings:",
-        error
-      );
+      console.error("Unable to load tuition settings:", error);
 
-      setErrorMessage(
-        `Unable to load tuition settings: ${error.message}`
-      );
+      setErrorMessage(`Unable to load tuition settings: ${error.message}`);
     }
   };
 
@@ -102,9 +90,7 @@ export default function TuitionTargetTab({
   // =========================
   const loadSavings = async () => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
@@ -122,14 +108,9 @@ export default function TuitionTargetTab({
 
       setSavingsRows(data || []);
     } catch (error) {
-      console.error(
-        "Unable to load tuition savings:",
-        error
-      );
+      console.error("Unable to load tuition savings:", error);
 
-      setErrorMessage(
-        `Unable to load tuition savings: ${error.message}`
-      );
+      setErrorMessage(`Unable to load tuition savings: ${error.message}`);
     }
   };
 
@@ -142,10 +123,7 @@ export default function TuitionTargetTab({
       setErrorMessage("");
 
       try {
-        await Promise.all([
-          loadTuitionSettings(),
-          loadSavings(),
-        ]);
+        await Promise.all([loadTuitionSettings(), loadSavings()]);
       } finally {
         setIsLoading(false);
       }
@@ -163,18 +141,13 @@ export default function TuitionTargetTab({
     newChurrosPrice = churrosPrice,
   } = {}) => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return false;
     }
 
     try {
       // Check if a settings row already exists
-      const {
-        data: existingSettings,
-        error: fetchError,
-      } = await supabase
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("tuition_settings")
         .select("id")
         .order("id", {
@@ -188,18 +161,11 @@ export default function TuitionTargetTab({
       }
 
       const payload = {
-        target_amount:
-          newTargetAmount === ""
-            ? null
-            : Number(newTargetAmount),
+        target_amount: newTargetAmount === "" ? null : Number(newTargetAmount),
 
-        target_date:
-          newTargetDate || null,
+        target_date: newTargetDate || null,
 
-        churros_price:
-          newChurrosPrice === ""
-            ? null
-            : Number(newChurrosPrice),
+        churros_price: newChurrosPrice === "" ? null : Number(newChurrosPrice),
       };
 
       // =========================
@@ -231,14 +197,9 @@ export default function TuitionTargetTab({
 
       return true;
     } catch (error) {
-      console.error(
-        "Unable to save tuition settings:",
-        error
-      );
+      console.error("Unable to save tuition settings:", error);
 
-      setErrorMessage(
-        `Unable to save tuition settings: ${error.message}`
-      );
+      setErrorMessage(`Unable to save tuition settings: ${error.message}`);
 
       return false;
     }
@@ -248,13 +209,8 @@ export default function TuitionTargetTab({
   // SAVE TUITION GOAL
   // =========================
   const saveGoal = async () => {
-    if (
-      !targetAmount ||
-      Number(targetAmount) <= 0
-    ) {
-      setErrorMessage(
-        "Enter a valid tuition fee target."
-      );
+    if (!targetAmount || Number(targetAmount) <= 0) {
+      setErrorMessage("Enter a valid tuition fee target.");
       return;
     }
 
@@ -263,20 +219,17 @@ export default function TuitionTargetTab({
     setSuccessMessage("");
 
     try {
-      const success =
-        await saveTuitionSettings({
-          newTargetAmount: targetAmount,
-          newTargetDate: targetDate,
-          newChurrosPrice: churrosPrice,
-        });
+      const success = await saveTuitionSettings({
+        newTargetAmount: targetAmount,
+        newTargetDate: targetDate,
+        newChurrosPrice: churrosPrice,
+      });
 
       if (!success) {
         return;
       }
 
-      setSuccessMessage(
-        "Tuition goal saved successfully."
-      );
+      setSuccessMessage("Tuition goal saved successfully.");
     } finally {
       setIsSubmitting(false);
     }
@@ -289,9 +242,7 @@ export default function TuitionTargetTab({
     const price = Number(priceInput);
 
     if (!price || price <= 0) {
-      setErrorMessage(
-        "Enter a valid churros price."
-      );
+      setErrorMessage("Enter a valid churros price.");
       return;
     }
 
@@ -300,12 +251,11 @@ export default function TuitionTargetTab({
     setSuccessMessage("");
 
     try {
-      const success =
-        await saveTuitionSettings({
-          newTargetAmount: targetAmount,
-          newTargetDate: targetDate,
-          newChurrosPrice: price,
-        });
+      const success = await saveTuitionSettings({
+        newTargetAmount: targetAmount,
+        newTargetDate: targetDate,
+        newChurrosPrice: price,
+      });
 
       if (!success) {
         return;
@@ -314,9 +264,7 @@ export default function TuitionTargetTab({
       setChurrosPrice(String(price));
       setPriceInput(String(price));
 
-      setSuccessMessage(
-        "Churros price saved successfully."
-      );
+      setSuccessMessage("Churros price saved successfully.");
     } finally {
       setIsSubmitting(false);
     }
@@ -327,9 +275,8 @@ export default function TuitionTargetTab({
   // =========================
   const savingsHistoryTotal = useMemo(() => {
     return savingsRows.reduce(
-      (total, row) =>
-        total + Number(row.amount || 0),
-      0
+      (total, row) => total + Number(row.amount || 0),
+      0,
     );
   }, [savingsRows]);
 
@@ -337,76 +284,41 @@ export default function TuitionTargetTab({
   // AUTOMATIC PROFIT
   // =========================
   const automaticProfit = useMemo(() => {
-    const sales = Number(
-      summaryTrackerTotal || 0
-    );
+    const sales = Number(summaryTrackerTotal || 0);
 
-    const expenses = Number(
-      summaryExpensesTotal || 0
-    );
+    const expenses = Number(summaryExpensesTotal || 0);
 
-    return Math.max(
-      sales - expenses,
-      0
-    );
-  }, [
-    summaryTrackerTotal,
-    summaryExpensesTotal,
-  ]);
+    return Math.max(sales - expenses, 0);
+  }, [summaryTrackerTotal, summaryExpensesTotal]);
 
   // =========================
   // TOTAL SAVED
   // =========================
   const totalSaved = useMemo(() => {
-    return Math.max(
-      automaticProfit +
-        savingsHistoryTotal,
-      0
-    );
-  }, [
-    automaticProfit,
-    savingsHistoryTotal,
-  ]);
+    return Math.max(automaticProfit + savingsHistoryTotal, 0);
+  }, [automaticProfit, savingsHistoryTotal]);
 
   // =========================
   // REMAINING TUITION
   // =========================
   const remainingTuition = useMemo(() => {
-    const target = Number(
-      targetAmount || 0
-    );
+    const target = Number(targetAmount || 0);
 
-    return Math.max(
-      target - totalSaved,
-      0
-    );
-  }, [
-    targetAmount,
-    totalSaved,
-  ]);
+    return Math.max(target - totalSaved, 0);
+  }, [targetAmount, totalSaved]);
 
   // =========================
   // PACKS NEEDED
   // =========================
   const packsNeeded = useMemo(() => {
-    const price = Number(
-      churrosPrice || 0
-    );
+    const price = Number(churrosPrice || 0);
 
-    if (
-      price <= 0 ||
-      remainingTuition <= 0
-    ) {
+    if (price <= 0 || remainingTuition <= 0) {
       return 0;
     }
 
-    return Math.ceil(
-      remainingTuition / price
-    );
-  }, [
-    churrosPrice,
-    remainingTuition,
-  ]);
+    return Math.ceil(remainingTuition / price);
+  }, [churrosPrice, remainingTuition]);
 
   // =========================
   // DAYS REMAINING
@@ -418,103 +330,58 @@ export default function TuitionTargetTab({
 
     const today = new Date();
 
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
+    today.setHours(0, 0, 0, 0);
 
-    const deadline = new Date(
-      `${targetDate}T00:00:00`
-    );
+    const deadline = new Date(`${targetDate}T00:00:00`);
 
-    deadline.setHours(
-      0,
-      0,
-      0,
-      0
-    );
+    deadline.setHours(0, 0, 0, 0);
 
-    const difference =
-      deadline.getTime() -
-      today.getTime();
+    const difference = deadline.getTime() - today.getTime();
 
     if (difference < 0) {
       return 0;
     }
 
-    return (
-      Math.floor(
-        difference /
-          (1000 * 60 * 60 * 24)
-      ) + 1
-    );
+    return Math.floor(difference / (1000 * 60 * 60 * 24)) + 1;
   }, [targetDate]);
 
   // =========================
   // PACKS PER DAY
   // =========================
   const packsPerDay = useMemo(() => {
-    if (
-      packsNeeded <= 0 ||
-      daysRemaining <= 0
-    ) {
+    if (packsNeeded <= 0 || daysRemaining <= 0) {
       return 0;
     }
 
-    return Math.ceil(
-      packsNeeded / daysRemaining
-    );
-  }, [
-    packsNeeded,
-    daysRemaining,
-  ]);
+    return Math.ceil(packsNeeded / daysRemaining);
+  }, [packsNeeded, daysRemaining]);
 
   // =========================
   // PROGRESS
   // =========================
   const progress = useMemo(() => {
-    const target = Number(
-      targetAmount || 0
-    );
+    const target = Number(targetAmount || 0);
 
     if (target <= 0) {
       return 0;
     }
 
-    return Math.min(
-      (totalSaved / target) * 100,
-      100
-    );
-  }, [
-    targetAmount,
-    totalSaved,
-  ]);
+    return Math.min((totalSaved / target) * 100, 100);
+  }, [targetAmount, totalSaved]);
 
   // =========================
   // ADD MANUAL SAVING
   // =========================
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
-    if (
-      !savingsDate ||
-      !savingsAmount ||
-      Number(savingsAmount) <= 0
-    ) {
-      setErrorMessage(
-        "Enter a valid savings date and amount."
-      );
+    if (!savingsDate || !savingsAmount || Number(savingsAmount) <= 0) {
+      setErrorMessage("Enter a valid savings date and amount.");
       return;
     }
 
@@ -525,18 +392,13 @@ export default function TuitionTargetTab({
     try {
       const payload = {
         date: savingsDate,
-        amount: Number(
-          savingsAmount
-        ),
-        notes:
-          savingsNotes.trim() ||
-          null,
+        amount: Number(savingsAmount),
+        notes: savingsNotes.trim() || null,
       };
 
-      const { error } =
-        await supabase
-          .from("tuition_savings")
-          .insert([payload]);
+      const { error } = await supabase
+        .from("tuition_savings")
+        .insert([payload]);
 
       if (error) {
         throw error;
@@ -548,18 +410,11 @@ export default function TuitionTargetTab({
       setSavingsAmount("");
       setSavingsNotes("");
 
-      setSuccessMessage(
-        "Savings saved successfully."
-      );
+      setSuccessMessage("Savings saved successfully.");
     } catch (error) {
-      console.error(
-        "Unable to save tuition saving:",
-        error
-      );
+      console.error("Unable to save tuition saving:", error);
 
-      setErrorMessage(
-        `Unable to save savings: ${error.message}`
-      );
+      setErrorMessage(`Unable to save savings: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -568,20 +423,15 @@ export default function TuitionTargetTab({
   // =========================
   // DELETE SAVING
   // =========================
-  const handleDelete = async (
-    rowId
-  ) => {
+  const handleDelete = async (rowId) => {
     if (!supabase) {
-      setErrorMessage(
-        "Supabase is not configured yet."
-      );
+      setErrorMessage("Supabase is not configured yet.");
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this saving?"
-      );
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this saving?",
+    );
 
     if (!confirmed) {
       return;
@@ -592,11 +442,10 @@ export default function TuitionTargetTab({
     setSuccessMessage("");
 
     try {
-      const { error } =
-        await supabase
-          .from("tuition_savings")
-          .delete()
-          .eq("id", rowId);
+      const { error } = await supabase
+        .from("tuition_savings")
+        .delete()
+        .eq("id", rowId);
 
       if (error) {
         throw error;
@@ -604,18 +453,11 @@ export default function TuitionTargetTab({
 
       await loadSavings();
 
-      setSuccessMessage(
-        "Saving deleted successfully."
-      );
+      setSuccessMessage("Saving deleted successfully.");
     } catch (error) {
-      console.error(
-        "Unable to delete saving:",
-        error
-      );
+      console.error("Unable to delete saving:", error);
 
-      setErrorMessage(
-        `Unable to delete saving: ${error.message}`
-      );
+      setErrorMessage(`Unable to delete saving: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -623,7 +465,6 @@ export default function TuitionTargetTab({
 
   return (
     <div className="space-y-5">
-
       {/* =========================
           HEADER
       ========================= */}
@@ -633,8 +474,7 @@ export default function TuitionTargetTab({
         </h2>
 
         <p className="mt-2 text-gray-600 dark:text-gray-300">
-          Track your tuition fee savings and
-          monitor your progress.
+          Track your tuition fee savings and monitor your progress.
         </p>
       </div>
 
@@ -660,18 +500,16 @@ export default function TuitionTargetTab({
           TUITION TARGET
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Tuition Fee Target
         </h3>
 
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          Set your tuition target and calculate
-          how many packs of churros you need to sell.
+          Set your tuition target and calculate how many packs of churros you
+          need to sell.
         </p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-
           {/* TARGET */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
@@ -682,11 +520,7 @@ export default function TuitionTargetTab({
               type="number"
               min="0"
               value={targetAmount}
-              onChange={(e) =>
-                setTargetAmount(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setTargetAmount(e.target.value)}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               placeholder="₱7,160"
             />
@@ -701,15 +535,10 @@ export default function TuitionTargetTab({
             <input
               type="date"
               value={targetDate}
-              onChange={(e) =>
-                setTargetDate(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setTargetDate(e.target.value)}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
           </div>
-
         </div>
 
         <button
@@ -718,35 +547,28 @@ export default function TuitionTargetTab({
           disabled={isSubmitting}
           className="mt-4 rounded-xl bg-[#d8a66b] px-5 py-3 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
         >
-          {isSubmitting
-            ? "Saving..."
-            : "💾 Save Tuition Goal"}
+          {isSubmitting ? "Saving..." : "💾 Save Tuition Goal"}
         </button>
-
       </div>
 
       {/* =========================
           CHURROS PRICE
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           🥨 Churros Sales Calculator
         </h3>
 
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          Enter the selling price of one pack
-          of churros.
+          Enter the selling price of one pack of churros.
         </p>
 
         <div className="mt-4">
-
           <label className="mb-2 block text-sm font-semibold">
             Churros Price per Pack
           </label>
 
           <div className="flex">
-
             <span className="flex items-center rounded-l-xl border border-r-0 border-gray-300 bg-gray-100 px-4 dark:border-gray-600 dark:bg-gray-800">
               ₱
             </span>
@@ -755,15 +577,10 @@ export default function TuitionTargetTab({
               type="number"
               min="1"
               value={priceInput}
-              onChange={(e) =>
-                setPriceInput(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setPriceInput(e.target.value)}
               className="w-full rounded-r-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               placeholder="69"
             />
-
           </div>
 
           <button
@@ -772,208 +589,137 @@ export default function TuitionTargetTab({
             disabled={isSubmitting}
             className="mt-3 rounded-xl bg-[#d8a66b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
           >
-            {isSubmitting
-              ? "Saving..."
-              : "💾 Save Churros Price"}
+            {isSubmitting ? "Saving..." : "💾 Save Churros Price"}
           </button>
-
         </div>
-
       </div>
 
       {/* =========================
           CALCULATOR RESULTS
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <div className="grid gap-3 sm:grid-cols-3">
-
           {/* TARGET */}
           <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
-
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Tuition Target
             </p>
 
             <p className="mt-2 text-2xl font-bold text-[#d8a66b]">
               ₱
-              {Number(
-                targetAmount || 0
-              ).toLocaleString(
-                "en-PH",
-                {
-                  minimumFractionDigits: 2,
-                }
-              )}
+              {Number(targetAmount || 0).toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+              })}
             </p>
-
           </div>
 
           {/* SAVED */}
           <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
-
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Total Saved
             </p>
 
             <p className="mt-2 text-2xl font-bold text-green-500">
               ₱
-              {totalSaved.toLocaleString(
-                "en-PH",
-                {
-                  minimumFractionDigits: 2,
-                }
-              )}
+              {totalSaved.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+              })}
             </p>
 
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Includes automatic profit
             </p>
-
           </div>
 
           {/* REMAINING */}
           <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-4 dark:border-gray-700 dark:bg-gray-800">
-
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Remaining Tuition
             </p>
 
             <p className="mt-2 text-2xl font-bold text-orange-500">
               ₱
-              {remainingTuition.toLocaleString(
-                "en-PH",
-                {
-                  minimumFractionDigits: 2,
-                }
-              )}
+              {remainingTuition.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+              })}
             </p>
-
           </div>
-
         </div>
 
         {/* PACKS NEEDED */}
         <div className="mt-4 rounded-xl border border-green-700 bg-green-950 p-5">
-
           <p className="text-sm font-semibold text-green-400">
             Packs of Churros Needed
           </p>
 
           <div className="mt-2 flex items-baseline gap-2">
-
             <span className="text-4xl font-bold text-green-400">
               {packsNeeded}
             </span>
 
-            <span className="text-lg text-green-300">
-              packs
-            </span>
-
+            <span className="text-lg text-green-300">packs</span>
           </div>
 
           <p className="mt-2 text-sm text-green-300">
-
-            At ₱
-            {Number(
-              churrosPrice || 0
-            ).toFixed(2)}
-            {" "}per pack, you need to sell{" "}
-
-            <strong>
-              {packsNeeded} packs
-            </strong>
-
-            {" "}to cover the remaining{" "}
-
+            At ₱{Number(churrosPrice || 0).toFixed(2)} per pack, you need to
+            sell <strong>{packsNeeded} packs</strong> to cover the remaining{" "}
             <strong>
               ₱
-              {remainingTuition.toLocaleString(
-                "en-PH",
-                {
-                  minimumFractionDigits: 2,
-                }
-              )}
+              {remainingTuition.toLocaleString("en-PH", {
+                minimumFractionDigits: 2,
+              })}
             </strong>
             .
-
           </p>
-
         </div>
 
         {/* DAYS + PACKS PER DAY */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-
           {/* DAYS */}
           <div className="rounded-xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-800">
-
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Days Until Target
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#d8a66b]">
-
               {daysRemaining}
 
-              <span className="ml-2 text-base font-medium">
-                days
-              </span>
-
+              <span className="ml-2 text-base font-medium">days</span>
             </p>
 
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-
               {targetDate
                 ? `Target date: ${targetDate}`
                 : "Set a target date first."}
-
             </p>
-
           </div>
 
           {/* PACKS PER DAY */}
           <div className="rounded-xl border border-blue-700 bg-blue-950 p-5">
-
             <p className="text-sm font-semibold text-blue-300">
               🥨 Packs Needed Per Day
             </p>
 
             <p className="mt-2 text-4xl font-bold text-blue-300">
-
               {packsPerDay}
 
-              <span className="ml-2 text-lg font-medium">
-                packs/day
-              </span>
-
+              <span className="ml-2 text-lg font-medium">packs/day</span>
             </p>
 
             <p className="mt-2 text-sm text-blue-200">
-
               You need to sell at least{" "}
-
-              <strong>
-                {packsPerDay} packs per day
-              </strong>
-
-              {" "}to reach your tuition target
-              before the target date.
-
+              <strong>{packsPerDay} packs per day</strong> to reach your tuition
+              target before the target date.
             </p>
-
           </div>
-
         </div>
-
       </div>
 
       {/* =========================
           SAVINGS PROGRESS
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <div className="flex items-center justify-between">
-
           <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
             Savings Progress
           </h3>
@@ -981,44 +727,31 @@ export default function TuitionTargetTab({
           <span className="font-bold text-green-500">
             {progress.toFixed(0)}%
           </span>
-
         </div>
 
         <div className="mt-4 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-
           <div
             className="h-full rounded-full bg-green-500 transition-all duration-500"
             style={{
               width: `${progress}%`,
             }}
           />
-
         </div>
 
         <div className="mt-3 flex justify-between text-sm text-gray-500 dark:text-gray-400">
-
           <span>
             Saved: ₱
-            {totalSaved.toLocaleString(
-              "en-PH",
-              {
-                minimumFractionDigits: 2,
-              }
-            )}
+            {totalSaved.toLocaleString("en-PH", {
+              minimumFractionDigits: 2,
+            })}
           </span>
 
           <span>
             Target: ₱
-            {Number(
-              targetAmount || 0
-            ).toLocaleString(
-              "en-PH",
-              {
-                minimumFractionDigits: 2,
-              }
-            )}
+            {Number(targetAmount || 0).toLocaleString("en-PH", {
+              minimumFractionDigits: 2,
+            })}
           </span>
-
         </div>
 
         {targetDate && (
@@ -1026,93 +759,61 @@ export default function TuitionTargetTab({
             Target date: {targetDate}
           </p>
         )}
-
       </div>
 
       {/* =========================
           ADD SAVINGS
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Add Savings
         </h3>
 
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          Add a manual saving if you want to record
-          money deposited directly toward tuition.
+          Add a manual saving if you want to record money deposited directly
+          toward tuition.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-5 space-y-4"
-        >
-
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-
             {/* DATE */}
             <div>
-
-              <label className="mb-2 block text-sm font-semibold">
-                Date
-              </label>
+              <label className="mb-2 block text-sm font-semibold">Date</label>
 
               <input
                 type="date"
                 value={savingsDate}
-                onChange={(e) =>
-                  setSavingsDate(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setSavingsDate(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
               />
-
             </div>
 
             {/* AMOUNT */}
             <div>
-
-              <label className="mb-2 block text-sm font-semibold">
-                Amount
-              </label>
+              <label className="mb-2 block text-sm font-semibold">Amount</label>
 
               <input
                 type="number"
                 min="0"
                 value={savingsAmount}
-                onChange={(e) =>
-                  setSavingsAmount(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setSavingsAmount(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
                 placeholder="₱500"
               />
-
             </div>
-
           </div>
 
           {/* NOTES */}
           <div>
-
-            <label className="mb-2 block text-sm font-semibold">
-              Notes
-            </label>
+            <label className="mb-2 block text-sm font-semibold">Notes</label>
 
             <input
               type="text"
               value={savingsNotes}
-              onChange={(e) =>
-                setSavingsNotes(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setSavingsNotes(e.target.value)}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
               placeholder="Example: Savings from churros sales"
             />
-
           </div>
 
           <button
@@ -1120,67 +821,41 @@ export default function TuitionTargetTab({
             disabled={isSubmitting}
             className="rounded-xl bg-[#d8a66b] px-5 py-3 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
           >
-            {isSubmitting
-              ? "Saving..."
-              : "💾 Save Savings"}
+            {isSubmitting ? "Saving..." : "💾 Save Savings"}
           </button>
-
         </form>
-
       </div>
 
       {/* =========================
           SAVINGS HISTORY
       ========================= */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Savings History
         </h3>
 
         <div className="mt-4 overflow-x-auto">
-
           <table className="min-w-full text-sm">
-
             <thead className="bg-[#f8f5f2] dark:bg-gray-800">
-
               <tr>
+                <th className="px-4 py-3 text-left">Date</th>
 
-                <th className="px-4 py-3 text-left">
-                  Date
-                </th>
+                <th className="px-4 py-3 text-left">Amount</th>
 
-                <th className="px-4 py-3 text-left">
-                  Amount
-                </th>
+                <th className="px-4 py-3 text-left">Notes</th>
 
-                <th className="px-4 py-3 text-left">
-                  Notes
-                </th>
-
-                <th className="px-4 py-3 text-left">
-                  Action
-                </th>
-
+                <th className="px-4 py-3 text-left">Action</th>
               </tr>
-
             </thead>
 
             <tbody>
-
               {isLoading ? (
-
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="px-4 py-6 text-center"
-                  >
+                  <td colSpan="4" className="px-4 py-6 text-center">
                     Loading...
                   </td>
                 </tr>
-
               ) : savingsRows.length === 0 ? (
-
                 <tr>
                   <td
                     colSpan="4"
@@ -1189,73 +864,40 @@ export default function TuitionTargetTab({
                     No savings records yet.
                   </td>
                 </tr>
-
               ) : (
+                savingsRows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="border-t border-gray-200 dark:border-gray-700"
+                  >
+                    <td className="px-4 py-3">{row.date}</td>
 
-                savingsRows.map(
-                  (row) => (
+                    <td className="px-4 py-3 font-semibold text-green-500">
+                      ₱
+                      {Number(row.amount || 0).toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
 
-                    <tr
-                      key={row.id}
-                      className="border-t border-gray-200 dark:border-gray-700"
-                    >
+                    <td className="px-4 py-3">{row.notes || "—"}</td>
 
-                      <td className="px-4 py-3">
-                        {row.date}
-                      </td>
-
-                      <td className="px-4 py-3 font-semibold text-green-500">
-
-                        ₱
-                        {Number(
-                          row.amount || 0
-                        ).toLocaleString(
-                          "en-PH",
-                          {
-                            minimumFractionDigits: 2,
-                          }
-                        )}
-
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {row.notes || "—"}
-                      </td>
-
-                      <td className="px-4 py-3">
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDelete(
-                              row.id
-                            )
-                          }
-                          disabled={
-                            isSubmitting
-                          }
-                          className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
-                        >
-                          Delete
-                        </button>
-
-                      </td>
-
-                    </tr>
-
-                  )
-                )
-
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(row.id)}
+                        disabled={isSubmitting}
+                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 }
