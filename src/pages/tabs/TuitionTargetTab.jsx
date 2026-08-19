@@ -6,7 +6,7 @@ export default function TuitionTargetTab({
   summaryExpensesTotal,
 }) {
   // =========================
-  // TUITION GOAL
+  // TUITION SETTINGS
   // =========================
   const [targetAmount, setTargetAmount] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -31,16 +31,17 @@ export default function TuitionTargetTab({
   // =========================
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   // =========================
   // LOAD TUITION SETTINGS
   // =========================
-  const loadSettings = async () => {
+  const loadTuitionSettings = async () => {
     if (!supabase) {
-      setErrorMessage("Supabase is not configured.");
+      setErrorMessage(
+        "Supabase is not configured yet."
+      );
       return;
     }
 
@@ -48,7 +49,9 @@ export default function TuitionTargetTab({
       const { data, error } = await supabase
         .from("tuition_settings")
         .select("*")
-        .order("id", { ascending: true })
+        .order("id", {
+          ascending: true,
+        })
         .limit(1)
         .maybeSingle();
 
@@ -64,7 +67,9 @@ export default function TuitionTargetTab({
             : ""
         );
 
-        setTargetDate(data.target_date || "");
+        setTargetDate(
+          data.target_date || ""
+        );
 
         setChurrosPrice(
           data.churros_price !== null &&
@@ -81,7 +86,10 @@ export default function TuitionTargetTab({
         );
       }
     } catch (error) {
-      console.error("Unable to load tuition settings:", error);
+      console.error(
+        "Unable to load tuition settings:",
+        error
+      );
 
       setErrorMessage(
         `Unable to load tuition settings: ${error.message}`
@@ -94,8 +102,9 @@ export default function TuitionTargetTab({
   // =========================
   const loadSavings = async () => {
     if (!supabase) {
-      setErrorMessage("Supabase is not configured.");
-      setIsLoading(false);
+      setErrorMessage(
+        "Supabase is not configured yet."
+      );
       return;
     }
 
@@ -119,22 +128,27 @@ export default function TuitionTargetTab({
       );
 
       setErrorMessage(
-        `Unable to load savings: ${error.message}`
+        `Unable to load tuition savings: ${error.message}`
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
   // =========================
-  // LOAD EVERYTHING
+  // LOAD ALL DATA
   // =========================
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([
-        loadSettings(),
-        loadSavings(),
-      ]);
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        await Promise.all([
+          loadTuitionSettings(),
+          loadSavings(),
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadData();
@@ -143,21 +157,40 @@ export default function TuitionTargetTab({
   // =========================
   // SAVE TUITION SETTINGS
   // =========================
-  const saveSettings = async ({
+  const saveTuitionSettings = async ({
     newTargetAmount = targetAmount,
     newTargetDate = targetDate,
     newChurrosPrice = churrosPrice,
   } = {}) => {
     if (!supabase) {
-      setErrorMessage("Supabase is not configured.");
+      setErrorMessage(
+        "Supabase is not configured yet."
+      );
       return false;
     }
 
     try {
+      // Check if a settings row already exists
+      const {
+        data: existingSettings,
+        error: fetchError,
+      } = await supabase
+        .from("tuition_settings")
+        .select("id")
+        .order("id", {
+          ascending: true,
+        })
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
       const payload = {
         target_amount:
           newTargetAmount === ""
-            ? 0
+            ? null
             : Number(newTargetAmount),
 
         target_date:
@@ -165,45 +198,35 @@ export default function TuitionTargetTab({
 
         churros_price:
           newChurrosPrice === ""
-            ? 0
+            ? null
             : Number(newChurrosPrice),
       };
 
-      const { data, error } = await supabase
-        .from("tuition_settings")
-        .upsert(payload, {
-          onConflict: "id",
-        })
-        .select()
-        .single();
+      // =========================
+      // UPDATE EXISTING ROW
+      // =========================
+      if (existingSettings?.id) {
+        const { error } = await supabase
+          .from("tuition_settings")
+          .update(payload)
+          .eq("id", existingSettings.id);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
       }
 
-      if (data) {
-        setTargetAmount(
-          data.target_amount !== null &&
-            data.target_amount !== undefined
-            ? String(data.target_amount)
-            : ""
-        );
+      // =========================
+      // INSERT FIRST ROW
+      // =========================
+      else {
+        const { error } = await supabase
+          .from("tuition_settings")
+          .insert([payload]);
 
-        setTargetDate(data.target_date || "");
-
-        setChurrosPrice(
-          data.churros_price !== null &&
-            data.churros_price !== undefined
-            ? String(data.churros_price)
-            : ""
-        );
-
-        setPriceInput(
-          data.churros_price !== null &&
-            data.churros_price !== undefined
-            ? String(data.churros_price)
-            : ""
-        );
+        if (error) {
+          throw error;
+        }
       }
 
       return true;
@@ -226,32 +249,37 @@ export default function TuitionTargetTab({
   // =========================
   const saveGoal = async () => {
     if (
-      targetAmount === "" &&
-      targetDate === ""
+      !targetAmount ||
+      Number(targetAmount) <= 0
     ) {
       setErrorMessage(
-        "Enter a tuition target or target date first."
+        "Enter a valid tuition fee target."
       );
       return;
     }
 
-    setIsSavingSettings(true);
+    setIsSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
 
-    const success = await saveSettings({
-      newTargetAmount: targetAmount,
-      newTargetDate: targetDate,
-      newChurrosPrice: churrosPrice,
-    });
+    try {
+      const success =
+        await saveTuitionSettings({
+          newTargetAmount: targetAmount,
+          newTargetDate: targetDate,
+          newChurrosPrice: churrosPrice,
+        });
 
-    if (success) {
+      if (!success) {
+        return;
+      }
+
       setSuccessMessage(
         "Tuition goal saved successfully."
       );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSavingSettings(false);
   };
 
   // =========================
@@ -262,28 +290,36 @@ export default function TuitionTargetTab({
 
     if (!price || price <= 0) {
       setErrorMessage(
-        "Enter a valid churros price greater than ₱0."
+        "Enter a valid churros price."
       );
       return;
     }
 
-    setIsSavingSettings(true);
+    setIsSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
 
-    const success = await saveSettings({
-      newTargetAmount: targetAmount,
-      newTargetDate: targetDate,
-      newChurrosPrice: price,
-    });
+    try {
+      const success =
+        await saveTuitionSettings({
+          newTargetAmount: targetAmount,
+          newTargetDate: targetDate,
+          newChurrosPrice: price,
+        });
 
-    if (success) {
+      if (!success) {
+        return;
+      }
+
+      setChurrosPrice(String(price));
+      setPriceInput(String(price));
+
       setSuccessMessage(
         "Churros price saved successfully."
       );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSavingSettings(false);
   };
 
   // =========================
@@ -466,17 +502,18 @@ export default function TuitionTargetTab({
 
     if (!supabase) {
       setErrorMessage(
-        "Supabase is not configured."
+        "Supabase is not configured yet."
       );
       return;
     }
 
     if (
       !savingsDate ||
-      !savingsAmount
+      !savingsAmount ||
+      Number(savingsAmount) <= 0
     ) {
       setErrorMessage(
-        "Enter the date and amount."
+        "Enter a valid savings date and amount."
       );
       return;
     }
@@ -521,7 +558,7 @@ export default function TuitionTargetTab({
       );
 
       setErrorMessage(
-        `Unable to save saving: ${error.message}`
+        `Unable to save savings: ${error.message}`
       );
     } finally {
       setIsSubmitting(false);
@@ -536,7 +573,7 @@ export default function TuitionTargetTab({
   ) => {
     if (!supabase) {
       setErrorMessage(
-        "Supabase is not configured."
+        "Supabase is not configured yet."
       );
       return;
     }
@@ -588,20 +625,34 @@ export default function TuitionTargetTab({
     <div className="space-y-5">
 
       {/* =========================
-          SUCCESS MESSAGE
+          HEADER
       ========================= */}
-      {successMessage && (
-        <div className="rounded-xl border border-green-700 bg-green-950 p-3 text-sm text-green-300">
-          {successMessage}
+      <div>
+        <h2 className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
+          Tuition Fee Target
+        </h2>
+
+        <p className="mt-2 text-gray-600 dark:text-gray-300">
+          Track your tuition fee savings and
+          monitor your progress.
+        </p>
+      </div>
+
+      {/* =========================
+          ERROR
+      ========================= */}
+      {errorMessage && (
+        <div className="rounded-xl border border-red-700 bg-red-950 p-4 text-sm text-red-300">
+          {errorMessage}
         </div>
       )}
 
       {/* =========================
-          ERROR MESSAGE
+          SUCCESS
       ========================= */}
-      {errorMessage && (
-        <div className="rounded-xl border border-red-700 bg-red-950 p-3 text-sm text-red-300">
-          {errorMessage}
+      {successMessage && (
+        <div className="rounded-xl border border-green-700 bg-green-950 p-4 text-sm text-green-300">
+          {successMessage}
         </div>
       )}
 
@@ -637,7 +688,7 @@ export default function TuitionTargetTab({
                 )
               }
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              placeholder="7160"
+              placeholder="₱7,160"
             />
           </div>
 
@@ -664,10 +715,10 @@ export default function TuitionTargetTab({
         <button
           type="button"
           onClick={saveGoal}
-          disabled={isSavingSettings}
+          disabled={isSubmitting}
           className="mt-4 rounded-xl bg-[#d8a66b] px-5 py-3 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
         >
-          {isSavingSettings
+          {isSubmitting
             ? "Saving..."
             : "💾 Save Tuition Goal"}
         </button>
@@ -718,10 +769,10 @@ export default function TuitionTargetTab({
           <button
             type="button"
             onClick={saveChurrosPrice}
-            disabled={isSavingSettings}
+            disabled={isSubmitting}
             className="mt-3 rounded-xl bg-[#d8a66b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#c38f54] disabled:opacity-50"
           >
-            {isSavingSettings
+            {isSubmitting
               ? "Saving..."
               : "💾 Save Churros Price"}
           </button>
@@ -776,7 +827,7 @@ export default function TuitionTargetTab({
             </p>
 
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Automatic profit + manual savings
+              Includes automatic profit
             </p>
 
           </div>
@@ -802,9 +853,7 @@ export default function TuitionTargetTab({
 
         </div>
 
-        {/* =========================
-            PACKS NEEDED
-        ========================= */}
+        {/* PACKS NEEDED */}
         <div className="mt-4 rounded-xl border border-green-700 bg-green-950 p-5">
 
           <p className="text-sm font-semibold text-green-400">
@@ -846,16 +895,13 @@ export default function TuitionTargetTab({
                 }
               )}
             </strong>
-
             .
 
           </p>
 
         </div>
 
-        {/* =========================
-            DAYS + PACKS PER DAY
-        ========================= */}
+        {/* DAYS + PACKS PER DAY */}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
 
           {/* DAYS */}
@@ -866,6 +912,7 @@ export default function TuitionTargetTab({
             </p>
 
             <p className="mt-2 text-3xl font-bold text-[#d8a66b]">
+
               {daysRemaining}
 
               <span className="ml-2 text-base font-medium">
@@ -875,9 +922,11 @@ export default function TuitionTargetTab({
             </p>
 
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+
               {targetDate
                 ? `Target date: ${targetDate}`
                 : "Set a target date first."}
+
             </p>
 
           </div>
@@ -890,6 +939,7 @@ export default function TuitionTargetTab({
             </p>
 
             <p className="mt-2 text-4xl font-bold text-blue-300">
+
               {packsPerDay}
 
               <span className="ml-2 text-lg font-medium">
@@ -899,6 +949,7 @@ export default function TuitionTargetTab({
             </p>
 
             <p className="mt-2 text-sm text-blue-200">
+
               You need to sell at least{" "}
 
               <strong>
@@ -1014,7 +1065,7 @@ export default function TuitionTargetTab({
                     e.target.value
                   )
                 }
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
               />
 
             </div>
@@ -1035,8 +1086,8 @@ export default function TuitionTargetTab({
                     e.target.value
                   )
                 }
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                placeholder="500"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
+                placeholder="₱500"
               />
 
             </div>
@@ -1058,7 +1109,7 @@ export default function TuitionTargetTab({
                   e.target.value
                 )
               }
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800"
               placeholder="Example: Savings from churros sales"
             />
 
@@ -1120,27 +1171,23 @@ export default function TuitionTargetTab({
               {isLoading ? (
 
                 <tr>
-
                   <td
                     colSpan="4"
                     className="px-4 py-6 text-center"
                   >
                     Loading...
                   </td>
-
                 </tr>
 
               ) : savingsRows.length === 0 ? (
 
                 <tr>
-
                   <td
                     colSpan="4"
                     className="px-4 py-6 text-center text-gray-500"
                   >
                     No savings records yet.
                   </td>
-
                 </tr>
 
               ) : (
@@ -1158,6 +1205,7 @@ export default function TuitionTargetTab({
                       </td>
 
                       <td className="px-4 py-3 font-semibold text-green-500">
+
                         ₱
                         {Number(
                           row.amount || 0
@@ -1167,6 +1215,7 @@ export default function TuitionTargetTab({
                             minimumFractionDigits: 2,
                           }
                         )}
+
                       </td>
 
                       <td className="px-4 py-3">
