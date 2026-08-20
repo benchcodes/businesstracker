@@ -5,11 +5,19 @@ export default function TrackerTab({
   isSubmitting,
   onSubmit,
 }) {
+  // Calculate total price directly from quantity × price
+  const quantity = Number(tracker.orderQuantity) || 0;
+  const price = Number(tracker.price) || 0;
+
+  const calculatedTotal = quantity * price;
+
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Welcome Banner */}
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold">👋 Welcome to ChurroZi Tracker!</h1>
+        <h1 className="text-3xl font-bold">
+          👋 Welcome to ChurroZi Tracker!
+        </h1>
 
         <p className="mt-3 text-amber-100">
           Easily manage your daily orders, calculate sales, and keep track of
@@ -78,6 +86,7 @@ export default function TrackerTab({
           <input
             type="number"
             min="0"
+            step="0.01"
             value={tracker.price}
             onChange={(e) =>
               setTracker({
@@ -134,7 +143,7 @@ export default function TrackerTab({
         </p>
 
         <p className="mt-2 text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-          ₱{trackerTotal.toFixed(2)}
+          ₱{calculatedTotal.toFixed(2)}
         </p>
       </div>
 
