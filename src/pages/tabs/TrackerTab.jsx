@@ -16,8 +16,8 @@ const MENU = {
 
   "Churros Bites": [
     {
-      label: "15 pcs - ₱89",
-      pcs: 15,
+      label: "25 pcs - ₱89",
+      pcs: 25,
       price: 89,
     },
   ],
