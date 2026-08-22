@@ -468,15 +468,6 @@ export default function TuitionTargetTab({
       {/* =========================
           HEADER
       ========================= */}
-      <div>
-        <h2 className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-          Tuition Fee Target
-        </h2>
-
-        <p className="mt-2 text-gray-600 dark:text-gray-300">
-          Track your tuition fee savings and monitor your progress.
-        </p>
-      </div>
 
       {/* =========================
           ERROR

@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { supabase } from "../lib/supabase";
 
 import TrackerTab from "./tabs/TrackerTab";
@@ -6,60 +11,70 @@ import PendingOrdersTab from "./tabs/PendingOrdersTab";
 import ExpensesTab from "./tabs/ExpensesTab";
 import SummaryTab from "./tabs/SummaryTab";
 import TuitionTargetTab from "./tabs/TuitionTargetTab";
+import InventoryTab from "./tabs/InventoryTab";
+import SavingsTab from "./tabs/SavingsTab";
+
+// =====================================================
+// DEFAULT VALUES
+// =====================================================
+
+const DEFAULT_TRACKER = {
+  date: "",
+  name: "",
+  orderQuantity: "",
+  price: "",
+  notes: "",
+  status: "Pending",
+
+  product: "Regular Churros",
+  variantPcs: 4,
+  productPrice: 49,
+
+  dip: "Matcha",
+  additionalDips: "",
+  additionalDipType: "Chocolate",
+};
+
+const DEFAULT_EXPENSES = {
+  date: "",
+  product: "",
+  price: "",
+};
+
+const DEFAULT_SAVINGS = {
+  date: "",
+  amount: "",
+  notes: "",
+};
 
 export default function Dashboard({ activeView }) {
   // =====================================================
-  // TRACKER STATE
+  // FORM STATE
   // =====================================================
 
-  const [tracker, setTracker] = useState({
-    date: "",
-    name: "",
+  const [tracker, setTracker] =
+    useState(DEFAULT_TRACKER);
 
-    product: "Regular Churros",
-    variantPcs: 4,
-    productPrice: 49,
+  const [expenses, setExpenses] =
+    useState(DEFAULT_EXPENSES);
 
-    orderQuantity: "",
-
-    // Effective price saved to database
-    price: "",
-
-    // Additional dip
-    additionalDips: "",
-    additionalDipType: "Chocolate",
-
-    // Free dip
-    dip: "Matcha",
-
-    notes: "",
-    status: "Pending",
-  });
-
-  // =====================================================
-  // EXPENSE STATE
-  // =====================================================
-
-  const [expenses, setExpenses] = useState({
-    date: "",
-    product: "",
-    price: "",
-  });
+  const [savings, setSavings] =
+    useState(DEFAULT_SAVINGS);
 
   // =====================================================
   // DATA STATE
   // =====================================================
 
-  const [submittedTracker, setSubmittedTracker] =
-    useState(null);
-
-  const [submittedExpenses, setSubmittedExpenses] =
-    useState(null);
-
   const [trackerRows, setTrackerRows] =
     useState([]);
 
   const [expenseRows, setExpenseRows] =
+    useState([]);
+
+  const [savingsRows, setSavingsRows] =
+    useState([]);
+
+  const [inventoryRows, setInventoryRows] =
     useState([]);
 
   // =====================================================
@@ -79,11 +94,11 @@ export default function Dashboard({ activeView }) {
   const [isLoading, setIsLoading] =
     useState(true);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
-
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   // =====================================================
   // DARK MODE
@@ -93,37 +108,31 @@ export default function Dashboard({ activeView }) {
     const savedMode =
       localStorage.getItem("churrozi-dark-mode");
 
-    // Dark mode by default
-    if (savedMode === null) {
-      return true;
-    }
-
-    return savedMode === "true";
+    return savedMode === null
+      ? true
+      : savedMode === "true";
   });
 
   useEffect(() => {
-    const root = document.documentElement;
-
-    if (darkMode) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle(
+      "dark",
+      darkMode,
+    );
 
     localStorage.setItem(
       "churrozi-dark-mode",
-      String(darkMode)
+      String(darkMode),
     );
   }, [darkMode]);
 
   // =====================================================
-  // LOAD DATA
+  // LOAD ALL DATA
   // =====================================================
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     if (!supabase) {
       setErrorMessage(
-        "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first."
+        "Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment first.",
       );
 
       setIsLoading(false);
@@ -131,15 +140,13 @@ export default function Dashboard({ activeView }) {
     }
 
     try {
+      setIsLoading(true);
+
       const [
-        {
-          data: trackerData,
-          error: trackerError,
-        },
-        {
-          data: expenseData,
-          error: expenseError,
-        },
+        trackerResult,
+        expenseResult,
+        inventoryResult,
+        savingsResult,
       ] = await Promise.all([
         supabase
           .from("tracker")
@@ -154,22 +161,47 @@ export default function Dashboard({ activeView }) {
           .order("date", {
             ascending: false,
           }),
+
+        supabase
+          .from("inventory")
+          .select("*")
+          .order("id", {
+            ascending: true,
+          }),
+
+        supabase
+          .from("savings")
+          .select("*")
+          .order("date", {
+            ascending: false,
+          }),
       ]);
 
-      if (trackerError) {
-        throw trackerError;
-      }
+      const firstError = [
+        trackerResult.error,
+        expenseResult.error,
+        inventoryResult.error,
+        savingsResult.error,
+      ].find(Boolean);
 
-      if (expenseError) {
-        throw expenseError;
+      if (firstError) {
+        throw firstError;
       }
 
       setTrackerRows(
-        trackerData || []
+        trackerResult.data || [],
       );
 
       setExpenseRows(
-        expenseData || []
+        expenseResult.data || [],
+      );
+
+      setInventoryRows(
+        inventoryResult.data || [],
+      );
+
+      setSavingsRows(
+        savingsResult.data || [],
       );
 
       setErrorMessage("");
@@ -177,141 +209,116 @@ export default function Dashboard({ activeView }) {
       console.error(error);
 
       setErrorMessage(
-        `Unable to load data from Supabase: ${error.message}`
+        `Unable to load data from Supabase: ${error.message}`,
       );
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   // =====================================================
-  // ACTIVE FORM DATA
-  // =====================================================
-
-  const activeTracker =
-    submittedTracker || tracker;
-
-  const activeExpenses =
-    submittedExpenses || expenses;
-
-  // =====================================================
-  // TRACKER TOTAL
+  // FORM TOTALS
   // =====================================================
 
   const trackerTotal = useMemo(() => {
-    const quantity =
-      Number(
-        activeTracker.orderQuantity ??
-          activeTracker.order_quantity ??
-          0
-      ) || 0;
+    const quantity = Number(
+      tracker.orderQuantity || 0,
+    );
 
-    const productPrice =
-      Number(
-        activeTracker.productPrice ??
-          activeTracker.product_price ??
-          0
-      ) || 0;
+    const price = Number(
+      tracker.price || 0,
+    );
 
-    const additionalDips =
-      Number(
-        activeTracker.additionalDips ??
-          activeTracker.additional_dips ??
-          0
-      ) || 0;
-
-    const productTotal =
-      productPrice * quantity;
-
-    const dipTotal =
-      additionalDips * 10;
-
-    return productTotal + dipTotal;
+    return quantity * price;
   }, [
-    activeTracker.orderQuantity,
-    activeTracker.order_quantity,
-    activeTracker.productPrice,
-    activeTracker.product_price,
-    activeTracker.additionalDips,
-    activeTracker.additional_dips,
+    tracker.orderQuantity,
+    tracker.price,
   ]);
-
-  // =====================================================
-  // EXPENSE TOTAL
-  // =====================================================
 
   const expensesTotal = useMemo(() => {
     return Number(
-      activeExpenses.price ?? 0
+      expenses.price || 0,
     );
-  }, [
-    activeExpenses.price,
-  ]);
+  }, [expenses.price]);
+
+  const savingsTotal = useMemo(() => {
+    return Number(
+      savings.amount || 0,
+    );
+  }, [savings.amount]);
 
   // =====================================================
-  // DISPLAYED TRACKER ROWS
+  // DATE FILTER
   // =====================================================
 
-  const displayedTrackerRows =
-    useMemo(() => {
+  const filterBySummaryDate = useCallback(
+    (rows) => {
       if (
-        summaryRange === "date" &&
-        summaryDate
+        summaryRange !== "date" ||
+        !summaryDate
       ) {
-        return trackerRows.filter(
-          (row) =>
-            (row.date || "").slice(0, 10) ===
-            summaryDate
-        );
+        return rows;
       }
 
-      return trackerRows;
-    }, [
+      return rows.filter(
+        (row) =>
+          String(row.date || "").slice(
+            0,
+            10,
+          ) === summaryDate,
+      );
+    },
+    [summaryRange, summaryDate],
+  );
+
+  const displayedTrackerRows = useMemo(
+    () =>
+      filterBySummaryDate(
+        trackerRows,
+      ),
+    [
+      filterBySummaryDate,
       trackerRows,
-      summaryRange,
-      summaryDate,
-    ]);
+    ],
+  );
 
-  // =====================================================
-  // DISPLAYED EXPENSE ROWS
-  // =====================================================
-
-  const displayedExpenseRows =
-    useMemo(() => {
-      if (
-        summaryRange === "date" &&
-        summaryDate
-      ) {
-        return expenseRows.filter(
-          (row) =>
-            (row.date || "").slice(0, 10) ===
-            summaryDate
-        );
-      }
-
-      return expenseRows;
-    }, [
+  const displayedExpenseRows = useMemo(
+    () =>
+      filterBySummaryDate(
+        expenseRows,
+      ),
+    [
+      filterBySummaryDate,
       expenseRows,
-      summaryRange,
-      summaryDate,
-    ]);
+    ],
+  );
+
+  const displayedSavingsRows = useMemo(
+    () =>
+      filterBySummaryDate(
+        savingsRows,
+      ),
+    [
+      filterBySummaryDate,
+      savingsRows,
+    ],
+  );
 
   // =====================================================
   // PENDING ORDERS
   // =====================================================
 
-  const pendingTrackerRows =
-    useMemo(() => {
-      return trackerRows.filter(
-        (row) =>
-          (row.status || "Pending") ===
-          "Pending"
-      );
-    }, [trackerRows]);
+  const pendingTrackerRows = useMemo(() => {
+    return trackerRows.filter(
+      (row) =>
+        (row.status || "Pending") ===
+        "Pending",
+    );
+  }, [trackerRows]);
 
   // =====================================================
   // COMPLETED ORDERS
@@ -322,64 +329,9 @@ export default function Dashboard({ activeView }) {
       return displayedTrackerRows.filter(
         (row) =>
           (row.status || "Pending") ===
-          "Completed"
+          "Completed",
       );
     }, [displayedTrackerRows]);
-
-  // =====================================================
-  // ROW TOTAL HELPER
-  // =====================================================
-
-  /*
-    IMPORTANT:
-
-    Older rows may not have product_price
-    or additional_dips.
-
-    Therefore:
-
-    If product_price exists:
-      calculate from product price + dips.
-
-    Otherwise:
-      use old order_quantity × price.
-
-    This keeps old Supabase records working.
-  */
-
-  const getTrackerRowTotal = (row) => {
-    const quantity =
-      Number(
-        row.order_quantity || 0
-      );
-
-    const productPrice =
-      Number(
-        row.product_price
-      );
-
-    const additionalDips =
-      Number(
-        row.additional_dips || 0
-      );
-
-    // New records
-    if (
-      Number.isFinite(productPrice) &&
-      productPrice > 0
-    ) {
-      return (
-        productPrice * quantity +
-        additionalDips * 10
-      );
-    }
-
-    // Old records
-    return (
-      quantity *
-      Number(row.price || 0)
-    );
-  };
 
   // =====================================================
   // PENDING TOTAL
@@ -390,13 +342,18 @@ export default function Dashboard({ activeView }) {
       return pendingTrackerRows.reduce(
         (total, row) =>
           total +
-          getTrackerRowTotal(row),
-        0
+          Number(
+            row.order_quantity || 0,
+          ) *
+            Number(
+              row.price || 0,
+            ),
+        0,
       );
     }, [pendingTrackerRows]);
 
   // =====================================================
-  // SUMMARY SALES TOTAL
+  // SALES TOTAL
   // =====================================================
 
   const summaryTrackerTotal =
@@ -404,13 +361,18 @@ export default function Dashboard({ activeView }) {
       return completedTrackerRows.reduce(
         (total, row) =>
           total +
-          getTrackerRowTotal(row),
-        0
+          Number(
+            row.order_quantity || 0,
+          ) *
+            Number(
+              row.price || 0,
+            ),
+        0,
       );
     }, [completedTrackerRows]);
 
   // =====================================================
-  // SUMMARY EXPENSE TOTAL
+  // EXPENSE TOTAL
   // =====================================================
 
   const summaryExpensesTotal =
@@ -419,89 +381,61 @@ export default function Dashboard({ activeView }) {
         (total, row) =>
           total +
           Number(row.price || 0),
-        0
+        0,
       );
     }, [displayedExpenseRows]);
 
   // =====================================================
-  // AVAILABLE CAPITAL
+  // SAVINGS TOTAL
   // =====================================================
 
-  const availableCapital =
+  const summarySavingsTotal =
     useMemo(() => {
-      // Overall capital
-      if (!summaryDate) {
-        const totalSales =
-          trackerRows
-            .filter(
-              (row) =>
-                row.status ===
-                "Completed"
-            )
-            .reduce(
-              (total, row) =>
-                total +
-                getTrackerRowTotal(row),
-              0
-            );
-
-        const totalExpenses =
-          expenseRows.reduce(
-            (total, row) =>
-              total +
-              Number(row.price || 0),
-            0
-          );
-
-        return (
-          totalSales -
-          totalExpenses
-        );
-      }
-
-      // Capital before selected date
-      const selectedDate =
-        new Date(summaryDate);
-
-      const previousSales =
-        trackerRows
-          .filter(
-            (row) =>
-              row.status ===
-                "Completed" &&
-              new Date(row.date) <
-                selectedDate
-          )
-          .reduce(
-            (total, row) =>
-              total +
-              getTrackerRowTotal(row),
-            0
-          );
-
-      const previousExpenses =
-        expenseRows
-          .filter(
-            (row) =>
-              new Date(row.date) <
-              selectedDate
-          )
-          .reduce(
-            (total, row) =>
-              total +
-              Number(row.price || 0),
-            0
-          );
-
-      return (
-        previousSales -
-        previousExpenses
+      return displayedSavingsRows.reduce(
+        (total, row) =>
+          total +
+          Number(row.amount || 0),
+        0,
       );
-    }, [
-      summaryDate,
-      trackerRows,
-      expenseRows,
-    ]);
+    }, [displayedSavingsRows]);
+
+  // =====================================================
+  // PROFIT
+  //
+  // Profit = Sales - Expenses
+  //
+  // Savings is NOT an expense.
+  // =====================================================
+
+  const summaryProfit = useMemo(() => {
+    return (
+      summaryTrackerTotal -
+      summaryExpensesTotal
+    );
+  }, [
+    summaryTrackerTotal,
+    summaryExpensesTotal,
+  ]);
+
+  // =====================================================
+  // AVAILABLE MONEY
+  //
+  // Available Money = Profit - Savings
+  // =====================================================
+
+  const availableMoney = useMemo(() => {
+    return (
+      summaryProfit -
+      summarySavingsTotal
+    );
+  }, [
+    summaryProfit,
+    summarySavingsTotal,
+  ]);
+
+  // Keep capital consistent with available money.
+  const availableCapital =
+    availableMoney;
 
   // =====================================================
   // COUNTS
@@ -514,6 +448,275 @@ export default function Dashboard({ activeView }) {
     completedTrackerRows.length;
 
   // =====================================================
+  // INVENTORY HELPER
+  // =====================================================
+
+  const findInventoryItem = useCallback(
+    (inventory, itemName) => {
+      const normalizedName =
+        String(itemName)
+          .trim()
+          .toLowerCase();
+
+      return inventory.find(
+        (item) =>
+          String(item.name)
+            .trim()
+            .toLowerCase() ===
+          normalizedName,
+      );
+    },
+    [],
+  );
+
+  // =====================================================
+  // INVENTORY DEDUCTIONS
+  // =====================================================
+
+  const getInventoryDeductions =
+    useCallback((order) => {
+      const quantity = Math.max(
+        1,
+        Number(
+          order.orderQuantity ??
+            order.order_quantity ??
+            1,
+        ),
+      );
+
+      const additionalDips =
+        Math.max(
+          0,
+          Number(
+            order.additionalDips ??
+              order.additional_dips ??
+              0,
+          ),
+        );
+
+      const product =
+        order.product || "";
+
+      const deductions = [];
+
+      if (
+        product ===
+        "Regular Churros"
+      ) {
+        deductions.push(
+          {
+            name:
+              "Regular Size Pack",
+            quantity,
+          },
+          {
+            name: "Plastic",
+            quantity,
+          },
+          {
+            name: "Sticker",
+            quantity,
+          },
+          {
+            name: "Dip Pack",
+            quantity,
+          },
+        );
+      }
+
+      if (
+        product ===
+        "Churros Bites"
+      ) {
+        deductions.push(
+          {
+            name: "Bites Pack",
+            quantity,
+          },
+          {
+            name: "Plastic",
+            quantity,
+          },
+          {
+            name: "Sticker",
+            quantity,
+          },
+          {
+            name: "Dip Pack",
+            quantity,
+          },
+        );
+      }
+
+      if (
+        product ===
+        "Premium Churros w/ Alcapone"
+      ) {
+        deductions.push(
+          {
+            name:
+              "Regular Size Pack",
+            quantity,
+          },
+          {
+            name: "Plastic",
+            quantity,
+          },
+        );
+      }
+
+      // Additional dips are ON TOP
+      // of the free dip.
+      if (additionalDips > 0) {
+        deductions.push({
+          name: "Dip Pack",
+          quantity:
+            additionalDips,
+        });
+      }
+
+      return deductions;
+    }, []);
+
+  // =====================================================
+  // CHECK INVENTORY
+  // =====================================================
+
+  const checkInventoryAvailability =
+    useCallback(
+      (order) => {
+        const deductions =
+          getInventoryDeductions(
+            order,
+          );
+
+        const errors = [];
+
+        deductions.forEach(
+          (deduction) => {
+            const item =
+              findInventoryItem(
+                inventoryRows,
+                deduction.name,
+              );
+
+            if (!item) {
+              errors.push(
+                `${deduction.name} is missing from inventory.`,
+              );
+
+              return;
+            }
+
+            const currentStock =
+              Number(item.stock) || 0;
+
+            if (
+              currentStock <
+              deduction.quantity
+            ) {
+              errors.push(
+                `${deduction.name} only has ${currentStock} left, but this order needs ${deduction.quantity}.`,
+              );
+            }
+          },
+        );
+
+        return {
+          valid:
+            errors.length === 0,
+          errors,
+        };
+      },
+      [
+        findInventoryItem,
+        getInventoryDeductions,
+        inventoryRows,
+      ],
+    );
+
+  // =====================================================
+  // DEDUCT INVENTORY
+  // =====================================================
+
+  const deductInventory =
+    useCallback(
+      async (order) => {
+        const deductions =
+          getInventoryDeductions(
+            order,
+          );
+
+        for (
+          const deduction of deductions
+        ) {
+          const item =
+            findInventoryItem(
+              inventoryRows,
+              deduction.name,
+            );
+
+          if (!item) {
+            throw new Error(
+              `${deduction.name} was not found in inventory.`,
+            );
+          }
+
+          const currentStock =
+            Number(item.stock) || 0;
+
+          const newStock =
+            currentStock -
+            deduction.quantity;
+
+          if (newStock < 0) {
+            throw new Error(
+              `Not enough ${deduction.name} in stock.`,
+            );
+          }
+
+          const { error } =
+            await supabase
+              .from("inventory")
+              .update({
+                stock: newStock,
+              })
+              .eq(
+                "id",
+                item.id,
+              );
+
+          if (error) {
+            throw error;
+          }
+        }
+
+        const {
+          data,
+          error,
+        } = await supabase
+          .from("inventory")
+          .select("*")
+          .order("id", {
+            ascending: true,
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        setInventoryRows(
+          data || [],
+        );
+      },
+      [
+        findInventoryItem,
+        getInventoryDeductions,
+        inventoryRows,
+      ],
+    );
+
+  // =====================================================
   // TRACKER SUBMIT
   // =====================================================
 
@@ -523,7 +726,7 @@ export default function Dashboard({ activeView }) {
 
       if (!supabase) {
         setErrorMessage(
-          "Supabase is not configured yet."
+          "Supabase is not configured yet.",
         );
         return;
       }
@@ -532,10 +735,10 @@ export default function Dashboard({ activeView }) {
         !tracker.date ||
         !tracker.name ||
         !tracker.orderQuantity ||
-        !tracker.productPrice
+        !tracker.price
       ) {
         setErrorMessage(
-          "Fill in all required tracker fields before saving."
+          "Fill in all tracker fields before saving.",
         );
         return;
       }
@@ -544,188 +747,123 @@ export default function Dashboard({ activeView }) {
       setErrorMessage("");
 
       try {
-        const quantity =
-          Number(
-            tracker.orderQuantity
-          ) || 0;
+        const order = {
+          ...tracker,
 
-        const productPrice =
-          Number(
-            tracker.productPrice
-          ) || 0;
+          additionalDips:
+            tracker.additionalDips ===
+            ""
+              ? 0
+              : Number(
+                  tracker.additionalDips ||
+                    0,
+                ),
+        };
 
-        const additionalDips =
-          Number(
-            tracker.additionalDips
-          ) || 0;
+        // Check stock before
+        // completing an order.
+        if (
+          tracker.status ===
+          "Completed"
+        ) {
+          const inventoryCheck =
+            checkInventoryAvailability(
+              order,
+            );
 
-        // =================================================
-        // CALCULATE ORDER TOTAL
-        // =================================================
-
-        const productTotal =
-          productPrice *
-          quantity;
-
-        const dipTotal =
-          additionalDips * 10;
-
-        const totalOrderPrice =
-          productTotal +
-          dipTotal;
-
-        // =================================================
-        // EFFECTIVE PRICE
-        // =================================================
-
-        /*
-          Summary currently works with:
-
-          order_quantity × price
-
-          Therefore we save an effective
-          per-quantity price.
-
-          Example:
-
-          2 orders
-          Product = ₱49
-          2 extra dips = ₱20
-
-          Total = ₱118
-
-          Effective price:
-          ₱118 / 2 = ₱59
-
-          Summary:
-          2 × ₱59 = ₱118
-        */
-
-        const effectivePrice =
-          quantity > 0
-            ? totalOrderPrice /
-              quantity
-            : 0;
-
-        // =================================================
-        // SUPABASE PAYLOAD
-        // =================================================
+          if (
+            !inventoryCheck.valid
+          ) {
+            throw new Error(
+              `Cannot complete this order:\n\n${inventoryCheck.errors.join(
+                "\n",
+              )}`,
+            );
+          }
+        }
 
         const payload = {
           date: tracker.date,
 
           name: tracker.name,
 
-          product:
-            tracker.product ||
-            "Regular Churros",
-
-          variant_pcs:
-            Number(
-              tracker.variantPcs
-            ) || null,
-
-          product_price:
-            productPrice,
-
           order_quantity:
-            quantity,
+            Number(
+              tracker.orderQuantity,
+            ),
 
-          // Effective price
-          price:
-            effectivePrice,
-
-          additional_dips:
-            additionalDips,
-
-          additional_dip_type:
-            additionalDips > 0
-              ? tracker.additionalDipType ||
-                "Chocolate"
-              : null,
-
-          dip:
-            tracker.dip ||
-            "Matcha",
+          price: Number(
+            tracker.price || 0,
+          ),
 
           notes:
             tracker.notes?.trim() ||
             null,
 
           status:
-            tracker.status ||
-            "Pending",
+            tracker.status,
+
+          product:
+            tracker.product ||
+            null,
+
+          variant_pcs:
+            tracker.variantPcs
+              ? Number(
+                  tracker.variantPcs,
+                )
+              : null,
+
+          product_price:
+            tracker.productPrice
+              ? Number(
+                  tracker.productPrice,
+                )
+              : null,
+
+          dip:
+            tracker.dip || null,
+
+          additional_dips:
+            order.additionalDips,
+
+          additional_dip_type:
+            tracker.additionalDipType ||
+            null,
         };
 
-        // =================================================
-        // INSERT
-        // =================================================
-
-        const {
-          data,
-          error,
-        } = await supabase
-          .from("tracker")
-          .insert([payload])
-          .select()
-          .single();
+        const { error } =
+          await supabase
+            .from("tracker")
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
         }
 
-        // Add new row immediately
-        if (data) {
-          setTrackerRows(
-            (previous) => [
-              data,
-              ...previous,
-            ]
-          );
-
-          setSubmittedTracker(
-            data
+        // Deduct inventory only
+        // when order is completed.
+        if (
+          tracker.status ===
+          "Completed"
+        ) {
+          await deductInventory(
+            order,
           );
         }
 
-        // =================================================
-        // RESET FORM
-        // =================================================
+        setTracker(
+          DEFAULT_TRACKER,
+        );
 
-        setTracker({
-          date: "",
-          name: "",
-
-          product:
-            "Regular Churros",
-
-          variantPcs: 4,
-
-          productPrice: 49,
-
-          orderQuantity: "",
-
-          price: "",
-
-          additionalDips: "",
-
-          additionalDipType:
-            "Chocolate",
-
-          dip: "Matcha",
-
-          notes: "",
-
-          status: "Pending",
-        });
-
-        setErrorMessage("");
-
+        await loadData();
       } catch (error) {
         console.error(error);
 
         setErrorMessage(
-          `Unable to save tracker entry: ${error.message}`
+          `Unable to save tracker entry: ${error.message}`,
         );
       } finally {
         setIsSubmitting(false);
@@ -742,7 +880,7 @@ export default function Dashboard({ activeView }) {
 
       if (!supabase) {
         setErrorMessage(
-          "Supabase is not configured yet."
+          "Supabase is not configured yet.",
         );
         return;
       }
@@ -753,7 +891,7 @@ export default function Dashboard({ activeView }) {
         !expenses.price
       ) {
         setErrorMessage(
-          "Fill in all expense fields before saving."
+          "Fill in all expense fields before saving.",
         );
         return;
       }
@@ -764,55 +902,36 @@ export default function Dashboard({ activeView }) {
       try {
         const payload = {
           date: expenses.date,
-
           product:
             expenses.product,
-
-          price:
-            Number(
-              expenses.price || 0
-            ),
+          price: Number(
+            expenses.price || 0,
+          ),
         };
 
-        const {
-          data,
-          error,
-        } = await supabase
-          .from("expenses")
-          .insert([payload])
-          .select()
-          .single();
+        const { error } =
+          await supabase
+            .from("expenses")
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
         }
 
-        if (data) {
-          setExpenseRows(
-            (previous) => [
-              data,
-              ...previous,
-            ]
-          );
+        setExpenses(
+          DEFAULT_EXPENSES,
+        );
 
-          setSubmittedExpenses(
-            data
-          );
-        }
-
-        setExpenses({
-          date: "",
-          product: "",
-          price: "",
-        });
-
-        setErrorMessage("");
-
+        // Refresh everything so
+        // Summary updates automatically.
+        await loadData();
       } catch (error) {
         console.error(error);
 
         setErrorMessage(
-          `Unable to save expense entry: ${error.message}`
+          `Unable to save expense entry: ${error.message}`,
         );
       } finally {
         setIsSubmitting(false);
@@ -820,14 +939,55 @@ export default function Dashboard({ activeView }) {
     };
 
   // =====================================================
-  // DELETE TRACKER
+  // SAVINGS SUBMIT
   // =====================================================
 
-  const handleDeleteTrackerRow =
-    async (rowId) => {
+  const handleSavingsSubmit =
+    async (event) => {
+      event.preventDefault();
+
       if (!supabase) {
         setErrorMessage(
-          "Supabase is not configured yet."
+          "Supabase is not configured yet.",
+        );
+        return;
+      }
+
+      if (
+        !savings.date ||
+        !savings.amount
+      ) {
+        setErrorMessage(
+          "Enter a date and savings amount before saving.",
+        );
+        return;
+      }
+
+      const amount =
+        Number(
+          savings.amount,
+        );
+
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        setErrorMessage(
+          "Savings amount must be greater than 0.",
+        );
+        return;
+      }
+
+      // Cannot save more than
+      // currently available money.
+      if (
+        amount >
+        availableMoney
+      ) {
+        setErrorMessage(
+          `You only have ₱${availableMoney.toFixed(
+            2,
+          )} available money.`,
         );
         return;
       }
@@ -836,35 +996,123 @@ export default function Dashboard({ activeView }) {
       setErrorMessage("");
 
       try {
-        const {
-          error,
-        } = await supabase
-          .from("tracker")
-          .delete()
-          .eq("id", rowId);
+        const payload = {
+          date: savings.date,
+          amount,
+          notes:
+            savings.notes?.trim() ||
+            null,
+        };
+
+        const { error } =
+          await supabase
+            .from("savings")
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
         }
 
-        setTrackerRows(
-          (previous) =>
-            previous.filter(
-              (row) =>
-                row.id !== rowId
-            )
+        setSavings(
+          DEFAULT_SAVINGS,
         );
 
+        // Refresh everything so
+        // Summary and Savings update.
+        await loadData();
       } catch (error) {
         console.error(error);
 
         setErrorMessage(
-          `Unable to delete tracker entry: ${error.message}`
+          `Unable to save savings: ${error.message}`,
         );
       } finally {
         setIsSubmitting(false);
       }
     };
+
+  // =====================================================
+  // DELETE GENERIC ROW
+  // =====================================================
+
+  const deleteRow = async (
+    table,
+    rowId,
+    message,
+  ) => {
+    if (!supabase) {
+      setErrorMessage(
+        "Supabase is not configured yet.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { error } =
+        await supabase
+          .from(table)
+          .delete()
+          .eq(
+            "id",
+            rowId,
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      await loadData();
+    } catch (error) {
+      console.error(error);
+
+      setErrorMessage(
+        `${message}: ${error.message}`,
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // =====================================================
+  // DELETE TRACKER
+  // =====================================================
+
+  const handleDeleteTrackerRow =
+    (rowId) =>
+      deleteRow(
+        "tracker",
+        rowId,
+        "Unable to delete tracker entry",
+      );
+
+  // =====================================================
+  // DELETE EXPENSE
+  // =====================================================
+
+  const handleDeleteExpenseRow =
+    (rowId) =>
+      deleteRow(
+        "expenses",
+        rowId,
+        "Unable to delete expense entry",
+      );
+
+  // =====================================================
+  // DELETE SAVINGS
+  // =====================================================
+
+  const handleDeleteSavingsRow =
+    (rowId) =>
+      deleteRow(
+        "savings",
+        rowId,
+        "Unable to delete savings entry",
+      );
 
   // =====================================================
   // CHANGE TRACKER STATUS
@@ -873,11 +1121,11 @@ export default function Dashboard({ activeView }) {
   const handleTrackerStatusChange =
     async (
       rowId,
-      status
+      status,
     ) => {
       if (!supabase) {
         setErrorMessage(
-          "Supabase is not configured yet."
+          "Supabase is not configured yet.",
         );
         return;
       }
@@ -887,85 +1135,70 @@ export default function Dashboard({ activeView }) {
 
       try {
         const {
-          data,
-          error,
+          data: row,
+          error: findError,
         } = await supabase
           .from("tracker")
-          .update({
-            status,
-          })
-          .eq("id", rowId)
-          .select()
+          .select("*")
+          .eq(
+            "id",
+            rowId,
+          )
           .single();
 
-        if (error) {
-          throw error;
+        if (findError) {
+          throw findError;
         }
 
-        if (data) {
-          setTrackerRows(
-            (previous) =>
-              previous.map(
-                (row) =>
-                  row.id === rowId
-                    ? data
-                    : row
-              )
+        // Only deduct inventory
+        // when changing Pending -> Completed.
+        if (
+          status ===
+            "Completed" &&
+          row.status !==
+            "Completed"
+        ) {
+          const inventoryCheck =
+            checkInventoryAvailability(
+              row,
+            );
+
+          if (
+            !inventoryCheck.valid
+          ) {
+            throw new Error(
+              `Cannot complete this order:\n\n${inventoryCheck.errors.join(
+                "\n",
+              )}`,
+            );
+          }
+
+          await deductInventory(
+            row,
           );
         }
 
-      } catch (error) {
-        console.error(error);
-
-        setErrorMessage(
-          `Unable to update tracker status: ${error.message}`
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-  // =====================================================
-  // DELETE EXPENSE
-  // =====================================================
-
-  const handleDeleteExpenseRow =
-    async (rowId) => {
-      if (!supabase) {
-        setErrorMessage(
-          "Supabase is not configured yet."
-        );
-        return;
-      }
-
-      setIsSubmitting(true);
-      setErrorMessage("");
-
-      try {
-        const {
-          error,
-        } = await supabase
-          .from("expenses")
-          .delete()
-          .eq("id", rowId);
+        const { error } =
+          await supabase
+            .from("tracker")
+            .update({
+              status,
+            })
+            .eq(
+              "id",
+              rowId,
+            );
 
         if (error) {
           throw error;
         }
 
-        setExpenseRows(
-          (previous) =>
-            previous.filter(
-              (row) =>
-                row.id !== rowId
-            )
-        );
-
+        await loadData();
       } catch (error) {
         console.error(error);
 
         setErrorMessage(
-          `Unable to delete expense entry: ${error.message}`
+          `Unable to update tracker status: ${error.message}`,
         );
       } finally {
         setIsSubmitting(false);
@@ -982,14 +1215,14 @@ export default function Dashboard({ activeView }) {
         ? ` for ${row.name}`
         : "";
 
-      const isConfirmed =
+      const confirmed =
         window.confirm(
-          `Are you sure you want to delete this tracker entry${label}?`
+          `Are you sure you want to delete this tracker entry${label}?`,
         );
 
-      if (isConfirmed) {
+      if (confirmed) {
         handleDeleteTrackerRow(
-          row.id
+          row.id,
         );
       }
     };
@@ -1000,19 +1233,42 @@ export default function Dashboard({ activeView }) {
 
   const confirmDeleteExpenseRow =
     (row) => {
-      const label =
-        row?.product
-          ? ` for ${row.product}`
-          : "";
+      const label = row?.product
+        ? ` for ${row.product}`
+        : "";
 
-      const isConfirmed =
+      const confirmed =
         window.confirm(
-          `Are you sure you want to delete this expense entry${label}?`
+          `Are you sure you want to delete this expense entry${label}?`,
         );
 
-      if (isConfirmed) {
+      if (confirmed) {
         handleDeleteExpenseRow(
-          row.id
+          row.id,
+        );
+      }
+    };
+
+  // =====================================================
+  // CONFIRM DELETE SAVINGS
+  // =====================================================
+
+  const confirmDeleteSavingsRow =
+    (row) => {
+      const label = row?.amount
+        ? ` of ₱${Number(
+            row.amount,
+          ).toFixed(2)}`
+        : "";
+
+      const confirmed =
+        window.confirm(
+          `Are you sure you want to remove this savings entry${label}?`,
+        );
+
+      if (confirmed) {
+        handleDeleteSavingsRow(
+          row.id,
         );
       }
     };
@@ -1024,7 +1280,6 @@ export default function Dashboard({ activeView }) {
   const viewMeta = {
     tracker: {
       title: "Tracker",
-
       description:
         "Log daily orders and calculate the total price for each entry.",
     },
@@ -1032,39 +1287,46 @@ export default function Dashboard({ activeView }) {
     pending: {
       title:
         "Pending Orders",
-
       description:
         "Review all pending orders and mark them completed when done.",
     },
 
     expenses: {
-      title:
-        "Expenses",
-
+      title: "Expenses",
       description:
         "Record product expenses and keep your costs organized.",
     },
 
-    summary: {
-      title:
-        "Summary",
-
+    savings: {
+      title: "Savings",
       description:
-        "Review completed orders and expense data in a spreadsheet-style summary.",
+        "Set aside part of your profit without recording it as an expense.",
+    },
+
+    summary: {
+      title: "Summary",
+      description:
+        "Review your profit, expenses, savings, and available money.",
     },
 
     tuition: {
       title:
         "Tuition Fee Target",
-
       description:
         "Track your tuition fee savings and monitor your progress.",
+    },
+
+    inventory: {
+      title:
+        "Packaging Inventory",
+      description:
+        "Monitor your packaging stocks and automatically deduct supplies from completed orders.",
     },
   };
 
   const currentView =
     viewMeta[activeView] ||
-    viewMeta.summary;
+    viewMeta.tracker;
 
   // =====================================================
   // RENDER ACTIVE TAB
@@ -1084,59 +1346,60 @@ export default function Dashboard({ activeView }) {
           summaryRange={
             summaryRange
           }
-
           setSummaryRange={
             setSummaryRange
           }
-
           summaryDate={
             summaryDate
           }
-
           setSummaryDate={
             setSummaryDate
           }
-
           isLoading={
             isLoading
           }
-
           completedTrackerRows={
             completedTrackerRows
           }
-
           displayedExpenseRows={
             displayedExpenseRows
           }
-
+          displayedSavingsRows={
+            displayedSavingsRows
+          }
           isSubmitting={
             isSubmitting
           }
-
           onDeleteTracker={
             confirmDeleteTrackerRow
           }
-
           onDeleteExpense={
             confirmDeleteExpenseRow
           }
-
+          onDeleteSavings={
+            confirmDeleteSavingsRow
+          }
           summaryTrackerTotal={
             summaryTrackerTotal
           }
-
           summaryExpensesTotal={
             summaryExpensesTotal
           }
-
+          summarySavingsTotal={
+            summarySavingsTotal
+          }
+          summaryProfit={
+            summaryProfit
+          }
           availableCapital={
             availableCapital
           }
-
+          availableMoney={
+            availableMoney
+          }
           pendingOrdersCount={
             pendingOrdersCount
           }
-
           completedOrdersCount={
             completedOrdersCount
           }
@@ -1145,7 +1408,48 @@ export default function Dashboard({ activeView }) {
     }
 
     // ===================================================
-    // PENDING ORDERS
+    // SAVINGS
+    // ===================================================
+
+    if (
+      activeView ===
+      "savings"
+    ) {
+      return (
+        <SavingsTab
+          savings={
+            savings
+          }
+          setSavings={
+            setSavings
+          }
+          savingsRows={
+            savingsRows
+          }
+          savingsTotal={
+            summarySavingsTotal
+          }
+          availableMoney={
+            availableMoney
+          }
+          isLoading={
+            isLoading
+          }
+          isSubmitting={
+            isSubmitting
+          }
+          onSubmit={
+            handleSavingsSubmit
+          }
+          onDelete={
+            confirmDeleteSavingsRow
+          }
+        />
+      );
+    }
+
+    // ===================================================
+    // PENDING
     // ===================================================
 
     if (
@@ -1157,28 +1461,23 @@ export default function Dashboard({ activeView }) {
           isLoading={
             isLoading
           }
-
           pendingTrackerRows={
             pendingTrackerRows
           }
-
           isSubmitting={
             isSubmitting
           }
-
           onMarkComplete={(
-            rowId
+            rowId,
           ) =>
             handleTrackerStatusChange(
               rowId,
-              "Completed"
+              "Completed",
             )
           }
-
           onDeleteTracker={
             confirmDeleteTrackerRow
           }
-
           pendingTrackerTotal={
             pendingTrackerTotal
           }
@@ -1199,19 +1498,15 @@ export default function Dashboard({ activeView }) {
           expenses={
             expenses
           }
-
           setExpenses={
             setExpenses
           }
-
           expensesTotal={
             expensesTotal
           }
-
           isSubmitting={
             isSubmitting
           }
-
           onSubmit={
             handleExpensesSubmit
           }
@@ -1232,9 +1527,43 @@ export default function Dashboard({ activeView }) {
           summaryTrackerTotal={
             summaryTrackerTotal
           }
-
           summaryExpensesTotal={
             summaryExpensesTotal
+          }
+          summarySavingsTotal={
+            summarySavingsTotal
+          }
+          summaryProfit={
+            summaryProfit
+          }
+          availableMoney={
+            availableMoney
+          }
+        />
+      );
+    }
+
+    // ===================================================
+    // INVENTORY
+    // ===================================================
+
+    if (
+      activeView ===
+      "inventory"
+    ) {
+      return (
+        <InventoryTab
+          inventoryRows={
+            inventoryRows
+          }
+          setInventoryRows={
+            setInventoryRows
+          }
+          isLoading={
+            isLoading
+          }
+          setErrorMessage={
+            setErrorMessage
           }
         />
       );
@@ -1249,19 +1578,15 @@ export default function Dashboard({ activeView }) {
         tracker={
           tracker
         }
-
         setTracker={
           setTracker
         }
-
         trackerTotal={
           trackerTotal
         }
-
         isSubmitting={
           isSubmitting
         }
-
         onSubmit={
           handleTrackerSubmit
         }
@@ -1315,14 +1640,14 @@ export default function Dashboard({ activeView }) {
             </p>
           </div>
 
-          {/* DARK / LIGHT MODE */}
+          {/* DARK MODE */}
 
           <button
             type="button"
             onClick={() =>
               setDarkMode(
                 (previous) =>
-                  !previous
+                  !previous,
               )
             }
             className={`w-fit shrink-0 rounded-lg px-4 py-2 font-medium text-white transition ${
@@ -1337,23 +1662,21 @@ export default function Dashboard({ activeView }) {
           </button>
         </div>
 
-        {/* ERROR MESSAGE */}
+        {/* ERROR */}
 
         {errorMessage ? (
           <div
-            className={`mt-4 rounded-xl border p-3 text-sm ${
+            className={`mt-4 whitespace-pre-line rounded-xl border p-3 text-sm ${
               darkMode
                 ? "border-amber-700 bg-amber-950 text-amber-200"
                 : "border-amber-200 bg-amber-50 text-amber-800"
             }`}
           >
-            {
-              errorMessage
-            }
+            {errorMessage}
           </div>
         ) : null}
 
-        {/* ACTIVE COMPONENT */}
+        {/* ACTIVE TAB */}
 
         <div className="mt-6">
           {

@@ -347,7 +347,7 @@ export default function TrackerTab({
 
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold">
-          👋 Welcome to ChurroZi Tracker!
+          Welcome to ChurroZi Tracker!
         </h1>
 
         <p className="mt-3 text-amber-100">

@@ -4,14 +4,23 @@ export default function Sidebar({
   isOpen = false,
   onClose,
 }) {
+  const handleSelect = (view) => {
+    onSelectView(view);
+
+    // Close sidebar automatically on mobile
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
     <>
       {/* Overlay for mobile when open */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden transition-opacity duration-200"
+          className="fixed inset-0 z-30 bg-black/40 transition-opacity duration-200 md:hidden"
           onClick={onClose}
-          aria-hidden
+          aria-hidden="true"
         />
       )}
 
@@ -26,14 +35,19 @@ export default function Sidebar({
         <div className="flex items-start justify-between border-b border-[#6b4a3a] p-6">
           <div>
             <h1 className="text-2xl font-bold">ChurroZi</h1>
-            <p className="mt-1 text-sm text-gray-300">Tracker & Expenses</p>
+
+            <p className="mt-1 text-sm text-gray-300">
+              Tracker & Expenses
+            </p>
           </div>
         </div>
 
+        {/* Navigation */}
         <nav className="space-y-2 p-4">
-          {/* SUMMARY - TOP */}
+          {/* SUMMARY */}
           <button
-            onClick={() => onSelectView("summary")}
+            type="button"
+            onClick={() => handleSelect("summary")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "summary"
                 ? "bg-[#d8a66b] text-white"
@@ -45,7 +59,8 @@ export default function Sidebar({
 
           {/* TRACKER */}
           <button
-            onClick={() => onSelectView("tracker")}
+            type="button"
+            onClick={() => handleSelect("tracker")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "tracker"
                 ? "bg-[#d8a66b] text-white"
@@ -57,7 +72,8 @@ export default function Sidebar({
 
           {/* PENDING ORDERS */}
           <button
-            onClick={() => onSelectView("pending")}
+            type="button"
+            onClick={() => handleSelect("pending")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "pending"
                 ? "bg-[#d8a66b] text-white"
@@ -69,7 +85,8 @@ export default function Sidebar({
 
           {/* EXPENSES */}
           <button
-            onClick={() => onSelectView("expenses")}
+            type="button"
+            onClick={() => handleSelect("expenses")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "expenses"
                 ? "bg-[#d8a66b] text-white"
@@ -79,9 +96,23 @@ export default function Sidebar({
             Expenses
           </button>
 
+          {/* SAVINGS */}
+          <button
+            type="button"
+            onClick={() => handleSelect("savings")}
+            className={`w-full rounded-lg px-4 py-3 text-left transition ${
+              activeView === "savings"
+                ? "bg-[#d8a66b] text-white"
+                : "hover:bg-[#5d3c32]"
+            }`}
+          >
+            Savings
+          </button>
+
           {/* TUITION */}
           <button
-            onClick={() => onSelectView("tuition")}
+            type="button"
+            onClick={() => handleSelect("tuition")}
             className={`w-full rounded-lg px-4 py-3 text-left transition ${
               activeView === "tuition"
                 ? "bg-[#d8a66b] text-white"
@@ -89,6 +120,19 @@ export default function Sidebar({
             }`}
           >
             Tuition Fee Target
+          </button>
+
+          {/* INVENTORY */}
+          <button
+            type="button"
+            onClick={() => handleSelect("inventory")}
+            className={`w-full rounded-lg px-4 py-3 text-left transition ${
+              activeView === "inventory"
+                ? "bg-[#d8a66b] text-white"
+                : "hover:bg-[#5d3c32]"
+            }`}
+          >
+            Inventory
           </button>
         </nav>
       </aside>

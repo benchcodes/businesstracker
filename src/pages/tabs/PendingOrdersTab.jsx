@@ -10,10 +10,6 @@ export default function PendingOrdersTab({
     <div className="space-y-6">
       {/* Pending Orders */}
       <div>
-        <h2 className="text-2xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-          Pending Orders
-        </h2>
-
         <div className="mt-4 space-y-6">
           {isLoading ? (
             <div className="rounded-xl border border-gray-200 bg-white p-5 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
@@ -36,7 +32,7 @@ export default function PendingOrdersTab({
               >
                 {/* Date Header */}
                 <div className="bg-[#d8a66b] px-5 py-3 font-bold text-white">
-                  📅 {date}
+                  {date}
                 </div>
 
                 {/* Table */}
