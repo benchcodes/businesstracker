@@ -47,27 +47,25 @@ export default function TrackerTab({
   isSubmitting,
   onSubmit,
 }) {
-  /*
-   * ============================================================
-   * CURRENT PRODUCT
-   * ============================================================
-   */
+  // ============================================================
+  // CURRENT PRODUCT
+  // ============================================================
 
   const selectedProduct =
-    MENU[tracker.product] || MENU["Regular Churros"];
+    MENU[tracker.product] ||
+    MENU["Regular Churros"];
 
-  /*
-   * Find the currently selected menu variant.
-   *
-   * We use variantPcs + productPrice instead of tracker.price
-   * because tracker.price is kept as the BASE PRODUCT PRICE.
-   */
+  // ============================================================
+  // SELECTED VARIANT
+  // ============================================================
 
   const selectedVariant = useMemo(() => {
     const found = selectedProduct.find(
       (variant) =>
-        Number(variant.pcs) === Number(tracker.variantPcs) &&
-        Number(variant.price) === Number(tracker.productPrice)
+        Number(variant.pcs) ===
+          Number(tracker.variantPcs) &&
+        Number(variant.price) ===
+          Number(tracker.productPrice),
     );
 
     return found || selectedProduct[0];
@@ -77,162 +75,231 @@ export default function TrackerTab({
     tracker.productPrice,
   ]);
 
-  /*
-   * ============================================================
-   * ORDER VALUES
-   * ============================================================
-   */
+  // ============================================================
+  // ORDER QUANTITY
+  // ============================================================
 
   const quantity = Math.max(
     1,
-    Number(tracker.orderQuantity) || 1
+    Number(tracker.orderQuantity) || 1,
   );
 
-  /*
-   * Additional dip is intentionally allowed to be ""
-   * while the user is typing.
-   *
-   * Example:
-   *
-   * ""  -> 0
-   * "1" -> 1
-   * "2" -> 2
-   */
+  // ============================================================
+  // ADDITIONAL DIPS
+  // ============================================================
 
   const additionalDips =
     tracker.additionalDips === ""
       ? 0
       : Math.max(
           0,
-          Number(tracker.additionalDips) || 0
+          Number(tracker.additionalDips) || 0,
         );
 
-  /*
-   * BASE MENU PRICE
-   *
-   * This is NEVER modified by the additional dip.
-   */
+  // ============================================================
+  // BASE PRODUCT PRICE
+  // ============================================================
 
   const basePrice =
     Number(selectedVariant.price) || 0;
 
-  /*
-   * PRODUCT TOTAL
-   *
-   * Example:
-   *
-   * ₱69 × 2 orders = ₱138
-   */
+  // ============================================================
+  // PRODUCT TOTAL
+  //
+  // Example:
+  // ₱69 × 2 = ₱138
+  // ============================================================
 
   const productTotal =
     basePrice * quantity;
 
-  /*
-   * ADDITIONAL DIP TOTAL
-   *
-   * ₱10 per additional dip.
-   */
+  // ============================================================
+  // ADDITIONAL DIP TOTAL
+  //
+  // Example:
+  // 2 dips × ₱10 = ₱20
+  // ============================================================
 
   const dipTotal =
-    additionalDips * ADDITIONAL_DIP_PRICE;
+    additionalDips *
+    ADDITIONAL_DIP_PRICE;
 
-  /*
-   * FINAL ORDER TOTAL
-   *
-   * Product total + additional dips
-   */
+  // ============================================================
+  // FINAL ORDER TOTAL
+  //
+  // Product + Additional Dips
+  //
+  // Example:
+  // ₱138 + ₱20 = ₱158
+  // ============================================================
 
   const calculatedTotal =
     productTotal + dipTotal;
 
-  /*
-   * ============================================================
-   * PRODUCT CHANGE
-   * ============================================================
-   */
+  // ============================================================
+  // UPDATE CALCULATED VALUES
+  //
+  // These values are saved into tracker state so the parent
+  // component can also access them when submitting the order.
+  // ============================================================
 
-  const handleProductChange = (event) => {
-    const product = event.target.value;
+  const updateCalculatedValues = (
+    previous,
+    overrides = {},
+  ) => {
+    const nextQuantity = Math.max(
+      1,
+      Number(
+        overrides.orderQuantity ??
+          previous.orderQuantity,
+      ) || 1,
+    );
+
+    const nextBasePrice =
+      Number(
+        overrides.productPrice ??
+          previous.productPrice ??
+          selectedVariant.price,
+      ) || 0;
+
+    const nextAdditionalDips =
+      overrides.additionalDips === ""
+        ? 0
+        : Math.max(
+            0,
+            Number(
+              overrides.additionalDips ??
+                previous.additionalDips ??
+                0,
+            ) || 0,
+          );
+
+    const nextProductTotal =
+      nextBasePrice * nextQuantity;
+
+    const nextDipTotal =
+      nextAdditionalDips *
+      ADDITIONAL_DIP_PRICE;
+
+    const nextTotal =
+      nextProductTotal +
+      nextDipTotal;
+
+    return {
+      ...previous,
+      ...overrides,
+
+      // Base product price
+      price: nextBasePrice,
+      productPrice: nextBasePrice,
+
+      // Additional dip information
+      additionalDipPrice:
+        ADDITIONAL_DIP_PRICE,
+
+      additionalDipTotal:
+        nextDipTotal,
+
+      // Product subtotal
+      productTotal:
+        nextProductTotal,
+
+      // Final order total
+      totalPrice:
+        nextTotal,
+
+      // Legacy-compatible total
+      total:
+        nextTotal,
+    };
+  };
+
+  // ============================================================
+  // PRODUCT CHANGE
+  // ============================================================
+
+  const handleProductChange = (
+    event,
+  ) => {
+    const product =
+      event.target.value;
 
     const firstVariant =
       MENU[product]?.[0];
 
-    if (!firstVariant) return;
+    if (!firstVariant) {
+      return;
+    }
 
-    setTracker((previous) => ({
-      ...previous,
+    setTracker((previous) =>
+      updateCalculatedValues(
+        previous,
+        {
+          product,
 
-      product,
+          variantPcs:
+            firstVariant.pcs,
 
-      variantPcs:
-        firstVariant.pcs,
+          productPrice:
+            firstVariant.price,
 
-      productPrice:
-        firstVariant.price,
+          price:
+            firstVariant.price,
 
-      /*
-       * IMPORTANT:
-       * price is ONLY the base menu price.
-       */
-      price:
-        firstVariant.price,
+          additionalDips: "",
 
-      /*
-       * Reset additional dip when changing product.
-       */
-      additionalDips: "",
-
-      additionalDipType:
-        "Chocolate",
-    }));
+          additionalDipType:
+            "Chocolate",
+        },
+      ),
+    );
   };
 
-  /*
-   * ============================================================
-   * VARIANT CHANGE
-   * ============================================================
-   */
+  // ============================================================
+  // VARIANT CHANGE
+  // ============================================================
 
-  const handleVariantChange = (event) => {
+  const handleVariantChange = (
+    event,
+  ) => {
     const index =
       Number(event.target.value);
 
     const variant =
       selectedProduct[index];
 
-    if (!variant) return;
+    if (!variant) {
+      return;
+    }
 
-    setTracker((previous) => ({
-      ...previous,
+    setTracker((previous) =>
+      updateCalculatedValues(
+        previous,
+        {
+          variantPcs:
+            variant.pcs,
 
-      variantPcs:
-        variant.pcs,
+          productPrice:
+            variant.price,
 
-      productPrice:
-        variant.price,
-
-      /*
-       * price remains the BASE PRODUCT PRICE.
-       */
-      price:
-        variant.price,
-    }));
+          price:
+            variant.price,
+        },
+      ),
+    );
   };
 
-  /*
-   * ============================================================
-   * QUANTITY CHANGE
-   * ============================================================
-   */
+  // ============================================================
+  // QUANTITY CHANGE
+  // ============================================================
 
-  const handleQuantityChange = (event) => {
+  const handleQuantityChange = (
+    event,
+  ) => {
     const value =
       event.target.value;
 
-    /*
-     * Allow empty input temporarily.
-     * This makes typing easier.
-     */
+    // Allow empty input while typing
     if (value === "") {
       setTracker((previous) => ({
         ...previous,
@@ -245,41 +312,44 @@ export default function TrackerTab({
     const numericValue =
       Math.max(
         1,
-        Number(value) || 1
+        Number(value) || 1,
       );
 
-    setTracker((previous) => ({
-      ...previous,
-      orderQuantity:
-        numericValue,
-    }));
+    setTracker((previous) =>
+      updateCalculatedValues(
+        previous,
+        {
+          orderQuantity:
+            numericValue,
+        },
+      ),
+    );
   };
 
-  /*
-   * ============================================================
-   * ADDITIONAL DIP QUANTITY
-   * ============================================================
-   */
+  // ============================================================
+  // ADDITIONAL DIP QUANTITY
+  // ============================================================
 
   const handleAdditionalDipsChange = (
-    event
+    event,
   ) => {
     const value =
       event.target.value;
 
-    /*
-     * IMPORTANT:
-     *
-     * We allow "".
-     *
-     * This prevents the input from forcing
-     * 0 back into the field while typing.
-     */
-
+    // Allow empty input
     if (value === "") {
       setTracker((previous) => ({
         ...previous,
         additionalDips: "",
+        additionalDipTotal: 0,
+        totalPrice:
+          Number(
+            previous.productTotal,
+          ) || 0,
+        total:
+          Number(
+            previous.productTotal,
+          ) || 0,
       }));
 
       return;
@@ -288,24 +358,26 @@ export default function TrackerTab({
     const numericValue =
       Math.max(
         0,
-        Number(value) || 0
+        Number(value) || 0,
       );
 
-    setTracker((previous) => ({
-      ...previous,
-      additionalDips:
-        numericValue,
-    }));
+    setTracker((previous) =>
+      updateCalculatedValues(
+        previous,
+        {
+          additionalDips:
+            numericValue,
+        },
+      ),
+    );
   };
 
-  /*
-   * ============================================================
-   * ADDITIONAL DIP FLAVOR
-   * ============================================================
-   */
+  // ============================================================
+  // ADDITIONAL DIP FLAVOR
+  // ============================================================
 
   const handleAdditionalDipTypeChange = (
-    event
+    event,
   ) => {
     setTracker((previous) => ({
       ...previous,
@@ -315,30 +387,134 @@ export default function TrackerTab({
     }));
   };
 
-  /*
-   * ============================================================
-   * VARIANT SELECT INDEX
-   * ============================================================
-   */
+  // ============================================================
+  // DATE CHANGE
+  // ============================================================
 
-  const selectedVariantIndex = Math.max(
-    0,
-    selectedProduct.findIndex(
-      (variant) =>
-        Number(variant.pcs) ===
-          Number(
-            tracker.variantPcs
-          ) &&
-        Number(variant.price) ===
-          Number(
-            tracker.productPrice
-          )
-    )
-  );
+  const handleDateChange = (
+    event,
+  ) => {
+    setTracker((previous) => ({
+      ...previous,
+      date: event.target.value,
+    }));
+  };
+
+  // ============================================================
+  // CUSTOMER NAME CHANGE
+  // ============================================================
+
+  const handleNameChange = (
+    event,
+  ) => {
+    setTracker((previous) => ({
+      ...previous,
+      name: event.target.value,
+    }));
+  };
+
+  // ============================================================
+  // FREE DIP CHANGE
+  // ============================================================
+
+  const handleFreeDipChange = (
+    event,
+  ) => {
+    setTracker((previous) => ({
+      ...previous,
+      dip: event.target.value,
+    }));
+  };
+
+  // ============================================================
+  // NOTES CHANGE
+  // ============================================================
+
+  const handleNotesChange = (
+    event,
+  ) => {
+    setTracker((previous) => ({
+      ...previous,
+      notes: event.target.value,
+    }));
+  };
+
+  // ============================================================
+  // STATUS CHANGE
+  // ============================================================
+
+  const handleStatusChange = (
+    event,
+  ) => {
+    setTracker((previous) => ({
+      ...previous,
+      status: event.target.value,
+    }));
+  };
+
+  // ============================================================
+  // SUBMIT
+  //
+  // Before submitting, make sure the latest calculated total
+  // is stored in tracker.
+  // ============================================================
+
+  const handleSubmit = (event) => {
+    /*
+     * IMPORTANT:
+     *
+     * calculatedTotal includes:
+     *
+     * Product Total
+     * +
+     * Additional Dip Total
+     */
+
+    setTracker((previous) =>
+      updateCalculatedValues(
+        previous,
+        {
+          orderQuantity:
+            previous.orderQuantity,
+
+          productPrice:
+            selectedVariant.price,
+
+          additionalDips:
+            previous.additionalDips,
+        },
+      ),
+    );
+
+    /*
+     * Continue to the parent's existing submit handler.
+     */
+    onSubmit(event);
+  };
+
+  // ============================================================
+  // SELECTED VARIANT INDEX
+  // ============================================================
+
+  const selectedVariantIndex =
+    Math.max(
+      0,
+      selectedProduct.findIndex(
+        (variant) =>
+          Number(variant.pcs) ===
+            Number(
+              tracker.variantPcs,
+            ) &&
+          Number(variant.price) ===
+            Number(
+              tracker.productPrice,
+            ),
+      ),
+    );
 
   return (
     <form
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       className="space-y-6"
     >
       {/* =======================================================
@@ -353,7 +529,8 @@ export default function TrackerTab({
         <p className="mt-3 text-amber-100">
           Easily manage your daily orders,
           calculate sales, and keep track of
-          your churros business—all in one place.
+          your churros business—all in one
+          place.
         </p>
       </div>
 
@@ -362,7 +539,6 @@ export default function TrackerTab({
       ======================================================= */}
 
       <div className="grid gap-4 md:grid-cols-2">
-
         {/* DATE */}
 
         <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -373,12 +549,8 @@ export default function TrackerTab({
             value={
               tracker.date || ""
             }
-            onChange={(event) =>
-              setTracker((previous) => ({
-                ...previous,
-                date:
-                  event.target.value,
-              }))
+            onChange={
+              handleDateChange
             }
             className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
@@ -396,18 +568,13 @@ export default function TrackerTab({
             value={
               tracker.name || ""
             }
-            onChange={(event) =>
-              setTracker((previous) => ({
-                ...previous,
-                name:
-                  event.target.value,
-              }))
+            onChange={
+              handleNameChange
             }
             placeholder="Customer or order name"
             className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
           />
         </label>
-
       </div>
 
       {/* =======================================================
@@ -415,25 +582,20 @@ export default function TrackerTab({
       ======================================================= */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
-
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           🥨 Churros Order
         </h2>
 
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Select the churros product and
-          variant.
+          Select the churros product
+          and variant.
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-
           {/* PRODUCT */}
 
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
-            <span>
-              Product
-            </span>
+            <span>Product</span>
 
             <select
               value={
@@ -445,7 +607,9 @@ export default function TrackerTab({
               }
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
-              {Object.keys(MENU).map(
+              {Object.keys(
+                MENU,
+              ).map(
                 (product) => (
                   <option
                     key={product}
@@ -453,16 +617,14 @@ export default function TrackerTab({
                   >
                     {product}
                   </option>
-                )
+                ),
               )}
             </select>
-
           </label>
 
           {/* VARIANT */}
 
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
             <span>
               Size / Variant
             </span>
@@ -477,23 +639,26 @@ export default function TrackerTab({
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
               {selectedProduct.map(
-                (variant, index) => (
+                (
+                  variant,
+                  index,
+                ) => (
                   <option
                     key={`${variant.pcs}-${variant.price}`}
                     value={index}
                   >
-                    {variant.label}
+                    {
+                      variant.label
+                    }
                   </option>
-                )
+                ),
               )}
             </select>
-
           </label>
 
           {/* QUANTITY */}
 
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
             <span>
               Quantity
             </span>
@@ -502,7 +667,8 @@ export default function TrackerTab({
               type="number"
               min="1"
               value={
-                tracker.orderQuantity === ""
+                tracker.orderQuantity ===
+                ""
                   ? ""
                   : tracker.orderQuantity ??
                     1
@@ -512,13 +678,11 @@ export default function TrackerTab({
               }
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
-
           </label>
 
           {/* FREE DIP */}
 
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
             <span>
               Free Dip
             </span>
@@ -528,14 +692,8 @@ export default function TrackerTab({
                 tracker.dip ||
                 "Matcha"
               }
-              onChange={(event) =>
-                setTracker(
-                  (previous) => ({
-                    ...previous,
-                    dip:
-                      event.target.value,
-                  })
-                )
+              onChange={
+                handleFreeDipChange
               }
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
@@ -547,12 +705,10 @@ export default function TrackerTab({
                   >
                     {dip}
                   </option>
-                )
+                ),
               )}
             </select>
-
           </label>
-
         </div>
 
         {/* =====================================================
@@ -560,27 +716,22 @@ export default function TrackerTab({
         ===================================================== */}
 
         <div className="mt-5 rounded-xl border border-[#d8a66b] bg-white p-4 dark:border-[#8B5E3C] dark:bg-gray-800">
-
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-
             <div>
-
               <p className="font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
                 🥣 Additional Dip
               </p>
 
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                ₱10.00 per additional dip
+                ₱10.00 per additional
+                dip
               </p>
-
             </div>
 
             <div className="grid w-full gap-3 sm:grid-cols-2 md:w-auto">
-
               {/* DIP FLAVOR */}
 
               <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
                 <span>
                   Dip Flavor
                 </span>
@@ -594,7 +745,8 @@ export default function TrackerTab({
                     handleAdditionalDipTypeChange
                   }
                   disabled={
-                    additionalDips <= 0
+                    additionalDips <=
+                    0
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 >
@@ -606,16 +758,14 @@ export default function TrackerTab({
                       >
                         {dip}
                       </option>
-                    )
+                    ),
                   )}
                 </select>
-
               </label>
 
               {/* DIP QUANTITY */}
 
               <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
                 <span>
                   Quantity
                 </span>
@@ -625,7 +775,8 @@ export default function TrackerTab({
                   min="0"
                   placeholder="0"
                   value={
-                    tracker.additionalDips === ""
+                    tracker.additionalDips ===
+                    ""
                       ? ""
                       : tracker.additionalDips ??
                         ""
@@ -635,31 +786,29 @@ export default function TrackerTab({
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
-
               </label>
-
             </div>
-
           </div>
 
-          {additionalDips > 0 && (
+          {additionalDips >
+            0 && (
             <p className="mt-3 text-sm text-[#5A3A2E] dark:text-[#e8bd85]">
-
-              {additionalDips} additional{" "}
-              {additionalDips === 1
+              {additionalDips}{" "}
+              additional{" "}
+              {additionalDips ===
+              1
                 ? "dip"
                 : "dips"}{" "}
               —{" "}
               {tracker.additionalDipType ||
                 "Chocolate"}{" "}
               · ₱
-              {dipTotal.toFixed(2)}
-
+              {dipTotal.toFixed(
+                2,
+              )}
             </p>
           )}
-
         </div>
-
       </div>
 
       {/* =======================================================
@@ -667,27 +816,19 @@ export default function TrackerTab({
       ======================================================= */}
 
       <label className="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
-        <span>
-          Notes
-        </span>
+        <span>Notes</span>
 
         <textarea
           value={
             tracker.notes || ""
           }
-          onChange={(event) =>
-            setTracker((previous) => ({
-              ...previous,
-              notes:
-                event.target.value,
-            }))
+          onChange={
+            handleNotesChange
           }
           placeholder="Add special instructions or order notes"
           rows={3}
           className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500"
         />
-
       </label>
 
       {/* =======================================================
@@ -695,22 +836,15 @@ export default function TrackerTab({
       ======================================================= */}
 
       <label className="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-
-        <span>
-          Status
-        </span>
+        <span>Status</span>
 
         <select
           value={
             tracker.status ||
             "Pending"
           }
-          onChange={(event) =>
-            setTracker((previous) => ({
-              ...previous,
-              status:
-                event.target.value,
-            }))
+          onChange={
+            handleStatusChange
           }
           className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
         >
@@ -722,7 +856,6 @@ export default function TrackerTab({
             Completed
           </option>
         </select>
-
       </label>
 
       {/* =======================================================
@@ -730,51 +863,48 @@ export default function TrackerTab({
       ======================================================= */}
 
       <div className="rounded-2xl bg-[#f8f5f2] p-5 dark:bg-gray-800">
-
         <p className="text-lg font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Order Summary
         </p>
 
         <div className="mt-4 space-y-3">
-
           {/* PRODUCT */}
 
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
-
             <span>
               {tracker.product ||
                 "Regular Churros"}{" "}
-              ({selectedVariant.pcs} pcs)
+              ({selectedVariant.pcs}{" "}
+              pcs)
             </span>
 
             <span>
               ₱
-              {basePrice.toFixed(2)}
-              {" × "}
-              {quantity}
+              {basePrice.toFixed(
+                2,
+              )}{" "}
+              × {quantity}
             </span>
-
           </div>
 
           {/* PRODUCT SUBTOTAL */}
 
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
-
             <span>
               Product Subtotal
             </span>
 
             <span>
               ₱
-              {productTotal.toFixed(2)}
+              {productTotal.toFixed(
+                2,
+              )}
             </span>
-
           </div>
 
           {/* FREE DIP */}
 
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
-
             <span>
               Free Dip
               {tracker.dip
@@ -785,17 +915,15 @@ export default function TrackerTab({
             <span className="text-green-600 dark:text-green-400">
               Included
             </span>
-
           </div>
 
           {/* ADDITIONAL DIP */}
 
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
-
             <span>
               Additional Dip
-
-              {additionalDips > 0 && (
+              {additionalDips >
+                0 && (
                 <>
                   {" "}
                   (
@@ -804,37 +932,33 @@ export default function TrackerTab({
                   )
                 </>
               )}
-
             </span>
 
             <span>
               ₱
-              {dipTotal.toFixed(2)}
+              {dipTotal.toFixed(
+                2,
+              )}
             </span>
-
           </div>
 
           {/* TOTAL */}
 
           <div className="border-t border-gray-300 pt-3 dark:border-gray-600">
-
             <div className="flex items-center justify-between">
-
               <span className="text-lg font-semibold text-gray-700 dark:text-gray-200">
                 Total Price
               </span>
 
               <span className="text-3xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
                 ₱
-                {calculatedTotal.toFixed(2)}
+                {calculatedTotal.toFixed(
+                  2,
+                )}
               </span>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
 
       {/* =======================================================
@@ -850,7 +974,6 @@ export default function TrackerTab({
           ? "Saving..."
           : "Submit Order"}
       </button>
-
     </form>
   );
 }
