@@ -76,13 +76,16 @@ export default function TrackerTab({
   ]);
 
   // ============================================================
-  // ORDER QUANTITY
+  // QUANTITY
   // ============================================================
 
-  const quantity = Math.max(
-    1,
-    Number(tracker.orderQuantity) || 1,
-  );
+  const quantity =
+    tracker.orderQuantity === ""
+      ? 1
+      : Math.max(
+          1,
+          Number(tracker.orderQuantity) || 1,
+        );
 
   // ============================================================
   // ADDITIONAL DIPS
@@ -97,7 +100,7 @@ export default function TrackerTab({
         );
 
   // ============================================================
-  // BASE PRODUCT PRICE
+  // BASE PRICE
   // ============================================================
 
   const basePrice =
@@ -105,9 +108,6 @@ export default function TrackerTab({
 
   // ============================================================
   // PRODUCT TOTAL
-  //
-  // Example:
-  // ₱69 × 2 = ₱138
   // ============================================================
 
   const productTotal =
@@ -115,9 +115,6 @@ export default function TrackerTab({
 
   // ============================================================
   // ADDITIONAL DIP TOTAL
-  //
-  // Example:
-  // 2 dips × ₱10 = ₱20
   // ============================================================
 
   const dipTotal =
@@ -125,37 +122,33 @@ export default function TrackerTab({
     ADDITIONAL_DIP_PRICE;
 
   // ============================================================
-  // FINAL ORDER TOTAL
-  //
-  // Product + Additional Dips
-  //
-  // Example:
-  // ₱138 + ₱20 = ₱158
+  // FINAL TOTAL
   // ============================================================
 
   const calculatedTotal =
     productTotal + dipTotal;
 
   // ============================================================
-  // UPDATE CALCULATED VALUES
-  //
-  // These values are saved into tracker state so the parent
-  // component can also access them when submitting the order.
+  // CALCULATE ORDER VALUES
   // ============================================================
 
-  const updateCalculatedValues = (
+  const calculateOrderValues = (
     previous,
     overrides = {},
   ) => {
-    const nextQuantity = Math.max(
-      1,
-      Number(
-        overrides.orderQuantity ??
-          previous.orderQuantity,
-      ) || 1,
-    );
+    const nextQuantity =
+      overrides.orderQuantity === ""
+        ? 1
+        : Math.max(
+            1,
+            Number(
+              overrides.orderQuantity ??
+                previous.orderQuantity ??
+                1,
+            ) || 1,
+          );
 
-    const nextBasePrice =
+    const nextProductPrice =
       Number(
         overrides.productPrice ??
           previous.productPrice ??
@@ -175,7 +168,8 @@ export default function TrackerTab({
           );
 
     const nextProductTotal =
-      nextBasePrice * nextQuantity;
+      nextProductPrice *
+      nextQuantity;
 
     const nextDipTotal =
       nextAdditionalDips *
@@ -189,26 +183,37 @@ export default function TrackerTab({
       ...previous,
       ...overrides,
 
-      // Base product price
-      price: nextBasePrice,
-      productPrice: nextBasePrice,
+      // Quantity
+      orderQuantity:
+        overrides.orderQuantity === ""
+          ? ""
+          : nextQuantity,
 
-      // Additional dip information
+      // Product price
+      price: nextProductPrice,
+      productPrice: nextProductPrice,
+
+      // Product subtotal
+      productTotal:
+        nextProductTotal,
+
+      // Additional dip
+      additionalDips:
+        overrides.additionalDips === ""
+          ? ""
+          : nextAdditionalDips,
+
       additionalDipPrice:
         ADDITIONAL_DIP_PRICE,
 
       additionalDipTotal:
         nextDipTotal,
 
-      // Product subtotal
-      productTotal:
-        nextProductTotal,
-
-      // Final order total
+      // FINAL TOTAL
       totalPrice:
         nextTotal,
 
-      // Legacy-compatible total
+      // Legacy-compatible field
       total:
         nextTotal,
     };
@@ -232,7 +237,7 @@ export default function TrackerTab({
     }
 
     setTracker((previous) =>
-      updateCalculatedValues(
+      calculateOrderValues(
         previous,
         {
           product,
@@ -273,7 +278,7 @@ export default function TrackerTab({
     }
 
     setTracker((previous) =>
-      updateCalculatedValues(
+      calculateOrderValues(
         previous,
         {
           variantPcs:
@@ -299,12 +304,15 @@ export default function TrackerTab({
     const value =
       event.target.value;
 
-    // Allow empty input while typing
     if (value === "") {
-      setTracker((previous) => ({
-        ...previous,
-        orderQuantity: "",
-      }));
+      setTracker((previous) =>
+        calculateOrderValues(
+          previous,
+          {
+            orderQuantity: "",
+          },
+        ),
+      );
 
       return;
     }
@@ -316,7 +324,7 @@ export default function TrackerTab({
       );
 
     setTracker((previous) =>
-      updateCalculatedValues(
+      calculateOrderValues(
         previous,
         {
           orderQuantity:
@@ -338,19 +346,14 @@ export default function TrackerTab({
 
     // Allow empty input
     if (value === "") {
-      setTracker((previous) => ({
-        ...previous,
-        additionalDips: "",
-        additionalDipTotal: 0,
-        totalPrice:
-          Number(
-            previous.productTotal,
-          ) || 0,
-        total:
-          Number(
-            previous.productTotal,
-          ) || 0,
-      }));
+      setTracker((previous) =>
+        calculateOrderValues(
+          previous,
+          {
+            additionalDips: "",
+          },
+        ),
+      );
 
       return;
     }
@@ -362,7 +365,7 @@ export default function TrackerTab({
       );
 
     setTracker((previous) =>
-      updateCalculatedValues(
+      calculateOrderValues(
         previous,
         {
           additionalDips:
@@ -388,7 +391,7 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // DATE CHANGE
+  // DATE
   // ============================================================
 
   const handleDateChange = (
@@ -401,7 +404,7 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // CUSTOMER NAME CHANGE
+  // CUSTOMER NAME
   // ============================================================
 
   const handleNameChange = (
@@ -414,7 +417,7 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // FREE DIP CHANGE
+  // FREE DIP
   // ============================================================
 
   const handleFreeDipChange = (
@@ -427,7 +430,7 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // NOTES CHANGE
+  // NOTES
   // ============================================================
 
   const handleNotesChange = (
@@ -440,7 +443,7 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // STATUS CHANGE
+  // STATUS
   // ============================================================
 
   const handleStatusChange = (
@@ -454,42 +457,45 @@ export default function TrackerTab({
 
   // ============================================================
   // SUBMIT
-  //
-  // Before submitting, make sure the latest calculated total
-  // is stored in tracker.
   // ============================================================
 
   const handleSubmit = (event) => {
     /*
-     * IMPORTANT:
-     *
-     * calculatedTotal includes:
+     * Make sure the tracker contains the latest:
      *
      * Product Total
-     * +
      * Additional Dip Total
+     * Final Total
      */
 
-    setTracker((previous) =>
-      updateCalculatedValues(
-        previous,
+    const finalTracker =
+      calculateOrderValues(
+        tracker,
         {
           orderQuantity:
-            previous.orderQuantity,
+            tracker.orderQuantity,
 
           productPrice:
             selectedVariant.price,
 
           additionalDips:
-            previous.additionalDips,
+            tracker.additionalDips,
         },
-      ),
-    );
+      );
 
     /*
-     * Continue to the parent's existing submit handler.
+     * Store the complete calculated order.
      */
-    onSubmit(event);
+    setTracker(finalTracker);
+
+    /*
+     * Pass the calculated tracker to the parent.
+     *
+     * The parent can use the second argument:
+     *
+     * onSubmit(event, finalTracker)
+     */
+    onSubmit(event, finalTracker);
   };
 
   // ============================================================
@@ -517,9 +523,9 @@ export default function TrackerTab({
       onSubmit={handleSubmit}
       className="space-y-6"
     >
-      {/* =======================================================
-          WELCOME BANNER
-      ======================================================= */}
+      {/* ======================================================
+          WELCOME
+      ====================================================== */}
 
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold">
@@ -534,9 +540,9 @@ export default function TrackerTab({
         </p>
       </div>
 
-      {/* =======================================================
+      {/* ======================================================
           BASIC ORDER INFO
-      ======================================================= */}
+      ====================================================== */}
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* DATE */}
@@ -546,9 +552,7 @@ export default function TrackerTab({
 
           <input
             type="date"
-            value={
-              tracker.date || ""
-            }
+            value={tracker.date || ""}
             onChange={
               handleDateChange
             }
@@ -556,7 +560,7 @@ export default function TrackerTab({
           />
         </label>
 
-        {/* CUSTOMER NAME */}
+        {/* CUSTOMER */}
 
         <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <span>
@@ -565,9 +569,7 @@ export default function TrackerTab({
 
           <input
             type="text"
-            value={
-              tracker.name || ""
-            }
+            value={tracker.name || ""}
             onChange={
               handleNameChange
             }
@@ -577,9 +579,9 @@ export default function TrackerTab({
         </label>
       </div>
 
-      {/* =======================================================
-          PRODUCT
-      ======================================================= */}
+      {/* ======================================================
+          CHURROS ORDER
+      ====================================================== */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
@@ -607,9 +609,7 @@ export default function TrackerTab({
               }
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
-              {Object.keys(
-                MENU,
-              ).map(
+              {Object.keys(MENU).map(
                 (product) => (
                   <option
                     key={product}
@@ -647,9 +647,7 @@ export default function TrackerTab({
                     key={`${variant.pcs}-${variant.price}`}
                     value={index}
                   >
-                    {
-                      variant.label
-                    }
+                    {variant.label}
                   </option>
                 ),
               )}
@@ -711,9 +709,9 @@ export default function TrackerTab({
           </label>
         </div>
 
-        {/* =====================================================
+        {/* ====================================================
             ADDITIONAL DIP
-        ===================================================== */}
+        ==================================================== */}
 
         <div className="mt-5 rounded-xl border border-[#d8a66b] bg-white p-4 dark:border-[#8B5E3C] dark:bg-gray-800">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -790,38 +788,32 @@ export default function TrackerTab({
             </div>
           </div>
 
-          {additionalDips >
-            0 && (
+          {additionalDips > 0 && (
             <p className="mt-3 text-sm text-[#5A3A2E] dark:text-[#e8bd85]">
               {additionalDips}{" "}
               additional{" "}
-              {additionalDips ===
-              1
+              {additionalDips === 1
                 ? "dip"
                 : "dips"}{" "}
               —{" "}
               {tracker.additionalDipType ||
                 "Chocolate"}{" "}
               · ₱
-              {dipTotal.toFixed(
-                2,
-              )}
+              {dipTotal.toFixed(2)}
             </p>
           )}
         </div>
       </div>
 
-      {/* =======================================================
+      {/* ======================================================
           NOTES
-      ======================================================= */}
+      ====================================================== */}
 
       <label className="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
         <span>Notes</span>
 
         <textarea
-          value={
-            tracker.notes || ""
-          }
+          value={tracker.notes || ""}
           onChange={
             handleNotesChange
           }
@@ -831,9 +823,9 @@ export default function TrackerTab({
         />
       </label>
 
-      {/* =======================================================
+      {/* ======================================================
           STATUS
-      ======================================================= */}
+      ====================================================== */}
 
       <label className="block space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
         <span>Status</span>
@@ -858,9 +850,9 @@ export default function TrackerTab({
         </select>
       </label>
 
-      {/* =======================================================
+      {/* ======================================================
           ORDER SUMMARY
-      ======================================================= */}
+      ====================================================== */}
 
       <div className="rounded-2xl bg-[#f8f5f2] p-5 dark:bg-gray-800">
         <p className="text-lg font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
@@ -874,16 +866,13 @@ export default function TrackerTab({
             <span>
               {tracker.product ||
                 "Regular Churros"}{" "}
-              ({selectedVariant.pcs}{" "}
-              pcs)
+              ({selectedVariant.pcs} pcs)
             </span>
 
             <span>
               ₱
-              {basePrice.toFixed(
-                2,
-              )}{" "}
-              × {quantity}
+              {basePrice.toFixed(2)} ×{" "}
+              {quantity}
             </span>
           </div>
 
@@ -896,9 +885,7 @@ export default function TrackerTab({
 
             <span>
               ₱
-              {productTotal.toFixed(
-                2,
-              )}
+              {productTotal.toFixed(2)}
             </span>
           </div>
 
@@ -922,8 +909,7 @@ export default function TrackerTab({
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
             <span>
               Additional Dip
-              {additionalDips >
-                0 && (
+              {additionalDips > 0 && (
                 <>
                   {" "}
                   (
@@ -936,9 +922,7 @@ export default function TrackerTab({
 
             <span>
               ₱
-              {dipTotal.toFixed(
-                2,
-              )}
+              {dipTotal.toFixed(2)}
             </span>
           </div>
 
@@ -961,9 +945,9 @@ export default function TrackerTab({
         </div>
       </div>
 
-      {/* =======================================================
+      {/* ======================================================
           SUBMIT
-      ======================================================= */}
+      ====================================================== */}
 
       <button
         type="submit"

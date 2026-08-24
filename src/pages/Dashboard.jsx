@@ -37,6 +37,7 @@ const DEFAULT_TRACKER = {
   productPrice: 49,
 
   dip: "Matcha",
+
   additionalDips: "",
   additionalDipType: "Chocolate",
 };
@@ -79,16 +80,22 @@ export default function Dashboard({ activeView }) {
   // SUMMARY STATE
   // =====================================================
 
-  const [summaryRange, setSummaryRange] = useState("overall");
-  const [summaryDate, setSummaryDate] = useState("");
+  const [summaryRange, setSummaryRange] =
+    useState("overall");
+
+  const [summaryDate, setSummaryDate] =
+    useState("");
 
   // =====================================================
   // UI STATE
   // =====================================================
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   // =====================================================
   // DARK MODE
@@ -99,7 +106,9 @@ export default function Dashboard({ activeView }) {
       "churrozi-dark-mode",
     );
 
-    return savedMode === null ? true : savedMode === "true";
+    return savedMode === null
+      ? true
+      : savedMode === "true";
   });
 
   useEffect(() => {
@@ -177,10 +186,21 @@ export default function Dashboard({ activeView }) {
         throw firstError;
       }
 
-      setTrackerRows(trackerResult.data || []);
-      setExpenseRows(expenseResult.data || []);
-      setInventoryRows(inventoryResult.data || []);
-      setSavingsRows(savingsResult.data || []);
+      setTrackerRows(
+        trackerResult.data || [],
+      );
+
+      setExpenseRows(
+        expenseResult.data || [],
+      );
+
+      setInventoryRows(
+        inventoryResult.data || [],
+      );
+
+      setSavingsRows(
+        savingsResult.data || [],
+      );
 
       setErrorMessage("");
     } catch (error) {
@@ -214,7 +234,10 @@ export default function Dashboard({ activeView }) {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number) || number <= 0) {
+    if (
+      !Number.isFinite(number) ||
+      number <= 0
+    ) {
       return 0;
     }
 
@@ -237,7 +260,10 @@ export default function Dashboard({ activeView }) {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number) || number <= 0) {
+    if (
+      !Number.isFinite(number) ||
+      number <= 0
+    ) {
       return 1;
     }
 
@@ -261,7 +287,10 @@ export default function Dashboard({ activeView }) {
 
     const number = Number(value);
 
-    if (!Number.isFinite(number) || number < 0) {
+    if (
+      !Number.isFinite(number) ||
+      number < 0
+    ) {
       return 0;
     }
 
@@ -269,151 +298,190 @@ export default function Dashboard({ activeView }) {
   }, []);
 
   // =====================================================
-  // GET ORDER TOTAL
+  // GET PRODUCT TOTAL
+  // =====================================================
+
+  const getProductTotal = useCallback(
+    (row) => {
+      const quantity =
+        getOrderQuantity(row);
+
+      const productPrice =
+        getProductPrice(row);
+
+      return (
+        quantity * productPrice
+      );
+    },
+    [
+      getOrderQuantity,
+      getProductPrice,
+    ],
+  );
+
+  // =====================================================
+  // GET EXTRA DIP TOTAL
+  // =====================================================
+
+  const getAdditionalDipTotal =
+    useCallback(
+      (row) => {
+        const additionalDips =
+          getAdditionalDips(row);
+
+        return (
+          additionalDips *
+          ADDITIONAL_DIP_PRICE
+        );
+      },
+      [getAdditionalDips],
+    );
+
+  // =====================================================
+  // GET COMPLETE ORDER TOTAL
   //
-  // PRODUCT TOTAL:
-  // product price × quantity
-  //
-  // EXTRA DIP TOTAL:
-  // additional dips × ₱10
-  //
-  // FINAL:
-  // product total + extra dip total
-  //
-  // NO order_total COLUMN REQUIRED.
+  // PRODUCT TOTAL
+  // +
+  // EXTRA DIP TOTAL
+  // =
+  // FINAL TOTAL
   // =====================================================
 
   const getOrderTotal = useCallback(
     (row) => {
-      if (!row) {
-        return 0;
-      }
-
-      const quantity = getOrderQuantity(row);
-      const productPrice = getProductPrice(row);
-      const additionalDips = getAdditionalDips(row);
-
       const productTotal =
-        quantity * productPrice;
+        getProductTotal(row);
 
       const additionalDipTotal =
-        additionalDips * ADDITIONAL_DIP_PRICE;
+        getAdditionalDipTotal(row);
 
       const calculatedTotal =
-        productTotal + additionalDipTotal;
+        productTotal +
+        additionalDipTotal;
 
-      // ---------------------------------------------------
-      // USE CALCULATED TOTAL
-      // ---------------------------------------------------
-
-      if (
-        Number.isFinite(calculatedTotal) &&
-        calculatedTotal >= 0
-      ) {
-        return calculatedTotal;
-      }
-
-      // ---------------------------------------------------
-      // LEGACY FALLBACK
-      // ---------------------------------------------------
-
-      const legacyTotal = Number(
-        row.total ?? 0,
-      );
-
-      if (
-        Number.isFinite(legacyTotal) &&
-        legacyTotal > 0
-      ) {
-        return legacyTotal;
-      }
-
-      return 0;
+      return Number.isFinite(
+        calculatedTotal,
+      )
+        ? calculatedTotal
+        : 0;
     },
     [
-      getAdditionalDips,
-      getOrderQuantity,
-      getProductPrice,
+      getProductTotal,
+      getAdditionalDipTotal,
     ],
   );
 
   // =====================================================
   // NORMALIZE TRACKER ROW
+  //
+  // This is the important part.
+  //
+  // Every Pending/Summary row gets:
+  //
+  // productTotal
+  // additionalDipTotal
+  // effectiveTotal
   // =====================================================
 
-  const normalizeTrackerRow = useCallback(
-    (row) => {
-      const quantity = getOrderQuantity(row);
-      const productPrice = getProductPrice(row);
-      const additionalDips = getAdditionalDips(row);
+  const normalizeTrackerRow =
+    useCallback(
+      (row) => {
+        const quantity =
+          getOrderQuantity(row);
 
-      const productTotal =
-        quantity * productPrice;
+        const productPrice =
+          getProductPrice(row);
 
-      const additionalDipTotal =
-        additionalDips * ADDITIONAL_DIP_PRICE;
+        const additionalDips =
+          getAdditionalDips(row);
 
-      const effectiveTotal =
-        productTotal + additionalDipTotal;
+        const productTotal =
+          quantity * productPrice;
 
-      return {
-        ...row,
+        const additionalDipTotal =
+          additionalDips *
+          ADDITIONAL_DIP_PRICE;
 
-        orderQuantity: quantity,
+        const effectiveTotal =
+          productTotal +
+          additionalDipTotal;
 
-        productPrice,
+        return {
+          ...row,
 
-        additionalDips,
+          // Quantity
+          orderQuantity: quantity,
 
-        productTotal,
+          // Product price
+          productPrice,
 
-        additionalDipTotal,
+          // Extra dips
+          additionalDips,
 
-        effectivePrice: effectiveTotal,
+          additionalDipPrice:
+            ADDITIONAL_DIP_PRICE,
 
-        effectiveTotal,
+          // Calculated totals
+          productTotal,
 
-        originalPrice: row.price ?? 0,
+          additionalDipTotal,
 
-        originalTotal: row.total ?? null,
-      };
-    },
-    [
-      getAdditionalDips,
-      getOrderQuantity,
-      getProductPrice,
-    ],
-  );
+          effectiveTotal,
+
+          effectivePrice:
+            effectiveTotal,
+
+          // Legacy values
+          originalPrice:
+            row.price ?? 0,
+
+          originalTotal:
+            row.total ?? null,
+        };
+      },
+      [
+        getOrderQuantity,
+        getProductPrice,
+        getAdditionalDips,
+      ],
+    );
 
   // =====================================================
-  // FORM TOTAL
+  // TRACKER FORM TOTAL
   // =====================================================
 
   const trackerTotal = useMemo(() => {
-    const quantity = Number(
-      tracker.orderQuantity || 0,
-    );
+    const quantity =
+      Number(
+        tracker.orderQuantity || 0,
+      );
 
-    const productPrice = Number(
-      tracker.productPrice ||
-        tracker.price ||
-        0,
-    );
+    const productPrice =
+      Number(
+        tracker.productPrice ||
+          tracker.price ||
+          0,
+      );
 
-    const additionalDips = Number(
-      tracker.additionalDips || 0,
-    );
+    const additionalDips =
+      Number(
+        tracker.additionalDips || 0,
+      );
 
     const productTotal =
       quantity * productPrice;
 
     const additionalDipTotal =
-      additionalDips * ADDITIONAL_DIP_PRICE;
+      additionalDips *
+      ADDITIONAL_DIP_PRICE;
 
     const total =
-      productTotal + additionalDipTotal;
+      productTotal +
+      additionalDipTotal;
 
-    return Number.isFinite(total) ? total : 0;
+    return Number.isFinite(total)
+      ? total
+      : 0;
   }, [
     tracker.orderQuantity,
     tracker.productPrice,
@@ -430,7 +498,9 @@ export default function Dashboard({ activeView }) {
       expenses.price || 0,
     );
 
-    return Number.isFinite(value) ? value : 0;
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }, [expenses.price]);
 
   // =====================================================
@@ -442,254 +512,284 @@ export default function Dashboard({ activeView }) {
       savings.amount || 0,
     );
 
-    return Number.isFinite(value) ? value : 0;
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }, [savings.amount]);
 
   // =====================================================
   // DATE FILTER
   // =====================================================
 
-  const filterBySummaryDate = useCallback(
-    (rows) => {
-      if (
-        summaryRange !== "date" ||
-        !summaryDate
-      ) {
-        return rows;
-      }
+  const filterBySummaryDate =
+    useCallback(
+      (rows) => {
+        if (
+          summaryRange !== "date" ||
+          !summaryDate
+        ) {
+          return rows;
+        }
 
-      return rows.filter(
-        (row) =>
-          String(row.date || "").slice(0, 10) ===
-          summaryDate,
-      );
-    },
-    [summaryRange, summaryDate],
-  );
+        return rows.filter(
+          (row) =>
+            String(
+              row.date || "",
+            ).slice(0, 10) ===
+            summaryDate,
+        );
+      },
+      [summaryRange, summaryDate],
+    );
 
   // =====================================================
   // DISPLAYED TRACKER ROWS
   // =====================================================
 
-  const displayedTrackerRows = useMemo(() => {
-    const filtered =
-      filterBySummaryDate(trackerRows);
+  const displayedTrackerRows =
+    useMemo(() => {
+      const filtered =
+        filterBySummaryDate(
+          trackerRows,
+        );
 
-    return filtered.map(normalizeTrackerRow);
-  }, [
-    filterBySummaryDate,
-    normalizeTrackerRow,
-    trackerRows,
-  ]);
+      return filtered.map(
+        normalizeTrackerRow,
+      );
+    }, [
+      filterBySummaryDate,
+      normalizeTrackerRow,
+      trackerRows,
+    ]);
 
   // =====================================================
   // DISPLAYED EXPENSE ROWS
   // =====================================================
 
-  const displayedExpenseRows = useMemo(() => {
-    return filterBySummaryDate(expenseRows);
-  }, [
-    filterBySummaryDate,
-    expenseRows,
-  ]);
+  const displayedExpenseRows =
+    useMemo(() => {
+      return filterBySummaryDate(
+        expenseRows,
+      );
+    }, [
+      filterBySummaryDate,
+      expenseRows,
+    ]);
 
   // =====================================================
   // DISPLAYED SAVINGS ROWS
   // =====================================================
 
-  const displayedSavingsRows = useMemo(() => {
-    return filterBySummaryDate(savingsRows);
-  }, [
-    filterBySummaryDate,
-    savingsRows,
-  ]);
+  const displayedSavingsRows =
+    useMemo(() => {
+      return filterBySummaryDate(
+        savingsRows,
+      );
+    }, [
+      filterBySummaryDate,
+      savingsRows,
+    ]);
 
   // =====================================================
   // PENDING ORDERS
+  //
+  // Extra dips are already calculated
+  // through normalizeTrackerRow().
   // =====================================================
 
-  const pendingTrackerRows = useMemo(() => {
-    return trackerRows
-      .filter(
-        (row) =>
-          (row.status || "Pending") ===
-          "Pending",
-      )
-      .map(normalizeTrackerRow);
-  }, [
-    normalizeTrackerRow,
-    trackerRows,
-  ]);
+  const pendingTrackerRows =
+    useMemo(() => {
+      return trackerRows
+        .filter(
+          (row) =>
+            (row.status ||
+              "Pending") ===
+            "Pending",
+        )
+        .map(
+          normalizeTrackerRow,
+        );
+    }, [
+      normalizeTrackerRow,
+      trackerRows,
+    ]);
 
   // =====================================================
   // COMPLETED ORDERS
   // =====================================================
 
-  const completedTrackerRows = useMemo(() => {
-    return displayedTrackerRows.filter(
-      (row) =>
-        (row.status || "Pending") ===
-        "Completed",
-    );
-  }, [displayedTrackerRows]);
+  const completedTrackerRows =
+    useMemo(() => {
+      return displayedTrackerRows.filter(
+        (row) =>
+          (row.status ||
+            "Pending") ===
+          "Completed",
+      );
+    }, [displayedTrackerRows]);
 
   // =====================================================
-  // PENDING ORDERS TOTAL
+  // PENDING TOTAL
   //
-  // EXTRA DIPS INCLUDED.
+  // PRODUCT + EXTRA DIPS
   // =====================================================
 
-  const pendingTrackerTotal = useMemo(() => {
-    return pendingTrackerRows.reduce(
-      (total, row) =>
-        total +
-        Number(row.effectiveTotal || 0),
-      0,
-    );
-  }, [pendingTrackerRows]);
+  const pendingTrackerTotal =
+    useMemo(() => {
+      return pendingTrackerRows.reduce(
+        (total, row) => {
+          return (
+            total +
+            Number(
+              row.effectiveTotal || 0,
+            )
+          );
+        },
+        0,
+      );
+    }, [pendingTrackerRows]);
 
   // =====================================================
   // SUMMARY TOTAL SALES
   //
-  // EXTRA DIPS INCLUDED.
-  //
-  // Example:
-  //
-  // 1 order × ₱49 = ₱49
-  // 1 extra dip × ₱10 = ₱10
-  //
-  // TOTAL = ₱59
+  // PRODUCT + EXTRA DIPS
   // =====================================================
 
-  const summaryTrackerTotal = useMemo(() => {
-    return completedTrackerRows.reduce(
-      (total, row) => {
-        const orderTotal =
-          getOrderTotal(row);
-
-        return total + orderTotal;
-      },
-      0,
-    );
-  }, [
-    completedTrackerRows,
-    getOrderTotal,
-  ]);
+  const summaryTrackerTotal =
+    useMemo(() => {
+      return completedTrackerRows.reduce(
+        (total, row) => {
+          return (
+            total +
+            getOrderTotal(row)
+          );
+        },
+        0,
+      );
+    }, [
+      completedTrackerRows,
+      getOrderTotal,
+    ]);
 
   // =====================================================
   // SUMMARY TOTAL EXPENSES
   // =====================================================
 
-  const summaryExpensesTotal = useMemo(() => {
-    return displayedExpenseRows.reduce(
-      (total, row) => {
-        const amount = Number(
-          row.price || 0,
-        );
+  const summaryExpensesTotal =
+    useMemo(() => {
+      return displayedExpenseRows.reduce(
+        (total, row) => {
+          const amount =
+            Number(
+              row.price || 0,
+            );
 
-        return (
-          total +
-          (Number.isFinite(amount)
-            ? amount
-            : 0)
-        );
-      },
-      0,
-    );
-  }, [displayedExpenseRows]);
+          return (
+            total +
+            (Number.isFinite(amount)
+              ? amount
+              : 0)
+          );
+        },
+        0,
+      );
+    }, [displayedExpenseRows]);
 
   // =====================================================
   // SUMMARY TOTAL SAVINGS
   // =====================================================
 
-  const summarySavingsTotal = useMemo(() => {
-    return displayedSavingsRows.reduce(
-      (total, row) => {
-        const amount = Number(
-          row.amount || 0,
-        );
+  const summarySavingsTotal =
+    useMemo(() => {
+      return displayedSavingsRows.reduce(
+        (total, row) => {
+          const amount =
+            Number(
+              row.amount || 0,
+            );
 
-        return (
-          total +
-          (Number.isFinite(amount)
-            ? amount
-            : 0)
-        );
-      },
-      0,
-    );
-  }, [displayedSavingsRows]);
+          return (
+            total +
+            (Number.isFinite(amount)
+              ? amount
+              : 0)
+          );
+        },
+        0,
+      );
+    }, [displayedSavingsRows]);
 
   // =====================================================
   // NET PROFIT
   //
-  // PROFIT =
-  // TOTAL SALES - TOTAL EXPENSES
-  //
-  // Extra dips are already included in TOTAL SALES.
+  // SALES - EXPENSES
   // =====================================================
 
-  const summaryProfit = useMemo(() => {
-    const sales = Number(
-      summaryTrackerTotal || 0,
-    );
+  const summaryProfit =
+    useMemo(() => {
+      const sales =
+        Number(
+          summaryTrackerTotal || 0,
+        );
 
-    const expenses = Number(
-      summaryExpensesTotal || 0,
-    );
+      const expenses =
+        Number(
+          summaryExpensesTotal || 0,
+        );
 
-    const profit =
-      sales - expenses;
+      const profit =
+        sales - expenses;
 
-    return Number.isFinite(profit)
-      ? profit
-      : 0;
-  }, [
-    summaryTrackerTotal,
-    summaryExpensesTotal,
-  ]);
+      return Number.isFinite(profit)
+        ? profit
+        : 0;
+    }, [
+      summaryTrackerTotal,
+      summaryExpensesTotal,
+    ]);
 
   // =====================================================
   // AVAILABLE MONEY
   //
-  // AVAILABLE MONEY =
   // PROFIT - SAVINGS
   // =====================================================
 
-  const availableMoney = useMemo(() => {
-    const profit = Number(
-      summaryProfit || 0,
-    );
+  const availableMoney =
+    useMemo(() => {
+      const profit =
+        Number(
+          summaryProfit || 0,
+        );
 
-    const savings = Number(
-      summarySavingsTotal || 0,
-    );
+      const savings =
+        Number(
+          summarySavingsTotal || 0,
+        );
 
-    return Math.max(
-      0,
-      profit - savings,
-    );
-  }, [
-    summaryProfit,
-    summarySavingsTotal,
-  ]);
+      return Math.max(
+        0,
+        profit - savings,
+      );
+    }, [
+      summaryProfit,
+      summarySavingsTotal,
+    ]);
 
   // =====================================================
   // BUSINESS CAPITAL
-  //
-  // BUSINESS CAPITAL =
-  // NET PROFIT
   // =====================================================
 
-  const availableCapital = useMemo(() => {
-    const profit = Number(
-      summaryProfit || 0,
-    );
+  const availableCapital =
+    useMemo(() => {
+      const profit =
+        Number(
+          summaryProfit || 0,
+        );
 
-    return Number.isFinite(profit)
-      ? Math.max(0, profit)
-      : 0;
-  }, [summaryProfit]);
+      return Number.isFinite(profit)
+        ? Math.max(0, profit)
+        : 0;
+    }, [summaryProfit]);
 
   // =====================================================
   // COUNTS
@@ -705,23 +805,24 @@ export default function Dashboard({ activeView }) {
   // INVENTORY HELPER
   // =====================================================
 
-  const findInventoryItem = useCallback(
-    (inventory, itemName) => {
-      const normalizedName =
-        String(itemName)
-          .trim()
-          .toLowerCase();
-
-      return inventory.find(
-        (item) =>
-          String(item.name)
+  const findInventoryItem =
+    useCallback(
+      (inventory, itemName) => {
+        const normalizedName =
+          String(itemName)
             .trim()
-            .toLowerCase() ===
-          normalizedName,
-      );
-    },
-    [],
-  );
+            .toLowerCase();
+
+        return inventory.find(
+          (item) =>
+            String(item.name)
+              .trim()
+              .toLowerCase() ===
+            normalizedName,
+        );
+      },
+      [],
+    );
 
   // =====================================================
   // INVENTORY DEDUCTIONS
@@ -817,11 +918,12 @@ export default function Dashboard({ activeView }) {
         );
       }
 
-      // Additional dips require additional dip packs.
+      // EXTRA DIP = EXTRA DIP PACK
       if (additionalDips > 0) {
         deductions.push({
           name: "Dip Pack",
-          quantity: additionalDips,
+          quantity:
+            additionalDips,
         });
       }
 
@@ -836,7 +938,9 @@ export default function Dashboard({ activeView }) {
     useCallback(
       (order) => {
         const deductions =
-          getInventoryDeductions(order);
+          getInventoryDeductions(
+            order,
+          );
 
         const errors = [];
 
@@ -857,7 +961,9 @@ export default function Dashboard({ activeView }) {
             }
 
             const currentStock =
-              Number(item.stock) || 0;
+              Number(
+                item.stock,
+              ) || 0;
 
             if (
               currentStock <
@@ -871,7 +977,8 @@ export default function Dashboard({ activeView }) {
         );
 
         return {
-          valid: errors.length === 0,
+          valid:
+            errors.length === 0,
           errors,
         };
       },
@@ -890,7 +997,9 @@ export default function Dashboard({ activeView }) {
     useCallback(
       async (order) => {
         const deductions =
-          getInventoryDeductions(order);
+          getInventoryDeductions(
+            order,
+          );
 
         for (const deduction of deductions) {
           const item =
@@ -906,7 +1015,9 @@ export default function Dashboard({ activeView }) {
           }
 
           const currentStock =
-            Number(item.stock) || 0;
+            Number(
+              item.stock,
+            ) || 0;
 
           const newStock =
             currentStock -
@@ -924,7 +1035,10 @@ export default function Dashboard({ activeView }) {
               .update({
                 stock: newStock,
               })
-              .eq("id", item.id);
+              .eq(
+                "id",
+                item.id,
+              );
 
           if (error) {
             throw error;
@@ -945,7 +1059,9 @@ export default function Dashboard({ activeView }) {
           throw error;
         }
 
-        setInventoryRows(data || []);
+        setInventoryRows(
+          data || [],
+        );
       },
       [
         findInventoryItem,
@@ -987,31 +1103,32 @@ export default function Dashboard({ activeView }) {
       setErrorMessage("");
 
       try {
-        // -------------------------------------------------
-        // NORMALIZE VALUES
-        // -------------------------------------------------
+        const orderQuantity =
+          Number(
+            tracker.orderQuantity,
+          );
 
-        const orderQuantity = Number(
-          tracker.orderQuantity,
-        );
-
-        const productPrice = Number(
-          tracker.productPrice ||
-            tracker.price ||
-            0,
-        );
+        const productPrice =
+          Number(
+            tracker.productPrice ||
+              tracker.price ||
+              0,
+          );
 
         const additionalDips =
-          tracker.additionalDips === ""
+          tracker.additionalDips ===
+          ""
             ? 0
             : Number(
-                tracker.additionalDips || 0,
+                tracker.additionalDips ||
+                  0,
               );
 
         const validAdditionalDips =
           Number.isFinite(
             additionalDips,
-          ) && additionalDips > 0
+          ) &&
+          additionalDips > 0
             ? additionalDips
             : 0;
 
@@ -1026,9 +1143,9 @@ export default function Dashboard({ activeView }) {
             validAdditionalDips,
         };
 
-        // -------------------------------------------------
+        // =================================================
         // INVENTORY CHECK
-        // -------------------------------------------------
+        // =================================================
 
         if (
           tracker.status ===
@@ -1050,18 +1167,9 @@ export default function Dashboard({ activeView }) {
           }
         }
 
-        // -------------------------------------------------
-        // PAYLOAD
-        //
-        // IMPORTANT:
-        // There is NO order_total column.
-        //
-        // We save:
-        // product_price
-        // additional_dips
-        //
-        // Then calculate the final total in React.
-        // -------------------------------------------------
+        // =================================================
+        // SUPABASE PAYLOAD
+        // =================================================
 
         const payload = {
           date: tracker.date,
@@ -1071,8 +1179,11 @@ export default function Dashboard({ activeView }) {
           order_quantity:
             orderQuantity,
 
-          // BASE PRODUCT PRICE ONLY
+          // BASE PRODUCT PRICE
           price: productPrice,
+
+          product_price:
+            productPrice,
 
           notes:
             tracker.notes?.trim() ||
@@ -1082,7 +1193,8 @@ export default function Dashboard({ activeView }) {
             tracker.status,
 
           product:
-            tracker.product || null,
+            tracker.product ||
+            null,
 
           variant_pcs:
             tracker.variantPcs
@@ -1091,13 +1203,12 @@ export default function Dashboard({ activeView }) {
                 )
               : null,
 
-          product_price:
-            productPrice,
-
           dip:
-            tracker.dip || null,
+            tracker.dip ||
+            null,
 
-          // NUMBER OF EXTRA DIPS
+          // IMPORTANT:
+          // THIS IS THE EXTRA DIP QUANTITY
           additional_dips:
             validAdditionalDips,
 
@@ -1106,41 +1217,45 @@ export default function Dashboard({ activeView }) {
             null,
         };
 
-        // -------------------------------------------------
+        // =================================================
         // INSERT
-        // -------------------------------------------------
+        // =================================================
 
         const { error } =
           await supabase
             .from("tracker")
-            .insert([payload]);
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
         }
 
-        // -------------------------------------------------
-        // DEDUCT INVENTORY
-        // -------------------------------------------------
+        // =================================================
+        // DEDUCT INVENTORY IF COMPLETED
+        // =================================================
 
         if (
           tracker.status ===
           "Completed"
         ) {
-          await deductInventory(order);
+          await deductInventory(
+            order,
+          );
         }
 
-        // -------------------------------------------------
+        // =================================================
         // RESET
-        // -------------------------------------------------
+        // =================================================
 
         setTracker({
           ...DEFAULT_TRACKER,
         });
 
-        // -------------------------------------------------
+        // =================================================
         // RELOAD
-        // -------------------------------------------------
+        // =================================================
 
         await loadData();
       } catch (error) {
@@ -1200,7 +1315,9 @@ export default function Dashboard({ activeView }) {
         const { error } =
           await supabase
             .from("expenses")
-            .insert([payload]);
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
@@ -1249,9 +1366,10 @@ export default function Dashboard({ activeView }) {
         return;
       }
 
-      const amount = Number(
-        savings.amount,
-      );
+      const amount =
+        Number(
+          savings.amount,
+        );
 
       if (
         !Number.isFinite(amount) ||
@@ -1294,7 +1412,9 @@ export default function Dashboard({ activeView }) {
         const { error } =
           await supabase
             .from("savings")
-            .insert([payload]);
+            .insert([
+              payload,
+            ]);
 
         if (error) {
           throw error;
@@ -1421,13 +1541,14 @@ export default function Dashboard({ activeView }) {
           throw findError;
         }
 
-        // -------------------------------------------------
+        // =================================================
         // PENDING → COMPLETED
-        // -------------------------------------------------
+        // =================================================
 
         if (
           status === "Completed" &&
-          row.status !== "Completed"
+          row.status !==
+            "Completed"
         ) {
           const inventoryCheck =
             checkInventoryAvailability(
@@ -1444,12 +1565,14 @@ export default function Dashboard({ activeView }) {
             );
           }
 
-          await deductInventory(row);
+          await deductInventory(
+            row,
+          );
         }
 
-        // -------------------------------------------------
+        // =================================================
         // UPDATE STATUS
-        // -------------------------------------------------
+        // =================================================
 
         const { error } =
           await supabase
@@ -1491,7 +1614,9 @@ export default function Dashboard({ activeView }) {
         );
 
       if (confirmed) {
-        handleDeleteTrackerRow(row.id);
+        handleDeleteTrackerRow(
+          row.id,
+        );
       }
     };
 
@@ -1507,7 +1632,9 @@ export default function Dashboard({ activeView }) {
         );
 
       if (confirmed) {
-        handleDeleteExpenseRow(row.id);
+        handleDeleteExpenseRow(
+          row.id,
+        );
       }
     };
 
@@ -1525,7 +1652,9 @@ export default function Dashboard({ activeView }) {
         );
 
       if (confirmed) {
-        handleDeleteSavingsRow(row.id);
+        handleDeleteSavingsRow(
+          row.id,
+        );
       }
     };
 
@@ -1593,10 +1722,18 @@ export default function Dashboard({ activeView }) {
     if (activeView === "summary") {
       return (
         <SummaryTab
-          summaryRange={summaryRange}
-          setSummaryRange={setSummaryRange}
-          summaryDate={summaryDate}
-          setSummaryDate={setSummaryDate}
+          summaryRange={
+            summaryRange
+          }
+          setSummaryRange={
+            setSummaryRange
+          }
+          summaryDate={
+            summaryDate
+          }
+          setSummaryDate={
+            setSummaryDate
+          }
           isLoading={isLoading}
           completedTrackerRows={
             completedTrackerRows
@@ -1607,7 +1744,9 @@ export default function Dashboard({ activeView }) {
           displayedSavingsRows={
             displayedSavingsRows
           }
-          isSubmitting={isSubmitting}
+          isSubmitting={
+            isSubmitting
+          }
           onDeleteTracker={
             confirmDeleteTrackerRow
           }
@@ -1626,7 +1765,9 @@ export default function Dashboard({ activeView }) {
           summarySavingsTotal={
             summarySavingsTotal
           }
-          summaryProfit={summaryProfit}
+          summaryProfit={
+            summaryProfit
+          }
           availableCapital={
             availableCapital
           }
@@ -1652,14 +1793,28 @@ export default function Dashboard({ activeView }) {
         <SavingsTab
           savings={savings}
           setSavings={setSavings}
-          savingsRows={savingsRows}
-          savingsTotal={summarySavingsTotal}
-          summaryProfit={summaryProfit}
-          availableMoney={availableMoney}
+          savingsRows={
+            savingsRows
+          }
+          savingsTotal={
+            summarySavingsTotal
+          }
+          summaryProfit={
+            summaryProfit
+          }
+          availableMoney={
+            availableMoney
+          }
           isLoading={isLoading}
-          isSubmitting={isSubmitting}
-          onSubmit={handleSavingsSubmit}
-          onDelete={confirmDeleteSavingsRow}
+          isSubmitting={
+            isSubmitting
+          }
+          onSubmit={
+            handleSavingsSubmit
+          }
+          onDelete={
+            confirmDeleteSavingsRow
+          }
         />
       );
     }
@@ -1675,7 +1830,9 @@ export default function Dashboard({ activeView }) {
           pendingTrackerRows={
             pendingTrackerRows
           }
-          isSubmitting={isSubmitting}
+          isSubmitting={
+            isSubmitting
+          }
           onMarkComplete={(rowId) =>
             handleTrackerStatusChange(
               rowId,
@@ -1701,9 +1858,15 @@ export default function Dashboard({ activeView }) {
         <ExpensesTab
           expenses={expenses}
           setExpenses={setExpenses}
-          expensesTotal={expensesTotal}
-          isSubmitting={isSubmitting}
-          onSubmit={handleExpensesSubmit}
+          expensesTotal={
+            expensesTotal
+          }
+          isSubmitting={
+            isSubmitting
+          }
+          onSubmit={
+            handleExpensesSubmit
+          }
         />
       );
     }
@@ -1724,8 +1887,12 @@ export default function Dashboard({ activeView }) {
           summarySavingsTotal={
             summarySavingsTotal
           }
-          summaryProfit={summaryProfit}
-          availableMoney={availableMoney}
+          summaryProfit={
+            summaryProfit
+          }
+          availableMoney={
+            availableMoney
+          }
         />
       );
     }
@@ -1737,7 +1904,9 @@ export default function Dashboard({ activeView }) {
     if (activeView === "inventory") {
       return (
         <InventoryTab
-          inventoryRows={inventoryRows}
+          inventoryRows={
+            inventoryRows
+          }
           setInventoryRows={
             setInventoryRows
           }
@@ -1757,9 +1926,15 @@ export default function Dashboard({ activeView }) {
       <TrackerTab
         tracker={tracker}
         setTracker={setTracker}
-        trackerTotal={trackerTotal}
-        isSubmitting={isSubmitting}
-        onSubmit={handleTrackerSubmit}
+        trackerTotal={
+          trackerTotal
+        }
+        isSubmitting={
+          isSubmitting
+        }
+        onSubmit={
+          handleTrackerSubmit
+        }
       />
     );
   };
@@ -1783,9 +1958,7 @@ export default function Dashboard({ activeView }) {
             : "border-gray-200 bg-white"
         }`}
       >
-        {/* =================================================
-            HEADER
-        ================================================= */}
+        {/* HEADER */}
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -1806,17 +1979,20 @@ export default function Dashboard({ activeView }) {
                   : "text-gray-600"
               }`}
             >
-              {currentView.description}
+              {
+                currentView.description
+              }
             </p>
           </div>
 
-          {/* DARK MODE BUTTON */}
+          {/* DARK MODE */}
 
           <button
             type="button"
             onClick={() =>
               setDarkMode(
-                (previous) => !previous,
+                (previous) =>
+                  !previous,
               )
             }
             className={`w-fit shrink-0 rounded-lg px-4 py-2 font-medium text-white transition ${
@@ -1831,9 +2007,7 @@ export default function Dashboard({ activeView }) {
           </button>
         </div>
 
-        {/* =================================================
-            ERROR MESSAGE
-        ================================================= */}
+        {/* ERROR */}
 
         {errorMessage ? (
           <div
@@ -1847,9 +2021,7 @@ export default function Dashboard({ activeView }) {
           </div>
         ) : null}
 
-        {/* =================================================
-            ACTIVE TAB
-        ================================================= */}
+        {/* ACTIVE TAB */}
 
         <div className="mt-6">
           {renderActiveTab()}

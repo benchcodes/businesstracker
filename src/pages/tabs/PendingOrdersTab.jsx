@@ -6,6 +6,53 @@ export default function PendingOrdersTab({
   onDeleteTracker,
   pendingTrackerTotal,
 }) {
+  const getAdditionalDips = (row) => {
+    const value =
+      row.additionalDips ??
+      row.additional_dips ??
+      0;
+
+    const number = Number(value);
+
+    return Number.isFinite(number) && number > 0
+      ? number
+      : 0;
+  };
+
+  const getProductTotal = (row) => {
+    const quantity = Number(
+      row.orderQuantity ??
+        row.order_quantity ??
+        1,
+    );
+
+    const price = Number(
+      row.productPrice ??
+        row.product_price ??
+        row.price ??
+        0,
+    );
+
+    return quantity * price;
+  };
+
+  const getExtraDipTotal = (row) => {
+    const additionalDips =
+      getAdditionalDips(row);
+
+    return additionalDips * 10;
+  };
+
+  const getFinalTotal = (row) => {
+    const productTotal =
+      getProductTotal(row);
+
+    const extraDipTotal =
+      getExtraDipTotal(row);
+
+    return productTotal + extraDipTotal;
+  };
+
   return (
     <div className="space-y-6">
       {/* Pending Orders */}
@@ -17,102 +64,219 @@ export default function PendingOrdersTab({
             </div>
           ) : pendingTrackerRows.length > 0 ? (
             Object.entries(
-              pendingTrackerRows.reduce((groups, row) => {
-                const date = row.date || "No Date";
+              pendingTrackerRows.reduce(
+                (groups, row) => {
+                  const date =
+                    row.date || "No Date";
 
-                if (!groups[date]) groups[date] = [];
-                groups[date].push(row);
+                  if (!groups[date]) {
+                    groups[date] = [];
+                  }
 
-                return groups;
-              }, {}),
+                  groups[date].push(row);
+
+                  return groups;
+                },
+                {},
+              ),
             ).map(([date, orders]) => (
               <div
                 key={date}
                 className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
               >
-                {/* Date Header */}
+                {/* DATE HEADER */}
                 <div className="bg-[#d8a66b] px-5 py-3 font-bold text-white">
                   {date}
                 </div>
 
-                {/* Table */}
+                {/* TABLE */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead className="bg-[#f8f5f2] dark:bg-gray-800">
                       <tr className="text-gray-700 dark:text-gray-200">
-                        <th className="px-4 py-3 text-left">Name</th>
-                        <th className="px-4 py-3 text-left">Qty</th>
-                        <th className="px-4 py-3 text-left">Price</th>
-                        <th className="px-4 py-3 text-left">Total</th>
-                        <th className="px-4 py-3 text-left">Notes</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                        <th className="px-4 py-3 text-left">Action</th>
+                        <th className="px-4 py-3 text-left">
+                          Name
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Product
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Qty
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Price
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Extra Dip
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Total
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Notes
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Status
+                        </th>
+
+                        <th className="px-4 py-3 text-left">
+                          Action
+                        </th>
                       </tr>
                     </thead>
 
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {orders.map((row) => (
-                        <tr
-                          key={row.id}
-                          className="text-gray-800 dark:text-gray-200"
-                        >
-                          <td className="px-4 py-3">{row.name}</td>
+                      {orders.map((row) => {
+                        const additionalDips =
+                          getAdditionalDips(row);
 
-                          <td className="px-4 py-3">{row.order_quantity}</td>
+                        const productTotal =
+                          getProductTotal(row);
 
-                          <td className="px-4 py-3">
-                            ₱{Number(row.price).toFixed(2)}
-                          </td>
+                        const extraDipTotal =
+                          getExtraDipTotal(row);
 
-                          <td className="px-4 py-3 font-semibold">
-                            ₱
-                            {(
-                              Number(row.order_quantity) * Number(row.price)
-                            ).toFixed(2)}
-                          </td>
+                        const finalTotal =
+                          getFinalTotal(row);
 
-                          <td className="px-4 py-3">{row.notes || "—"}</td>
+                        return (
+                          <tr
+                            key={row.id}
+                            className="text-gray-800 dark:text-gray-200"
+                          >
+                            {/* NAME */}
+                            <td className="px-4 py-3">
+                              {row.name}
+                            </td>
 
-                          <td className="px-4 py-3">
-                            <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
-                              {row.status}
-                            </span>
-                          </td>
+                            {/* PRODUCT */}
+                            <td className="px-4 py-3">
+                              {row.product ||
+                                "Regular Churros"}
+                            </td>
 
-                          <td className="space-x-2 px-4 py-3">
-                            {/* Complete */}
-                            <button
-                              onClick={() => onMarkComplete(row.id)}
-                              disabled={isSubmitting}
-                              className="rounded-lg border border-green-300 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950"
-                            >
-                              Complete
-                            </button>
+                            {/* QUANTITY */}
+                            <td className="px-4 py-3">
+                              {row.orderQuantity ??
+                                row.order_quantity ??
+                                1}
+                            </td>
 
-                            {/* Delete */}
-                            <button
-                              onClick={() => onDeleteTracker(row)}
-                              disabled={isSubmitting}
-                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                            {/* PRODUCT PRICE */}
+                            <td className="px-4 py-3">
+                              ₱
+                              {Number(
+                                row.productPrice ??
+                                  row.product_price ??
+                                  row.price ??
+                                  0,
+                              ).toFixed(2)}
+                            </td>
 
-                      {/* Date Total */}
+                            {/* EXTRA DIP */}
+                            <td className="px-4 py-3">
+                              {additionalDips > 0 ? (
+                              <div>
+                                <span className="font-semibold">
+                                  {additionalDips}
+                                </span>
+
+                                {row.additionalDipType ||
+                                row.additional_dip_type ? (
+                                  <span className="ml-1 text-gray-500 dark:text-gray-400">
+                                    (
+                                    {row.additionalDipType ??
+                                      row.additional_dip_type}
+                                    )
+                                  </span>
+                                ) : null}
+
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  ₱{extraDipTotal.toFixed(2)}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                            </td>
+
+                            {/* TOTAL */}
+                            <td className="px-4 py-3 font-semibold">
+                              ₱
+                              {finalTotal.toFixed(2)}
+                            </td>
+
+                            {/* NOTES */}
+                            <td className="px-4 py-3">
+                              {row.notes || "—"}
+                            </td>
+
+                            {/* STATUS */}
+                            <td className="px-4 py-3">
+                              <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300">
+                                {row.status ||
+                                  "Pending"}
+                              </span>
+                            </td>
+
+                            {/* ACTION */}
+                            <td className="space-x-2 px-4 py-3">
+                              <button
+                                onClick={() =>
+                                  onMarkComplete(
+                                    row.id,
+                                  )
+                                }
+                                disabled={
+                                  isSubmitting
+                                }
+                                className="rounded-lg border border-green-300 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950"
+                              >
+                                Complete
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  onDeleteTracker(
+                                    row,
+                                  )
+                                }
+                                disabled={
+                                  isSubmitting
+                                }
+                                className="rounded-lg border border-red-300 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* DATE TOTAL */}
                       <tr className="bg-[#f8f5f2] dark:bg-gray-800">
                         <td
-                          colSpan="7"
+                          colSpan="9"
                           className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-gray-200"
                         >
                           Date Total: ₱
                           {orders
                             .reduce(
-                              (sum, row) =>
+                              (
+                                sum,
+                                row,
+                              ) =>
                                 sum +
-                                Number(row.order_quantity) * Number(row.price),
+                                getFinalTotal(
+                                  row,
+                                ),
                               0,
                             )
                             .toFixed(2)}
@@ -131,14 +295,14 @@ export default function PendingOrdersTab({
         </div>
       </div>
 
-      {/* Pending Orders Total */}
+      {/* PENDING ORDERS TOTAL */}
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
           Pending Orders Total
         </h2>
 
         <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4 text-lg font-semibold text-[#5A3A2E] dark:border-gray-700 dark:bg-gray-800 dark:text-[#e8bd85]">
-          ₱{pendingTrackerTotal.toFixed(2)}
+          ₱{Number(pendingTrackerTotal || 0).toFixed(2)}
         </div>
       </div>
     </div>
