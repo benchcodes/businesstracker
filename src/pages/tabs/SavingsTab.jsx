@@ -3,15 +3,42 @@ export default function SavingsTab({
   setSavings,
   savingsRows,
   savingsTotal,
-  availableMoney,
+  summaryProfit,
   isLoading,
   isSubmitting,
   onSubmit,
   onDelete,
 }) {
+  // =====================================================
+  // AVAILABLE MONEY
+  //
+  // Available Money = Net Profit - Total Savings
+  //
+  // Example:
+  // Net Profit = ₱3,921
+  // Total Savings = ₱1,000
+  //
+  // Available Money = ₱2,921
+  // =====================================================
+
+  const profit = Number(summaryProfit || 0);
+  const totalSavings = Number(savingsTotal || 0);
+
+  const availableMoney = Math.max(
+    0,
+    profit - totalSavings,
+  );
+
+  // =====================================================
+  // RENDER
+  // =====================================================
+
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-6 text-white shadow-lg">
         <h1 className="text-2xl font-bold">
           💰 Savings
@@ -23,38 +50,47 @@ export default function SavingsTab({
         </p>
       </div>
 
-      {/* TOTAL SAVINGS */}
+      {/* =====================================================
+          TOTAL SAVINGS
+      ===================================================== */}
+
       <div className="rounded-2xl border border-[#d8a66b] bg-[#f8f5f2] p-6 dark:border-[#8B5E3C] dark:bg-gray-900">
         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
           Total Savings
         </p>
 
         <p className="mt-2 text-4xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-          ₱{Number(savingsTotal || 0).toFixed(2)}
+          ₱{totalSavings.toFixed(2)}
         </p>
 
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          This amount is reserved and deducted only from
-          Available Money.
+          This is the total amount you have set aside for
+          savings.
         </p>
       </div>
 
-      {/* AVAILABLE MONEY */}
+      {/* =====================================================
+          AVAILABLE MONEY
+      ===================================================== */}
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
           Available Money
         </p>
 
         <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
-          ₱{Number(availableMoney || 0).toFixed(2)}
+          ₱{availableMoney.toFixed(2)}
         </p>
 
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Profit minus your total savings.
+          Net Profit − Total Savings.
         </p>
       </div>
 
-      {/* ADD SAVINGS */}
+      {/* =====================================================
+          ADD SAVINGS
+      ===================================================== */}
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
         <h2 className="text-xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
           Add Savings
@@ -65,6 +101,7 @@ export default function SavingsTab({
           className="mt-5 grid gap-4 md:grid-cols-2"
         >
           {/* DATE */}
+
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <span>Date</span>
 
@@ -82,6 +119,7 @@ export default function SavingsTab({
           </label>
 
           {/* AMOUNT */}
+
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <span>Amount to Save</span>
 
@@ -102,6 +140,7 @@ export default function SavingsTab({
           </label>
 
           {/* NOTES */}
+
           <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300 md:col-span-2">
             <span>Notes</span>
 
@@ -120,9 +159,13 @@ export default function SavingsTab({
           </label>
 
           {/* SAVE BUTTON */}
+
           <button
             type="submit"
-            disabled={isSubmitting || availableMoney <= 0}
+            disabled={
+              isSubmitting ||
+              availableMoney <= 0
+            }
             className="rounded-xl bg-[#d8a66b] px-4 py-3 font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
           >
             {isSubmitting
@@ -134,7 +177,10 @@ export default function SavingsTab({
         </form>
       </div>
 
-      {/* HISTORY */}
+      {/* =====================================================
+          SAVINGS HISTORY
+      ===================================================== */}
+
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
         <h2 className="text-xl font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
           Savings History
@@ -155,6 +201,8 @@ export default function SavingsTab({
                 key={row.id}
                 className="flex flex-col gap-3 rounded-xl border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700"
               >
+                {/* SAVINGS DETAILS */}
+
                 <div>
                   <p className="font-semibold text-gray-800 dark:text-white">
                     {row.date}
@@ -167,9 +215,14 @@ export default function SavingsTab({
                   )}
                 </div>
 
+                {/* AMOUNT + DELETE */}
+
                 <div className="flex items-center justify-between gap-4 sm:justify-end">
                   <span className="font-bold text-green-600 dark:text-green-400">
-                    +₱{Number(row.amount || 0).toFixed(2)}
+                    +₱
+                    {Number(
+                      row.amount || 0,
+                    ).toFixed(2)}
                   </span>
 
                   <button

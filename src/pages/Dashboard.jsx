@@ -15,6 +15,12 @@ import InventoryTab from "./tabs/InventoryTab";
 import SavingsTab from "./tabs/SavingsTab";
 
 // =====================================================
+// CONSTANTS
+// =====================================================
+
+const ADDITIONAL_DIP_PRICE = 10;
+
+// =====================================================
 // DEFAULT VALUES
 // =====================================================
 
@@ -52,61 +58,42 @@ export default function Dashboard({ activeView }) {
   // FORM STATE
   // =====================================================
 
-  const [tracker, setTracker] =
-    useState(DEFAULT_TRACKER);
-
-  const [expenses, setExpenses] =
-    useState(DEFAULT_EXPENSES);
-
-  const [savings, setSavings] =
-    useState(DEFAULT_SAVINGS);
+  const [tracker, setTracker] = useState(DEFAULT_TRACKER);
+  const [expenses, setExpenses] = useState(DEFAULT_EXPENSES);
+  const [savings, setSavings] = useState(DEFAULT_SAVINGS);
 
   // =====================================================
   // DATA STATE
   // =====================================================
 
-  const [trackerRows, setTrackerRows] =
-    useState([]);
-
-  const [expenseRows, setExpenseRows] =
-    useState([]);
-
-  const [savingsRows, setSavingsRows] =
-    useState([]);
-
-  const [inventoryRows, setInventoryRows] =
-    useState([]);
+  const [trackerRows, setTrackerRows] = useState([]);
+  const [expenseRows, setExpenseRows] = useState([]);
+  const [savingsRows, setSavingsRows] = useState([]);
+  const [inventoryRows, setInventoryRows] = useState([]);
 
   // =====================================================
   // SUMMARY STATE
   // =====================================================
 
-  const [summaryRange, setSummaryRange] =
-    useState("overall");
-
-  const [summaryDate, setSummaryDate] =
-    useState("");
+  const [summaryRange, setSummaryRange] = useState("overall");
+  const [summaryDate, setSummaryDate] = useState("");
 
   // =====================================================
   // UI STATE
   // =====================================================
 
-  const [isLoading, setIsLoading] =
-    useState(true);
-
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
-
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // =====================================================
   // DARK MODE
   // =====================================================
 
   const [darkMode, setDarkMode] = useState(() => {
-    const savedMode =
-      localStorage.getItem("churrozi-dark-mode");
+    const savedMode = localStorage.getItem(
+      "churrozi-dark-mode",
+    );
 
     return savedMode === null
       ? true
@@ -188,21 +175,10 @@ export default function Dashboard({ activeView }) {
         throw firstError;
       }
 
-      setTrackerRows(
-        trackerResult.data || [],
-      );
-
-      setExpenseRows(
-        expenseResult.data || [],
-      );
-
-      setInventoryRows(
-        inventoryResult.data || [],
-      );
-
-      setSavingsRows(
-        savingsResult.data || [],
-      );
+      setTrackerRows(trackerResult.data || []);
+      setExpenseRows(expenseResult.data || []);
+      setInventoryRows(inventoryResult.data || []);
+      setSavingsRows(savingsResult.data || []);
 
       setErrorMessage("");
     } catch (error) {
@@ -221,6 +197,134 @@ export default function Dashboard({ activeView }) {
   }, [loadData]);
 
   // =====================================================
+  // GET ORDER TOTAL
+  //
+  // SALES FORMULA:
+  //
+  // Product Sales =
+  // order quantity × base product price
+  //
+  // Additional Dips =
+  // additional dips × ₱10
+  //
+  // Final Order Total =
+  // product sales + additional dip charges
+  // =====================================================
+
+  const getOrderTotal = useCallback((row) => {
+  if (!row) {
+    return 0;
+  }
+
+  const quantity = Number(
+    row.order_quantity ??
+      row.orderQuantity ??
+      1,
+  );
+
+  const productPrice = Number(
+    row.product_price ??
+      row.productPrice ??
+      0,
+  );
+
+  const price = Number(row.price || 0);
+
+  const total = Number(row.total || 0);
+
+  const orderTotal = Number(
+    row.order_total || 0,
+  );
+
+  const orderTotalCamel = Number(
+    row.orderTotal || 0,
+  );
+
+  const validQuantity =
+    Number.isFinite(quantity) &&
+    quantity > 0
+      ? quantity
+      : 1;
+
+  // =====================================================
+  // PRIORITY:
+  // Quantity × Product Price
+  //
+  // Example:
+  // 2 × ₱69 = ₱138
+  // =====================================================
+
+  if (
+    Number.isFinite(productPrice) &&
+    productPrice > 0
+  ) {
+    return (
+      validQuantity * productPrice
+    );
+  }
+
+  // =====================================================
+  // LEGACY FALLBACK
+  // =====================================================
+
+  if (
+    Number.isFinite(total) &&
+    total > 0
+  ) {
+    return total;
+  }
+
+  if (
+    Number.isFinite(orderTotal) &&
+    orderTotal > 0
+  ) {
+    return orderTotal;
+  }
+
+  if (
+    Number.isFinite(orderTotalCamel) &&
+    orderTotalCamel > 0
+  ) {
+    return orderTotalCamel;
+  }
+
+  // Last fallback
+  if (
+    Number.isFinite(price) &&
+    price > 0
+  ) {
+    return price;
+  }
+
+  return 0;
+}, []);
+
+  // =====================================================
+  // NORMALIZE TRACKER ROWS
+  // =====================================================
+
+  const normalizeTrackerRow = useCallback(
+    (row) => {
+      const effectiveTotal =
+        getOrderTotal(row);
+
+      return {
+        ...row,
+
+        effectivePrice: effectiveTotal,
+        effectiveTotal,
+
+        originalPrice:
+          row.price ?? 0,
+
+        originalTotal:
+          row.total ?? null,
+      };
+    },
+    [getOrderTotal],
+  );
+
+  // =====================================================
   // FORM TOTALS
   // =====================================================
 
@@ -229,26 +333,55 @@ export default function Dashboard({ activeView }) {
       tracker.orderQuantity || 0,
     );
 
-    const price = Number(
-      tracker.price || 0,
+    const basePrice = Number(
+      tracker.productPrice ||
+        tracker.price ||
+        0,
     );
 
-    return quantity * price;
+    const additionalDips = Number(
+      tracker.additionalDips || 0,
+    );
+
+    const productSales =
+      quantity * basePrice;
+
+    const additionalDipSales =
+      additionalDips *
+      ADDITIONAL_DIP_PRICE;
+
+    const total =
+      productSales +
+      additionalDipSales;
+
+    return Number.isFinite(total)
+      ? total
+      : 0;
   }, [
     tracker.orderQuantity,
+    tracker.productPrice,
     tracker.price,
+    tracker.additionalDips,
   ]);
 
   const expensesTotal = useMemo(() => {
-    return Number(
+    const value = Number(
       expenses.price || 0,
     );
+
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }, [expenses.price]);
 
   const savingsTotal = useMemo(() => {
-    return Number(
+    const value = Number(
       savings.amount || 0,
     );
+
+    return Number.isFinite(value)
+      ? value
+      : 0;
   }, [savings.amount]);
 
   // =====================================================
@@ -266,59 +399,80 @@ export default function Dashboard({ activeView }) {
 
       return rows.filter(
         (row) =>
-          String(row.date || "").slice(
-            0,
-            10,
-          ) === summaryDate,
+          String(
+            row.date || "",
+          ).slice(0, 10) ===
+          summaryDate,
       );
     },
     [summaryRange, summaryDate],
   );
 
-  const displayedTrackerRows = useMemo(
-    () =>
+  // =====================================================
+  // DISPLAYED TRACKER ROWS
+  // =====================================================
+
+  const displayedTrackerRows = useMemo(() => {
+    const filtered =
       filterBySummaryDate(
         trackerRows,
-      ),
-    [
-      filterBySummaryDate,
-      trackerRows,
-    ],
-  );
+      );
 
-  const displayedExpenseRows = useMemo(
-    () =>
-      filterBySummaryDate(
+    return filtered.map(
+      normalizeTrackerRow,
+    );
+  }, [
+    filterBySummaryDate,
+    normalizeTrackerRow,
+    trackerRows,
+  ]);
+
+  // =====================================================
+  // DISPLAYED EXPENSE ROWS
+  // =====================================================
+
+  const displayedExpenseRows =
+    useMemo(() => {
+      return filterBySummaryDate(
         expenseRows,
-      ),
-    [
+      );
+    }, [
       filterBySummaryDate,
       expenseRows,
-    ],
-  );
+    ]);
 
-  const displayedSavingsRows = useMemo(
-    () =>
-      filterBySummaryDate(
+  // =====================================================
+  // DISPLAYED SAVINGS ROWS
+  // =====================================================
+
+  const displayedSavingsRows =
+    useMemo(() => {
+      return filterBySummaryDate(
         savingsRows,
-      ),
-    [
+      );
+    }, [
       filterBySummaryDate,
       savingsRows,
-    ],
-  );
+    ]);
 
   // =====================================================
   // PENDING ORDERS
   // =====================================================
 
-  const pendingTrackerRows = useMemo(() => {
-    return trackerRows.filter(
-      (row) =>
-        (row.status || "Pending") ===
-        "Pending",
-    );
-  }, [trackerRows]);
+  const pendingTrackerRows =
+    useMemo(() => {
+      return trackerRows
+        .filter(
+          (row) =>
+            (row.status ||
+              "Pending") ===
+            "Pending",
+        )
+        .map(normalizeTrackerRow);
+    }, [
+      normalizeTrackerRow,
+      trackerRows,
+    ]);
 
   // =====================================================
   // COMPLETED ORDERS
@@ -328,7 +482,8 @@ export default function Dashboard({ activeView }) {
     useMemo(() => {
       return displayedTrackerRows.filter(
         (row) =>
-          (row.status || "Pending") ===
+          (row.status ||
+            "Pending") ===
           "Completed",
       );
     }, [displayedTrackerRows]);
@@ -342,18 +497,13 @@ export default function Dashboard({ activeView }) {
       return pendingTrackerRows.reduce(
         (total, row) =>
           total +
-          Number(
-            row.order_quantity || 0,
-          ) *
-            Number(
-              row.price || 0,
-            ),
+          row.effectiveTotal,
         0,
       );
     }, [pendingTrackerRows]);
 
   // =====================================================
-  // SALES TOTAL
+  // TOTAL SALES
   // =====================================================
 
   const summaryTrackerTotal =
@@ -361,57 +511,86 @@ export default function Dashboard({ activeView }) {
       return completedTrackerRows.reduce(
         (total, row) =>
           total +
-          Number(
-            row.order_quantity || 0,
-          ) *
-            Number(
-              row.price || 0,
-            ),
+          row.effectiveTotal,
         0,
       );
     }, [completedTrackerRows]);
 
   // =====================================================
-  // EXPENSE TOTAL
+  // TOTAL EXPENSES
   // =====================================================
 
   const summaryExpensesTotal =
     useMemo(() => {
       return displayedExpenseRows.reduce(
-        (total, row) =>
-          total +
-          Number(row.price || 0),
+        (total, row) => {
+          const amount = Number(
+            row.price || 0,
+          );
+
+          return (
+            total +
+            (Number.isFinite(amount)
+              ? amount
+              : 0)
+          );
+        },
         0,
       );
     }, [displayedExpenseRows]);
 
   // =====================================================
-  // SAVINGS TOTAL
+  // TOTAL SAVINGS
+  //
+  // IMPORTANT:
+  // Savings are actual records from
+  // the savings table.
+  //
+  // Existing ₱464 stays ₱464.
   // =====================================================
 
   const summarySavingsTotal =
     useMemo(() => {
       return displayedSavingsRows.reduce(
-        (total, row) =>
-          total +
-          Number(row.amount || 0),
+        (total, row) => {
+          const amount = Number(
+            row.amount || 0,
+          );
+
+          return (
+            total +
+            (Number.isFinite(amount)
+              ? amount
+              : 0)
+          );
+        },
         0,
       );
     }, [displayedSavingsRows]);
 
   // =====================================================
-  // PROFIT
+  // NET PROFIT
   //
-  // Profit = Sales - Expenses
+  // PROFIT = SALES - EXPENSES
   //
-  // Savings is NOT an expense.
+  // Savings are NOT expenses.
   // =====================================================
 
   const summaryProfit = useMemo(() => {
-    return (
-      summaryTrackerTotal -
-      summaryExpensesTotal
+    const sales = Number(
+      summaryTrackerTotal || 0,
     );
+
+    const expenses = Number(
+      summaryExpensesTotal || 0,
+    );
+
+    const profit =
+      sales - expenses;
+
+    return Number.isFinite(profit)
+      ? profit
+      : 0;
   }, [
     summaryTrackerTotal,
     summaryExpensesTotal,
@@ -420,22 +599,47 @@ export default function Dashboard({ activeView }) {
   // =====================================================
   // AVAILABLE MONEY
   //
-  // Available Money = Profit - Savings
+  // AVAILABLE MONEY =
+  // NET PROFIT - TOTAL SAVINGS
   // =====================================================
 
   const availableMoney = useMemo(() => {
-    return (
-      summaryProfit -
-      summarySavingsTotal
-    );
-  }, [
-    summaryProfit,
-    summarySavingsTotal,
-  ]);
+      const profit = Number(
+        summaryProfit || 0,
+      );
 
-  // Keep capital consistent with available money.
+      const savings = Number(
+        summarySavingsTotal || 0,
+      );
+
+      return Math.max(
+        0,
+        profit - savings,
+      );
+    }, [
+      summaryProfit,
+      summarySavingsTotal,
+    ]);
+
+  // =====================================================
+  // BUSINESS CAPITAL
+  //
+  // BUSINESS CAPITAL =
+  // NET PROFIT
+  //
+  // Savings do NOT reduce profit.
+  // =====================================================
+
   const availableCapital =
-    availableMoney;
+    useMemo(() => {
+      const profit = Number(
+        summaryProfit || 0,
+      );
+
+      return Number.isFinite(profit)
+        ? Math.max(0, profit)
+        : 0;
+    }, [summaryProfit]);
 
   // =====================================================
   // COUNTS
@@ -451,23 +655,24 @@ export default function Dashboard({ activeView }) {
   // INVENTORY HELPER
   // =====================================================
 
-  const findInventoryItem = useCallback(
-    (inventory, itemName) => {
-      const normalizedName =
-        String(itemName)
-          .trim()
-          .toLowerCase();
-
-      return inventory.find(
-        (item) =>
-          String(item.name)
+  const findInventoryItem =
+    useCallback(
+      (inventory, itemName) => {
+        const normalizedName =
+          String(itemName)
             .trim()
-            .toLowerCase() ===
-          normalizedName,
-      );
-    },
-    [],
-  );
+            .toLowerCase();
+
+        return inventory.find(
+          (item) =>
+            String(item.name)
+              .trim()
+              .toLowerCase() ===
+            normalizedName,
+        );
+      },
+      [],
+    );
 
   // =====================================================
   // INVENTORY DEDUCTIONS
@@ -505,8 +710,7 @@ export default function Dashboard({ activeView }) {
       ) {
         deductions.push(
           {
-            name:
-              "Regular Size Pack",
+            name: "Regular Size Pack",
             quantity,
           },
           {
@@ -554,8 +758,7 @@ export default function Dashboard({ activeView }) {
       ) {
         deductions.push(
           {
-            name:
-              "Regular Size Pack",
+            name: "Regular Size Pack",
             quantity,
           },
           {
@@ -565,9 +768,9 @@ export default function Dashboard({ activeView }) {
         );
       }
 
-      // Additional dips are ON TOP
-      // of the free dip.
-      if (additionalDips > 0) {
+      if (
+        additionalDips > 0
+      ) {
         deductions.push({
           name: "Dip Pack",
           quantity:
@@ -604,12 +807,13 @@ export default function Dashboard({ activeView }) {
               errors.push(
                 `${deduction.name} is missing from inventory.`,
               );
-
               return;
             }
 
             const currentStock =
-              Number(item.stock) || 0;
+              Number(
+                item.stock,
+              ) || 0;
 
             if (
               currentStock <
@@ -647,9 +851,7 @@ export default function Dashboard({ activeView }) {
             order,
           );
 
-        for (
-          const deduction of deductions
-        ) {
+        for (const deduction of deductions) {
           const item =
             findInventoryItem(
               inventoryRows,
@@ -663,7 +865,9 @@ export default function Dashboard({ activeView }) {
           }
 
           const currentStock =
-            Number(item.stock) || 0;
+            Number(
+              item.stock,
+            ) || 0;
 
           const newStock =
             currentStock -
@@ -760,8 +964,6 @@ export default function Dashboard({ activeView }) {
                 ),
         };
 
-        // Check stock before
-        // completing an order.
         if (
           tracker.status ===
           "Completed"
@@ -782,6 +984,15 @@ export default function Dashboard({ activeView }) {
           }
         }
 
+        // Base product price is stored in price.
+        // Additional dips are stored separately.
+        const baseProductPrice =
+          Number(
+            tracker.productPrice ||
+              tracker.price ||
+              0,
+          );
+
         const payload = {
           date: tracker.date,
 
@@ -792,20 +1003,17 @@ export default function Dashboard({ activeView }) {
               tracker.orderQuantity,
             ),
 
-          price: Number(
-            tracker.price || 0,
-          ),
+          price:
+            baseProductPrice,
 
           notes:
             tracker.notes?.trim() ||
             null,
 
-          status:
-            tracker.status,
+          status: tracker.status,
 
           product:
-            tracker.product ||
-            null,
+            tracker.product || null,
 
           variant_pcs:
             tracker.variantPcs
@@ -843,8 +1051,6 @@ export default function Dashboard({ activeView }) {
           throw error;
         }
 
-        // Deduct inventory only
-        // when order is completed.
         if (
           tracker.status ===
           "Completed"
@@ -924,8 +1130,6 @@ export default function Dashboard({ activeView }) {
           DEFAULT_EXPENSES,
         );
 
-        // Refresh everything so
-        // Summary updates automatically.
         await loadData();
       } catch (error) {
         console.error(error);
@@ -963,10 +1167,9 @@ export default function Dashboard({ activeView }) {
         return;
       }
 
-      const amount =
-        Number(
-          savings.amount,
-        );
+      const amount = Number(
+        savings.amount,
+      );
 
       if (
         !Number.isFinite(amount) ||
@@ -978,8 +1181,6 @@ export default function Dashboard({ activeView }) {
         return;
       }
 
-      // Cannot save more than
-      // currently available money.
       if (
         amount >
         availableMoney
@@ -1019,8 +1220,6 @@ export default function Dashboard({ activeView }) {
           DEFAULT_SAVINGS,
         );
 
-        // Refresh everything so
-        // Summary and Savings update.
         await loadData();
       } catch (error) {
         console.error(error);
@@ -1079,7 +1278,7 @@ export default function Dashboard({ activeView }) {
   };
 
   // =====================================================
-  // DELETE TRACKER
+  // DELETE HANDLERS
   // =====================================================
 
   const handleDeleteTrackerRow =
@@ -1090,10 +1289,6 @@ export default function Dashboard({ activeView }) {
         "Unable to delete tracker entry",
       );
 
-  // =====================================================
-  // DELETE EXPENSE
-  // =====================================================
-
   const handleDeleteExpenseRow =
     (rowId) =>
       deleteRow(
@@ -1101,10 +1296,6 @@ export default function Dashboard({ activeView }) {
         rowId,
         "Unable to delete expense entry",
       );
-
-  // =====================================================
-  // DELETE SAVINGS
-  // =====================================================
 
   const handleDeleteSavingsRow =
     (rowId) =>
@@ -1150,8 +1341,6 @@ export default function Dashboard({ activeView }) {
           throw findError;
         }
 
-        // Only deduct inventory
-        // when changing Pending -> Completed.
         if (
           status ===
             "Completed" &&
@@ -1206,7 +1395,7 @@ export default function Dashboard({ activeView }) {
     };
 
   // =====================================================
-  // CONFIRM DELETE TRACKER
+  // CONFIRM DELETE
   // =====================================================
 
   const confirmDeleteTrackerRow =
@@ -1227,10 +1416,6 @@ export default function Dashboard({ activeView }) {
       }
     };
 
-  // =====================================================
-  // CONFIRM DELETE EXPENSE
-  // =====================================================
-
   const confirmDeleteExpenseRow =
     (row) => {
       const label = row?.product
@@ -1248,10 +1433,6 @@ export default function Dashboard({ activeView }) {
         );
       }
     };
-
-  // =====================================================
-  // CONFIRM DELETE SAVINGS
-  // =====================================================
 
   const confirmDeleteSavingsRow =
     (row) => {
@@ -1285,8 +1466,7 @@ export default function Dashboard({ activeView }) {
     },
 
     pending: {
-      title:
-        "Pending Orders",
+      title: "Pending Orders",
       description:
         "Review all pending orders and mark them completed when done.",
     },
@@ -1310,15 +1490,13 @@ export default function Dashboard({ activeView }) {
     },
 
     tuition: {
-      title:
-        "Tuition Fee Target",
+      title: "Tuition Fee Target",
       description:
         "Track your tuition fee savings and monitor your progress.",
     },
 
     inventory: {
-      title:
-        "Packaging Inventory",
+      title: "Packaging Inventory",
       description:
         "Monitor your packaging stocks and automatically deduct supplies from completed orders.",
     },
@@ -1333,10 +1511,6 @@ export default function Dashboard({ activeView }) {
   // =====================================================
 
   const renderActiveTab = () => {
-    // ===================================================
-    // SUMMARY
-    // ===================================================
-
     if (
       activeView ===
       "summary"
@@ -1407,27 +1581,22 @@ export default function Dashboard({ activeView }) {
       );
     }
 
-    // ===================================================
-    // SAVINGS
-    // ===================================================
-
     if (
       activeView ===
       "savings"
     ) {
       return (
         <SavingsTab
-          savings={
-            savings
-          }
-          setSavings={
-            setSavings
-          }
+          savings={savings}
+          setSavings={setSavings}
           savingsRows={
             savingsRows
           }
           savingsTotal={
             summarySavingsTotal
+          }
+          summaryProfit={
+            summaryProfit
           }
           availableMoney={
             availableMoney
@@ -1447,10 +1616,6 @@ export default function Dashboard({ activeView }) {
         />
       );
     }
-
-    // ===================================================
-    // PENDING
-    // ===================================================
 
     if (
       activeView ===
@@ -1485,10 +1650,6 @@ export default function Dashboard({ activeView }) {
       );
     }
 
-    // ===================================================
-    // EXPENSES
-    // ===================================================
-
     if (
       activeView ===
       "expenses"
@@ -1513,10 +1674,6 @@ export default function Dashboard({ activeView }) {
         />
       );
     }
-
-    // ===================================================
-    // TUITION
-    // ===================================================
 
     if (
       activeView ===
@@ -1543,10 +1700,6 @@ export default function Dashboard({ activeView }) {
       );
     }
 
-    // ===================================================
-    // INVENTORY
-    // ===================================================
-
     if (
       activeView ===
       "inventory"
@@ -1569,15 +1722,9 @@ export default function Dashboard({ activeView }) {
       );
     }
 
-    // ===================================================
-    // TRACKER
-    // ===================================================
-
     return (
       <TrackerTab
-        tracker={
-          tracker
-        }
+        tracker={tracker}
         setTracker={
           setTracker
         }
@@ -1613,8 +1760,6 @@ export default function Dashboard({ activeView }) {
             : "border-gray-200 bg-white"
         }`}
       >
-        {/* HEADER */}
-
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1
@@ -1634,13 +1779,9 @@ export default function Dashboard({ activeView }) {
                   : "text-gray-600"
               }`}
             >
-              {
-                currentView.description
-              }
+              {currentView.description}
             </p>
           </div>
-
-          {/* DARK MODE */}
 
           <button
             type="button"
@@ -1662,8 +1803,6 @@ export default function Dashboard({ activeView }) {
           </button>
         </div>
 
-        {/* ERROR */}
-
         {errorMessage ? (
           <div
             className={`mt-4 whitespace-pre-line rounded-xl border p-3 text-sm ${
@@ -1676,12 +1815,8 @@ export default function Dashboard({ activeView }) {
           </div>
         ) : null}
 
-        {/* ACTIVE TAB */}
-
         <div className="mt-6">
-          {
-            renderActiveTab()
-          }
+          {renderActiveTab()}
         </div>
       </div>
     </div>
