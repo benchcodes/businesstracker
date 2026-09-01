@@ -3,6 +3,7 @@ export default function Sidebar({
   onSelectView,
   isOpen = false,
   onClose,
+  brand,
 }) {
   const handleSelect = (view) => {
     onSelectView(view);
@@ -34,7 +35,7 @@ export default function Sidebar({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-[#6b4a3a] p-6">
           <div>
-            <h1 className="text-2xl font-bold">ChurroZi</h1>
+            <h1 className="text-2xl font-bold">{brand?.name || "ChurroZi"}</h1>
 
             <p className="mt-1 text-sm text-gray-300">
               Tracker & Expenses

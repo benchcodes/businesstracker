@@ -11,6 +11,7 @@ import PendingOrdersTab from "./tabs/PendingOrdersTab";
 import ExpensesTab from "./tabs/ExpensesTab";
 import SummaryTab from "./tabs/SummaryTab";
 import InventoryTab from "./tabs/InventoryTab";
+import AdminTab from "./tabs/AdminTab";
 
 // =====================================================
 // CONSTANTS
@@ -56,7 +57,13 @@ const DEFAULT_SAVINGS = {
 // DASHBOARD
 // =====================================================
 
-export default function Dashboard({ activeView }) {
+export default function Dashboard({
+  activeView,
+  brand,
+  setBrand,
+  menuConfig,
+  setMenuConfig,
+}) {
   // =====================================================
   // FORM STATE
   // =====================================================
@@ -1617,6 +1624,12 @@ export default function Dashboard({ activeView }) {
   // =====================================================
 
   const viewMeta = {
+    admin: {
+      title: "Admin",
+      description:
+        "Update your business name, logo, menu, and inventory settings.",
+    },
+
     tracker: {
       title: "Tracker",
       description:
@@ -1669,6 +1682,24 @@ export default function Dashboard({ activeView }) {
   // =====================================================
 
   const renderActiveTab = () => {
+    // ===================================================
+    // ADMIN
+    // ===================================================
+
+    if (activeView === "admin") {
+      return (
+        <AdminTab
+          brand={brand}
+          setBrand={setBrand}
+          menuConfig={menuConfig}
+          setMenuConfig={setMenuConfig}
+          inventoryRows={inventoryRows}
+          setInventoryRows={setInventoryRows}
+          setErrorMessage={setErrorMessage}
+        />
+      );
+    }
+
     // ===================================================
     // SUMMARY
     // ===================================================
@@ -1828,6 +1859,7 @@ export default function Dashboard({ activeView }) {
         onSubmit={
           handleTrackerSubmit
         }
+        menuConfig={menuConfig}
       />
     );
   };

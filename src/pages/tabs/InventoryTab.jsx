@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import AdminTab from "./AdminTab";
+
+const ADMIN_PASSWORD = "churrozi123";
 
 const INITIAL_FORM = {
   stock: "",
@@ -11,10 +14,42 @@ export default function InventoryTab({
   setInventoryRows,
   isLoading,
   setErrorMessage,
+  brand,
+  setBrand,
+  menuConfig,
+  setMenuConfig,
 }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSaving, setIsSaving] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminUnlocked, setAdminUnlocked] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.localStorage.getItem("churrozi-admin-unlocked") === "true";
+  });
+
+  const handleAdminUnlock = (event) => {
+    event.preventDefault();
+
+    if (adminPassword === ADMIN_PASSWORD) {
+      setAdminUnlocked(true);
+      window.localStorage.setItem("churrozi-admin-unlocked", "true");
+      setErrorMessage("");
+      return;
+    }
+
+    setErrorMessage("Incorrect admin password.");
+  };
+
+  const handleAdminLock = () => {
+    setAdminUnlocked(false);
+    setAdminPassword("");
+    window.localStorage.setItem("churrozi-admin-unlocked", "false");
+    setErrorMessage("");
+  };
 
   // =====================================================
   // LOAD INVENTORY
@@ -236,7 +271,60 @@ export default function InventoryTab({
           Manage your packaging stocks and monitor
           which items need to be restocked.
         </p>
+
+        {!adminUnlocked && (
+          <form onSubmit={handleAdminUnlock} className="mt-5 max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+            <p className="text-sm font-medium text-amber-100">
+              Admin access
+            </p>
+
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(event) => setAdminPassword(event.target.value)}
+                placeholder="Enter password"
+                className="w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
+              />
+
+              <button
+                type="submit"
+                className="rounded-xl bg-[#f4d7a3] px-4 py-2 text-sm font-semibold text-[#4b3028] transition hover:bg-[#e9c58a]"
+              >
+                Unlock
+              </button>
+            </div>
+          </form>
+        )}
+
+        {adminUnlocked && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-100 ring-1 ring-emerald-200/40">
+              Admin unlocked
+            </span>
+
+            <button
+              type="button"
+              onClick={handleAdminLock}
+              className="rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/15"
+            >
+              Lock Admin
+            </button>
+          </div>
+        )}
       </div>
+
+      {adminUnlocked && (
+        <AdminTab
+          brand={brand}
+          setBrand={setBrand}
+          menuConfig={menuConfig}
+          setMenuConfig={setMenuConfig}
+          inventoryRows={inventoryRows}
+          setInventoryRows={setInventoryRows}
+          setErrorMessage={setErrorMessage}
+        />
+      )}
 
       {/* =================================================
           INVENTORY CARDS

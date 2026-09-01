@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-const MENU = {
+const DEFAULT_MENU = {
   "Regular Churros": [
     {
       label: "4 pcs - ₱49",
@@ -46,7 +46,9 @@ export default function TrackerTab({
   trackerTotal,
   isSubmitting,
   onSubmit,
+  menuConfig,
 }) {
+  const MENU = menuConfig && Object.keys(menuConfig).length ? menuConfig : DEFAULT_MENU;
   // ============================================================
   // CURRENT PRODUCT
   // ============================================================

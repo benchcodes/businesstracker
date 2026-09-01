@@ -3,6 +3,32 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Welcome from "./pages/Welcome";
 
+const DEFAULT_BRAND = {
+  name: "ChurroZi",
+  logo: "/churrozi-logo.jpg",
+};
+
+const DEFAULT_MENU = {
+  "Regular Churros": [
+    { label: "4 pcs - ₱49", pcs: 4, price: 49 },
+    { label: "8 pcs - ₱69", pcs: 8, price: 69 },
+  ],
+  "Churros Bites": [{ label: "25 pcs - ₱89", pcs: 25, price: 89 }],
+  "Premium Churros w/ Alcapone": [
+    { label: "5 pcs - ₱69", pcs: 5, price: 69 },
+    { label: "8 pcs - ₱99", pcs: 8, price: 99 },
+  ],
+};
+
+const readStoredJson = (key, fallback) => {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export default function App() {
   const [activeView, setActiveView] = useState("summary");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,6 +50,11 @@ export default function App() {
     return savedMode === null ? true : savedMode === "true";
   });
 
+  const [brand, setBrand] = useState(() => readStoredJson("churrozi-brand", DEFAULT_BRAND));
+  const [menuConfig, setMenuConfig] = useState(() =>
+    readStoredJson("churrozi-menu", DEFAULT_MENU),
+  );
+
   // =========================
   // APPLY DARK MODE
   // TO ENTIRE WEBSITE
@@ -38,7 +69,9 @@ export default function App() {
     }
 
     localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
+    localStorage.setItem("churrozi-brand", JSON.stringify(brand));
+    localStorage.setItem("churrozi-menu", JSON.stringify(menuConfig));
+  }, [brand, darkMode, menuConfig]);
 
   // =========================
   // START WEBSITE
@@ -56,6 +89,7 @@ export default function App() {
         onStart={handleStart}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+        brand={brand}
       />
     );
   }
@@ -109,6 +143,7 @@ export default function App() {
           }}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          brand={brand}
         />
 
         {/* MAIN */}
@@ -121,6 +156,10 @@ export default function App() {
             activeView={activeView}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
+            brand={brand}
+            setBrand={setBrand}
+            menuConfig={menuConfig}
+            setMenuConfig={setMenuConfig}
           />
         </main>
       </div>

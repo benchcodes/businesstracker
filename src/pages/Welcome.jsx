@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Welcome({ onStart, darkMode, setDarkMode }) {
+export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -46,8 +46,8 @@ export default function Welcome({ onStart, darkMode, setDarkMode }) {
           }`}
         >
           <img
-            src="/churrozi-logo.jpg"
-            alt="ChurroZi Logo"
+            src={brand?.logo || "/churrozi-logo.jpg"}
+            alt={`${brand?.name || "ChurroZi"} Logo`}
             className="h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-[#d8a66b]/50 transition-transform duration-500 hover:scale-105 sm:h-72 sm:w-72"
           />
         </div>
@@ -58,7 +58,7 @@ export default function Welcome({ onStart, darkMode, setDarkMode }) {
             loaded ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
           } ${darkMode ? "text-[#e8bd85]" : "text-[#5A3A2E]"}`}
         >
-          ChurroZi
+          {brand?.name || "ChurroZi"}
         </h1>
 
         {/* SUBTITLE */}
