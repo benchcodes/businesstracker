@@ -96,32 +96,6 @@ export default function Sidebar({
             Expenses
           </button>
 
-          {/* SAVINGS */}
-          <button
-            type="button"
-            onClick={() => handleSelect("savings")}
-            className={`w-full rounded-lg px-4 py-3 text-left transition ${
-              activeView === "savings"
-                ? "bg-[#d8a66b] text-white"
-                : "hover:bg-[#5d3c32]"
-            }`}
-          >
-            Savings
-          </button>
-
-          {/* TUITION */}
-          <button
-            type="button"
-            onClick={() => handleSelect("tuition")}
-            className={`w-full rounded-lg px-4 py-3 text-left transition ${
-              activeView === "tuition"
-                ? "bg-[#d8a66b] text-white"
-                : "hover:bg-[#5d3c32]"
-            }`}
-          >
-            Tuition Fee Target
-          </button>
-
           {/* INVENTORY */}
           <button
             type="button"

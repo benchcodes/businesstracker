@@ -4,6 +4,7 @@ export default function SavingsTab({
   savingsRows,
   savingsTotal,
   summaryProfit,
+  availableMoney,
   isLoading,
   isSubmitting,
   onSubmit,
@@ -12,22 +13,16 @@ export default function SavingsTab({
   // =====================================================
   // AVAILABLE MONEY
   //
-  // Available Money = Net Profit - Total Savings
-  //
-  // Example:
-  // Net Profit = ₱3,921
-  // Total Savings = ₱1,000
-  //
-  // Available Money = ₱2,921
+  // Use the parent-provided value so this tab displays the
+  // same live net profit as the Summary tab.
   // =====================================================
 
-  const profit = Number(summaryProfit || 0);
   const totalSavings = Number(savingsTotal || 0);
-
-  const availableMoney = Math.max(
-    0,
-    profit - totalSavings,
-  );
+  const displayAvailableMoney = Number(availableMoney ?? summaryProfit ?? 0);
+  const formattedAvailableMoney = displayAvailableMoney.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   // =====================================================
   // RENDER
@@ -79,11 +74,11 @@ export default function SavingsTab({
         </p>
 
         <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
-          ₱{availableMoney.toFixed(2)}
+          ₱{formattedAvailableMoney}
         </p>
 
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Net Profit − Total Savings.
+          Matches the current net profit shown in Summary.
         </p>
       </div>
 
@@ -164,13 +159,13 @@ export default function SavingsTab({
             type="submit"
             disabled={
               isSubmitting ||
-              availableMoney <= 0
+              displayAvailableMoney <= 0
             }
             className="rounded-xl bg-[#d8a66b] px-4 py-3 font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2"
           >
             {isSubmitting
               ? "Saving..."
-              : availableMoney <= 0
+              : displayAvailableMoney <= 0
                 ? "No Available Money"
                 : "Save Money"}
           </button>

@@ -10,9 +10,7 @@ import TrackerTab from "./tabs/TrackerTab";
 import PendingOrdersTab from "./tabs/PendingOrdersTab";
 import ExpensesTab from "./tabs/ExpensesTab";
 import SummaryTab from "./tabs/SummaryTab";
-import TuitionTargetTab from "./tabs/TuitionTargetTab";
 import InventoryTab from "./tabs/InventoryTab";
-import SavingsTab from "./tabs/SavingsTab";
 
 // =====================================================
 // CONSTANTS
@@ -858,64 +856,20 @@ export default function Dashboard({ activeView }) {
         product ===
         "Regular Churros"
       ) {
-        deductions.push(
-          {
-            name: "Regular Size Pack",
-            quantity,
-          },
-          {
-            name: "Plastic",
-            quantity,
-          },
-          {
-            name: "Sticker",
-            quantity,
-          },
-          {
-            name: "Dip Pack",
-            quantity,
-          },
-        );
-      }
-
-      if (
-        product ===
-        "Churros Bites"
-      ) {
-        deductions.push(
-          {
-            name: "Bites Pack",
-            quantity,
-          },
-          {
-            name: "Plastic",
-            quantity,
-          },
-          {
-            name: "Sticker",
-            quantity,
-          },
-          {
-            name: "Dip Pack",
-            quantity,
-          },
-        );
+        deductions.push({
+          name: "Regular Size Pack",
+          quantity,
+        });
       }
 
       if (
         product ===
         "Premium Churros w/ Alcapone"
       ) {
-        deductions.push(
-          {
-            name: "Regular Size Pack",
-            quantity,
-          },
-          {
-            name: "Plastic",
-            quantity,
-          },
-        );
+        deductions.push({
+          name: "Regular Size Pack",
+          quantity,
+        });
       }
 
       // EXTRA DIP = EXTRA DIP PACK
@@ -1785,41 +1739,6 @@ export default function Dashboard({ activeView }) {
     }
 
     // ===================================================
-    // SAVINGS
-    // ===================================================
-
-    if (activeView === "savings") {
-      return (
-        <SavingsTab
-          savings={savings}
-          setSavings={setSavings}
-          savingsRows={
-            savingsRows
-          }
-          savingsTotal={
-            summarySavingsTotal
-          }
-          summaryProfit={
-            summaryProfit
-          }
-          availableMoney={
-            availableMoney
-          }
-          isLoading={isLoading}
-          isSubmitting={
-            isSubmitting
-          }
-          onSubmit={
-            handleSavingsSubmit
-          }
-          onDelete={
-            confirmDeleteSavingsRow
-          }
-        />
-      );
-    }
-
-    // ===================================================
     // PENDING
     // ===================================================
 
@@ -1866,32 +1785,6 @@ export default function Dashboard({ activeView }) {
           }
           onSubmit={
             handleExpensesSubmit
-          }
-        />
-      );
-    }
-
-    // ===================================================
-    // TUITION
-    // ===================================================
-
-    if (activeView === "tuition") {
-      return (
-        <TuitionTargetTab
-          summaryTrackerTotal={
-            summaryTrackerTotal
-          }
-          summaryExpensesTotal={
-            summaryExpensesTotal
-          }
-          summarySavingsTotal={
-            summarySavingsTotal
-          }
-          summaryProfit={
-            summaryProfit
-          }
-          availableMoney={
-            availableMoney
           }
         />
       );

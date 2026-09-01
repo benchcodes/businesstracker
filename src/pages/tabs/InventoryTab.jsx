@@ -252,10 +252,18 @@ export default function InventoryTab({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {inventoryRows.map((item) => {
-            const status = getStockStatus(item);
+          {inventoryRows
+            .filter(
+              (item) =>
+                ![
+                  "Plastic",
+                  "Bites Pack",
+                ].includes(item.name),
+            )
+            .map((item) => {
+              const status = getStockStatus(item);
 
-            return (
+              return (
               <div
                 key={item.id}
                 className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
