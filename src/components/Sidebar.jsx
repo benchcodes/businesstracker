@@ -4,6 +4,8 @@ export default function Sidebar({
   isOpen = false,
   onClose,
   brand,
+  userEmail,
+  onSignOut,
 }) {
   const handleSelect = (view) => {
     onSelectView(view);
@@ -35,7 +37,7 @@ export default function Sidebar({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-[#6b4a3a] p-6">
           <div>
-            <h1 className="text-2xl font-bold">{brand?.name || "ChurroZi"}</h1>
+            <h1 className="text-2xl font-bold">{brand?.name || "Benzi Tracker"}</h1>
 
             <p className="mt-1 text-sm text-gray-300">
               Tracker & Expenses
@@ -110,6 +112,19 @@ export default function Sidebar({
             Inventory
           </button>
         </nav>
+
+        <div className="absolute bottom-0 w-full border-t border-[#6b4a3a] p-4">
+          <p className="truncate px-2 text-xs text-gray-300" title={userEmail}>
+            {userEmail}
+          </p>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="mt-2 w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[#5d3c32]"
+          >
+            Log out
+          </button>
+        </div>
       </aside>
     </>
   );

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Welcome from "./pages/Welcome";
+import AuthPage from "./pages/AuthPage";
+import { supabase } from "./lib/supabase";
 
 const DEFAULT_BRAND = {
-  name: "ChurroZi",
+  name: "Benzi Tracker",
   logo: "/churrozi-logo.jpg",
 };
 
@@ -29,7 +31,16 @@ const readStoredJson = (key, fallback) => {
   }
 };
 
+const hasStoredValue = (key) => localStorage.getItem(key) !== null;
+
+const getInitialBrand = (session) => ({
+  ...DEFAULT_BRAND,
+  name: session?.user?.user_metadata?.business_name?.trim() || DEFAULT_BRAND.name,
+});
+
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [activeView, setActiveView] = useState("summary");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -42,18 +53,71 @@ export default function App() {
   // DARK MODE
   // Dark is DEFAULT
   // =========================
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem("darkMode");
-
-    // If no preference has been saved,
-    // default to dark mode.
-    return savedMode === null ? true : savedMode === "true";
-  });
-
-  const [brand, setBrand] = useState(() => readStoredJson("churrozi-brand", DEFAULT_BRAND));
-  const [menuConfig, setMenuConfig] = useState(() =>
-    readStoredJson("churrozi-menu", DEFAULT_MENU),
+  const storageKey = useCallback(
+    (key) => `${key}-${session?.user?.id || "guest"}`,
+    [session],
   );
+
+  const [darkMode, setDarkMode] = useState(true);
+
+  useEffect(() => {
+    if (!supabase) {
+      return undefined;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      startTransition(() => {
+        setSession(data.session);
+        setAuthLoading(false);
+      });
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setStarted(false);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session === undefined) {
+      return;
+    }
+
+    const savedMode = localStorage.getItem(storageKey("darkMode"));
+
+    startTransition(() => {
+      setDarkMode(savedMode === null ? true : savedMode === "true");
+    });
+  }, [session, storageKey]);
+
+  const [brand, setBrand] = useState(() => getInitialBrand(session));
+  const [menuConfig, setMenuConfig] = useState(DEFAULT_MENU);
+  const [settingsOwner, setSettingsOwner] = useState(null);
+
+  useEffect(() => {
+    if (session === undefined) {
+      return;
+    }
+
+    startTransition(() => {
+      setBrand(
+        readStoredJson(
+          storageKey("churrozi-brand"),
+          getInitialBrand(session),
+        ),
+      );
+      const menuKey = storageKey("churrozi-menu");
+      setMenuConfig(
+        hasStoredValue(menuKey)
+          ? readStoredJson(menuKey, {})
+          : session?.user?.id
+            ? {}
+            : DEFAULT_MENU,
+      );
+      setSettingsOwner(session?.user?.id || "guest");
+    });
+  }, [session, storageKey]);
 
   // =========================
   // APPLY DARK MODE
@@ -68,10 +132,14 @@ export default function App() {
       root.classList.remove("dark");
     }
 
-    localStorage.setItem("darkMode", String(darkMode));
-    localStorage.setItem("churrozi-brand", JSON.stringify(brand));
-    localStorage.setItem("churrozi-menu", JSON.stringify(menuConfig));
-  }, [brand, darkMode, menuConfig]);
+    if (session === undefined || settingsOwner !== (session?.user?.id || "guest")) {
+      return;
+    }
+
+    localStorage.setItem(storageKey("darkMode"), String(darkMode));
+    localStorage.setItem(storageKey("churrozi-brand"), JSON.stringify(brand));
+    localStorage.setItem(storageKey("churrozi-menu"), JSON.stringify(menuConfig));
+  }, [brand, darkMode, menuConfig, session, settingsOwner, storageKey]);
 
   // =========================
   // START WEBSITE
@@ -83,6 +151,14 @@ export default function App() {
   // =========================
   // WELCOME PAGE
   // =========================
+  if (authLoading) {
+    return null;
+  }
+
+  if (!session) {
+    return <AuthPage darkMode={darkMode} setDarkMode={setDarkMode} />;
+  }
+
   if (!started) {
     return (
       <Welcome
@@ -144,6 +220,8 @@ export default function App() {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           brand={brand}
+          userEmail={session.user.email}
+          onSignOut={() => supabase.auth.signOut()}
         />
 
         {/* MAIN */}

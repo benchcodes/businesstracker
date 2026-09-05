@@ -1,18 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-const DEFAULT_MENU = {
-  "Regular Churros": [
-    { label: "4 pcs - ₱49", pcs: 4, price: 49 },
-    { label: "8 pcs - ₱69", pcs: 8, price: 69 },
-  ],
-  "Churros Bites": [{ label: "25 pcs - ₱89", pcs: 25, price: 89 }],
-  "Premium Churros w/ Alcapone": [
-    { label: "5 pcs - ₱69", pcs: 5, price: 69 },
-    { label: "8 pcs - ₱99", pcs: 8, price: 99 },
-  ],
-};
-
 const createVariant = () => ({
   label: "",
   pcs: "",
@@ -20,7 +8,7 @@ const createVariant = () => ({
 });
 
 const toMenuDraft = (menu) => {
-  const source = menu && typeof menu === "object" ? menu : DEFAULT_MENU;
+  const source = menu && typeof menu === "object" ? menu : {};
 
   return Object.entries(source).map(([name, variants]) => ({
     id: `${name}-${Math.random().toString(16).slice(2)}`,
@@ -67,7 +55,7 @@ const normalizeMenuConfig = (draftProducts) => {
     }
   });
 
-  return Object.keys(normalized).length ? normalized : DEFAULT_MENU;
+  return normalized;
 };
 
 export default function AdminTab({
@@ -81,7 +69,7 @@ export default function AdminTab({
 }) {
   const fileInputRef = useRef(null);
   const [brandForm, setBrandForm] = useState({
-    name: brand?.name || "ChurroZi",
+    name: brand?.name || "Benzi Tracker",
     logo: brand?.logo || "/churrozi-logo.jpg",
   });
   const [menuDraft, setMenuDraft] = useState(() => toMenuDraft(menuConfig));
@@ -92,7 +80,7 @@ export default function AdminTab({
 
   useEffect(() => {
     setBrandForm({
-      name: brand?.name || "ChurroZi",
+      name: brand?.name || "Benzi Tracker",
       logo: brand?.logo || "/churrozi-logo.jpg",
     });
     setMenuDraft(toMenuDraft(menuConfig));
@@ -105,7 +93,7 @@ export default function AdminTab({
 
     try {
       const nextBrand = {
-        name: brandForm.name.trim() || "ChurroZi",
+        name: brandForm.name.trim() || "Benzi Tracker",
         logo: brandForm.logo.trim() || "/churrozi-logo.jpg",
       };
 
@@ -398,7 +386,7 @@ export default function AdminTab({
                 />
                 <div>
                   <p className="text-lg font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-                    {brandForm.name || "ChurroZi"}
+                    {brandForm.name || "Benzi Tracker"}
                   </p>
                 </div>
               </div>

@@ -48,14 +48,19 @@ export default function TrackerTab({
   onSubmit,
   menuConfig,
 }) {
-  const MENU = menuConfig && Object.keys(menuConfig).length ? menuConfig : DEFAULT_MENU;
+  const MENU = menuConfig ?? DEFAULT_MENU;
   // ============================================================
   // CURRENT PRODUCT
   // ============================================================
 
-  const selectedProduct =
-    MENU[tracker.product] ||
-    MENU["Regular Churros"];
+  const selectedProduct = useMemo(
+    () =>
+      MENU[tracker.product] ||
+      MENU["Regular Churros"] ||
+      Object.values(MENU)[0] ||
+      [],
+    [MENU, tracker.product],
+  );
 
   // ============================================================
   // SELECTED VARIANT
@@ -70,7 +75,7 @@ export default function TrackerTab({
           Number(tracker.productPrice),
     );
 
-    return found || selectedProduct[0];
+    return found || selectedProduct[0] || { pcs: 0, price: 0, label: "No variant" };
   }, [
     selectedProduct,
     tracker.variantPcs,
@@ -531,7 +536,7 @@ export default function TrackerTab({
 
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold">
-          Welcome to ChurroZi Tracker!
+          Welcome to Benzi Tracker!
         </h1>
 
         <p className="mt-3 text-amber-100">

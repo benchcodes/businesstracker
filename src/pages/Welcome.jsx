@@ -47,7 +47,7 @@ export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
         >
           <img
             src={brand?.logo || "/churrozi-logo.jpg"}
-            alt={`${brand?.name || "ChurroZi"} Logo`}
+            alt={`${brand?.name || "Benzi Tracker"} Logo`}
             className="h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-[#d8a66b]/50 transition-transform duration-500 hover:scale-105 sm:h-72 sm:w-72"
           />
         </div>
@@ -58,7 +58,7 @@ export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
             loaded ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
           } ${darkMode ? "text-[#e8bd85]" : "text-[#5A3A2E]"}`}
         >
-          {brand?.name || "ChurroZi"}
+          {brand?.name || "Benzi Tracker"}
         </h1>
 
         {/* SUBTITLE */}
