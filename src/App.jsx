@@ -7,8 +7,13 @@ import { supabase } from "./lib/supabase";
 
 const DEFAULT_BRAND = {
   name: "Benzi Tracker",
-  logo: "/churrozi-logo.jpg",
+  logo: "/benzi-logo.svg",
 };
+
+const LEGACY_DEFAULT_LOGOS = new Set([
+  "/churrozi-logo.jpg",
+  "churrozi-logo.jpg",
+]);
 
 const DEFAULT_MENU = {
   "Regular Churros": [
@@ -32,6 +37,19 @@ const readStoredJson = (key, fallback) => {
 };
 
 const hasStoredValue = (key) => localStorage.getItem(key) !== null;
+
+const normalizeBrand = (brand, session) => {
+  const nextBrand = {
+    ...getInitialBrand(session),
+    ...(brand || {}),
+  };
+
+  if (LEGACY_DEFAULT_LOGOS.has(nextBrand.logo)) {
+    nextBrand.logo = DEFAULT_BRAND.logo;
+  }
+
+  return nextBrand;
+};
 
 const getInitialBrand = (session) => ({
   ...DEFAULT_BRAND,
@@ -102,18 +120,16 @@ export default function App() {
 
     startTransition(() => {
       setBrand(
-        readStoredJson(
-          storageKey("churrozi-brand"),
-          getInitialBrand(session),
+        normalizeBrand(
+          readStoredJson(storageKey("churrozi-brand"), null),
+          session,
         ),
       );
       const menuKey = storageKey("churrozi-menu");
       setMenuConfig(
         hasStoredValue(menuKey)
           ? readStoredJson(menuKey, {})
-          : session?.user?.id
-            ? {}
-            : DEFAULT_MENU,
+          : DEFAULT_MENU,
       );
       setSettingsOwner(session?.user?.id || "guest");
     });
@@ -234,6 +250,7 @@ export default function App() {
             activeView={activeView}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
+            userId={session.user.id}
             brand={brand}
             setBrand={setBrand}
             menuConfig={menuConfig}

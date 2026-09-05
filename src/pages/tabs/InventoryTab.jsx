@@ -2,14 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import AdminTab from "./AdminTab";
 
-const ADMIN_PASSWORD = "churrozi123";
-
 const INITIAL_FORM = {
   stock: "",
   minimum_stock: "5",
 };
 
 export default function InventoryTab({
+  userId,
   inventoryRows,
   setInventoryRows,
   isLoading,
@@ -19,24 +18,55 @@ export default function InventoryTab({
   menuConfig,
   setMenuConfig,
 }) {
+  const adminPasswordKey = `benzi-admin-password-${userId || "guest"}`;
+  const adminUnlockedKey = `benzi-admin-unlocked-${userId || "guest"}`;
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSaving, setIsSaving] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminPasswordConfirmation, setAdminPasswordConfirmation] = useState("");
+  const [hasAdminPassword, setHasAdminPassword] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return Boolean(window.localStorage.getItem(adminPasswordKey));
+  });
   const [adminUnlocked, setAdminUnlocked] = useState(() => {
     if (typeof window === "undefined") {
       return false;
     }
 
-    return window.localStorage.getItem("churrozi-admin-unlocked") === "true";
+    return window.localStorage.getItem(adminUnlockedKey) === "true";
   });
 
   const handleAdminUnlock = (event) => {
     event.preventDefault();
 
-    if (adminPassword === ADMIN_PASSWORD) {
+    if (!hasAdminPassword) {
+      if (adminPassword.length < 6) {
+        setErrorMessage("Admin password must be at least 6 characters.");
+        return;
+      }
+
+      if (adminPassword !== adminPasswordConfirmation) {
+        setErrorMessage("Admin passwords do not match.");
+        return;
+      }
+
+      window.localStorage.setItem(adminPasswordKey, adminPassword);
+      setHasAdminPassword(true);
       setAdminUnlocked(true);
-      window.localStorage.setItem("churrozi-admin-unlocked", "true");
+      window.localStorage.setItem(adminUnlockedKey, "true");
+      setAdminPassword("");
+      setAdminPasswordConfirmation("");
+      setErrorMessage("");
+      return;
+    }
+
+    if (adminPassword === window.localStorage.getItem(adminPasswordKey)) {
+      setAdminUnlocked(true);
+      window.localStorage.setItem(adminUnlockedKey, "true");
       setErrorMessage("");
       return;
     }
@@ -47,7 +77,8 @@ export default function InventoryTab({
   const handleAdminLock = () => {
     setAdminUnlocked(false);
     setAdminPassword("");
-    window.localStorage.setItem("churrozi-admin-unlocked", "false");
+    setAdminPasswordConfirmation("");
+    window.localStorage.setItem(adminUnlockedKey, "false");
     setErrorMessage("");
   };
 
@@ -275,7 +306,7 @@ export default function InventoryTab({
         {!adminUnlocked && (
           <form onSubmit={handleAdminUnlock} className="mt-5 max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
             <p className="text-sm font-medium text-amber-100">
-              Admin access
+              {hasAdminPassword ? "Admin access" : "Create your Admin password"}
             </p>
 
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
@@ -283,15 +314,25 @@ export default function InventoryTab({
                 type="password"
                 value={adminPassword}
                 onChange={(event) => setAdminPassword(event.target.value)}
-                placeholder="Enter password"
+                placeholder={hasAdminPassword ? "Enter password" : "Create password"}
                 className="w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
               />
+
+              {!hasAdminPassword && (
+                <input
+                  type="password"
+                  value={adminPasswordConfirmation}
+                  onChange={(event) => setAdminPasswordConfirmation(event.target.value)}
+                  placeholder="Confirm password"
+                  className="w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
+                />
+              )}
 
               <button
                 type="submit"
                 className="rounded-xl bg-[#f4d7a3] px-4 py-2 text-sm font-semibold text-[#4b3028] transition hover:bg-[#e9c58a]"
               >
-                Unlock
+                {hasAdminPassword ? "Unlock" : "Set password"}
               </button>
             </div>
           </form>

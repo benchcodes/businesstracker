@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 const createVariant = () => ({
+  id: `variant-${Math.random().toString(16).slice(2)}`,
   label: "",
   pcs: "",
   price: "",
@@ -70,7 +71,7 @@ export default function AdminTab({
   const fileInputRef = useRef(null);
   const [brandForm, setBrandForm] = useState({
     name: brand?.name || "Benzi Tracker",
-    logo: brand?.logo || "/churrozi-logo.jpg",
+    logo: brand?.logo || "/benzi-logo.svg",
   });
   const [menuDraft, setMenuDraft] = useState(() => toMenuDraft(menuConfig));
   const [isDraggingImage, setIsDraggingImage] = useState(false);
@@ -81,7 +82,7 @@ export default function AdminTab({
   useEffect(() => {
     setBrandForm({
       name: brand?.name || "Benzi Tracker",
-      logo: brand?.logo || "/churrozi-logo.jpg",
+      logo: brand?.logo || "/benzi-logo.svg",
     });
     setMenuDraft(toMenuDraft(menuConfig));
   }, [brand, menuConfig]);
@@ -94,7 +95,7 @@ export default function AdminTab({
     try {
       const nextBrand = {
         name: brandForm.name.trim() || "Benzi Tracker",
-        logo: brandForm.logo.trim() || "/churrozi-logo.jpg",
+        logo: brandForm.logo.trim() || "/benzi-logo.svg",
       };
 
       setBrand(nextBrand);
@@ -380,7 +381,7 @@ export default function AdminTab({
               </p>
               <div className="flex items-center gap-3">
                 <img
-                  src={brandForm.logo || "/churrozi-logo.jpg"}
+                  src={brandForm.logo || "/benzi-logo.svg"}
                   alt="Brand logo preview"
                   className="h-14 w-14 rounded-full object-cover"
                 />

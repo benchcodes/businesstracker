@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768" role="img" aria-labelledby="title desc">
+  <title id="title">Benzi logo</title>
+  <desc id="desc">Red and pink Benzi BZ mark inside a circle</desc>
+  <defs>
+    <linearGradient id="redPink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ed0038"/>
+      <stop offset="1" stop-color="#ff3f88"/>
+    </linearGradient>
+  </defs>
+  <rect width="768" height="768" fill="#fff"/>
+  <circle cx="384" cy="384" r="358" fill="none" stroke="url(#redPink)" stroke-width="19"/>
+  <path fill="url(#redPink)" d="M139 181h258c77 0 123 38 123 91 0 38-19 67-55 86 45 16 70 45 70 88 0 63-54 99-139 99H133l87-284h77l-22 78h88c38 0 59-16 59-40 0-24-22-37-61-37H215l-76-81Zm163 304h100c38 0 57-14 57-40 0-25-21-38-60-38h-75l-22 78Z"/>
+  <path fill="url(#redPink)" d="M430 309h255L457 533h199l-59 57H226l239-224H430l-53 54 53-111Z"/>
+</svg>

@@ -31,14 +31,25 @@ const DEFAULT_TRACKER = {
   notes: "",
   status: "Pending",
 
-  product: "Regular Churros",
-  variantPcs: 4,
-  productPrice: 49,
+  product: "",
+  variantPcs: "",
+  productPrice: "",
 
   dip: "Matcha",
 
-  additionalDips: "",
-  additionalDipType: "Chocolate",
+};
+
+const getTrackerDefaults = (menuConfig) => {
+  const firstProduct = Object.keys(menuConfig || {})[0] || "";
+  const firstVariant = menuConfig?.[firstProduct]?.[0];
+
+  return {
+    ...DEFAULT_TRACKER,
+    product: firstProduct,
+    variantPcs: firstVariant?.pcs ?? "",
+    productPrice: firstVariant?.price ?? "",
+    price: firstVariant?.price ?? "",
+  };
 };
 
 const DEFAULT_EXPENSES = {
@@ -59,6 +70,7 @@ const DEFAULT_SAVINGS = {
 
 export default function Dashboard({
   activeView,
+  userId,
   brand,
   setBrand,
   menuConfig,
@@ -68,9 +80,42 @@ export default function Dashboard({
   // FORM STATE
   // =====================================================
 
-  const [tracker, setTracker] = useState(DEFAULT_TRACKER);
+  const [tracker, setTracker] = useState(() =>
+    getTrackerDefaults(menuConfig),
+  );
   const [expenses, setExpenses] = useState(DEFAULT_EXPENSES);
   const [savings, setSavings] = useState(DEFAULT_SAVINGS);
+
+  useEffect(() => {
+    const products = Object.keys(menuConfig || {});
+    const firstProduct = products[0] || "";
+
+    setTracker((previous) => {
+      const product = products.includes(previous.product)
+        ? previous.product
+        : firstProduct;
+      const variants = menuConfig?.[product] || [];
+      const selectedVariant = variants.find(
+        (variant) =>
+          Number(variant.pcs) === Number(previous.variantPcs) &&
+          Number(variant.price) === Number(previous.productPrice),
+      );
+
+      if (selectedVariant || (!product && !previous.product)) {
+        return previous;
+      }
+
+      const firstVariant = variants[0];
+
+      return {
+        ...previous,
+        product,
+        variantPcs: firstVariant?.pcs ?? "",
+        productPrice: firstVariant?.price ?? "",
+        price: firstVariant?.price ?? "",
+      };
+    });
+  }, [menuConfig]);
 
   // =====================================================
   // DATA STATE
@@ -1076,32 +1121,12 @@ export default function Dashboard({
               0,
           );
 
-        const additionalDips =
-          tracker.additionalDips ===
-          ""
-            ? 0
-            : Number(
-                tracker.additionalDips ||
-                  0,
-              );
-
-        const validAdditionalDips =
-          Number.isFinite(
-            additionalDips,
-          ) &&
-          additionalDips > 0
-            ? additionalDips
-            : 0;
-
         const order = {
           ...tracker,
 
           orderQuantity,
 
           productPrice,
-
-          additionalDips:
-            validAdditionalDips,
         };
 
         // =================================================
@@ -1164,18 +1189,6 @@ export default function Dashboard({
                 )
               : null,
 
-          dip:
-            tracker.dip ||
-            null,
-
-          // IMPORTANT:
-          // THIS IS THE EXTRA DIP QUANTITY
-          additional_dips:
-            validAdditionalDips,
-
-          additional_dip_type:
-            tracker.additionalDipType ||
-            null,
         };
 
         // =================================================
@@ -1828,6 +1841,11 @@ export default function Dashboard({
     if (activeView === "inventory") {
       return (
         <InventoryTab
+          userId={userId}
+          brand={brand}
+          setBrand={setBrand}
+          menuConfig={menuConfig}
+          setMenuConfig={setMenuConfig}
           inventoryRows={
             inventoryRows
           }
@@ -1848,6 +1866,7 @@ export default function Dashboard({
 
     return (
       <TrackerTab
+        brand={brand}
         tracker={tracker}
         setTracker={setTracker}
         trackerTotal={

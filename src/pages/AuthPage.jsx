@@ -3,7 +3,6 @@ import { supabase } from "../lib/supabase";
 
 export default function AuthPage({ darkMode, setDarkMode }) {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -12,11 +11,6 @@ export default function AuthPage({ darkMode, setDarkMode }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage("");
-
-    if (isSignUp && !businessName.trim()) {
-      setMessage("Enter your business or tracker name.");
-      return;
-    }
 
     if (!supabase) {
       setMessage("Supabase is not configured. Add your environment variables first.");
@@ -30,11 +24,6 @@ export default function AuthPage({ darkMode, setDarkMode }) {
         ? await supabase.auth.signUp({
             email: email.trim(),
             password,
-            options: {
-              data: {
-                business_name: businessName.trim(),
-              },
-            },
           })
         : await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
@@ -69,7 +58,7 @@ export default function AuthPage({ darkMode, setDarkMode }) {
       <section className="w-full max-w-md">
         <div className="mb-8 text-center">
           <img
-            src="/churrozi-logo.jpg"
+            src="/benzi-logo.svg"
             alt="Benzi Tracker logo"
             className="mx-auto h-24 w-24 rounded-full object-cover shadow-xl ring-4 ring-[#d8a66b]/40"
           />
@@ -88,22 +77,6 @@ export default function AuthPage({ darkMode, setDarkMode }) {
             darkMode ? "border-gray-700 bg-[#111827]" : "border-gray-200 bg-white"
           }`}
         >
-          {isSignUp && (
-            <label className="block text-sm font-semibold">
-              Business or tracker name
-              <input
-                type="text"
-                required
-                maxLength={80}
-                autoComplete="organization"
-                value={businessName}
-                onChange={(event) => setBusinessName(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-300 bg-transparent px-4 py-3 outline-none transition focus:border-[#d8a66b] dark:border-gray-600"
-                placeholder="e.g. My Other Business"
-              />
-            </label>
-          )}
-
           <label className="block text-sm font-semibold">
             Email
             <input

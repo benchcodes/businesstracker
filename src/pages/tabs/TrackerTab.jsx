@@ -1,65 +1,23 @@
 import { useMemo } from "react";
 
-const DEFAULT_MENU = {
-  "Regular Churros": [
-    {
-      label: "4 pcs - ₱49",
-      pcs: 4,
-      price: 49,
-    },
-    {
-      label: "8 pcs - ₱69",
-      pcs: 8,
-      price: 69,
-    },
-  ],
-
-  "Churros Bites": [
-    {
-      label: "25 pcs - ₱89",
-      pcs: 25,
-      price: 89,
-    },
-  ],
-
-  "Premium Churros w/ Alcapone": [
-    {
-      label: "5 pcs - ₱69",
-      pcs: 5,
-      price: 69,
-    },
-    {
-      label: "8 pcs - ₱99",
-      pcs: 8,
-      price: 99,
-    },
-  ],
-};
-
-const DIPS = ["Matcha", "Chocolate"];
-
-const ADDITIONAL_DIP_PRICE = 10;
-
 export default function TrackerTab({
+  brand,
   tracker,
   setTracker,
-  trackerTotal,
   isSubmitting,
   onSubmit,
   menuConfig,
 }) {
-  const MENU = menuConfig ?? DEFAULT_MENU;
+  const MENU = useMemo(() => menuConfig || {}, [menuConfig]);
+  const firstProduct = Object.keys(MENU)[0] || "";
   // ============================================================
   // CURRENT PRODUCT
   // ============================================================
 
   const selectedProduct = useMemo(
     () =>
-      MENU[tracker.product] ||
-      MENU["Regular Churros"] ||
-      Object.values(MENU)[0] ||
-      [],
-    [MENU, tracker.product],
+      MENU[tracker.product] || MENU[firstProduct] || [],
+    [MENU, firstProduct, tracker.product],
   );
 
   // ============================================================
@@ -95,18 +53,6 @@ export default function TrackerTab({
         );
 
   // ============================================================
-  // ADDITIONAL DIPS
-  // ============================================================
-
-  const additionalDips =
-    tracker.additionalDips === ""
-      ? 0
-      : Math.max(
-          0,
-          Number(tracker.additionalDips) || 0,
-        );
-
-  // ============================================================
   // BASE PRICE
   // ============================================================
 
@@ -121,19 +67,10 @@ export default function TrackerTab({
     basePrice * quantity;
 
   // ============================================================
-  // ADDITIONAL DIP TOTAL
-  // ============================================================
-
-  const dipTotal =
-    additionalDips *
-    ADDITIONAL_DIP_PRICE;
-
-  // ============================================================
   // FINAL TOTAL
   // ============================================================
 
-  const calculatedTotal =
-    productTotal + dipTotal;
+  const calculatedTotal = productTotal;
 
   // ============================================================
   // CALCULATE ORDER VALUES
@@ -162,29 +99,9 @@ export default function TrackerTab({
           selectedVariant.price,
       ) || 0;
 
-    const nextAdditionalDips =
-      overrides.additionalDips === ""
-        ? 0
-        : Math.max(
-            0,
-            Number(
-              overrides.additionalDips ??
-                previous.additionalDips ??
-                0,
-            ) || 0,
-          );
-
     const nextProductTotal =
       nextProductPrice *
       nextQuantity;
-
-    const nextDipTotal =
-      nextAdditionalDips *
-      ADDITIONAL_DIP_PRICE;
-
-    const nextTotal =
-      nextProductTotal +
-      nextDipTotal;
 
     return {
       ...previous,
@@ -204,25 +121,13 @@ export default function TrackerTab({
       productTotal:
         nextProductTotal,
 
-      // Additional dip
-      additionalDips:
-        overrides.additionalDips === ""
-          ? ""
-          : nextAdditionalDips,
-
-      additionalDipPrice:
-        ADDITIONAL_DIP_PRICE,
-
-      additionalDipTotal:
-        nextDipTotal,
-
       // FINAL TOTAL
       totalPrice:
-        nextTotal,
+        nextProductTotal,
 
       // Legacy-compatible field
       total:
-        nextTotal,
+        nextProductTotal,
     };
   };
 
@@ -258,10 +163,6 @@ export default function TrackerTab({
           price:
             firstVariant.price,
 
-          additionalDips: "",
-
-          additionalDipType:
-            "Chocolate",
         },
       ),
     );
@@ -342,62 +243,6 @@ export default function TrackerTab({
   };
 
   // ============================================================
-  // ADDITIONAL DIP QUANTITY
-  // ============================================================
-
-  const handleAdditionalDipsChange = (
-    event,
-  ) => {
-    const value =
-      event.target.value;
-
-    // Allow empty input
-    if (value === "") {
-      setTracker((previous) =>
-        calculateOrderValues(
-          previous,
-          {
-            additionalDips: "",
-          },
-        ),
-      );
-
-      return;
-    }
-
-    const numericValue =
-      Math.max(
-        0,
-        Number(value) || 0,
-      );
-
-    setTracker((previous) =>
-      calculateOrderValues(
-        previous,
-        {
-          additionalDips:
-            numericValue,
-        },
-      ),
-    );
-  };
-
-  // ============================================================
-  // ADDITIONAL DIP FLAVOR
-  // ============================================================
-
-  const handleAdditionalDipTypeChange = (
-    event,
-  ) => {
-    setTracker((previous) => ({
-      ...previous,
-
-      additionalDipType:
-        event.target.value,
-    }));
-  };
-
-  // ============================================================
   // DATE
   // ============================================================
 
@@ -420,19 +265,6 @@ export default function TrackerTab({
     setTracker((previous) => ({
       ...previous,
       name: event.target.value,
-    }));
-  };
-
-  // ============================================================
-  // FREE DIP
-  // ============================================================
-
-  const handleFreeDipChange = (
-    event,
-  ) => {
-    setTracker((previous) => ({
-      ...previous,
-      dip: event.target.value,
     }));
   };
 
@@ -471,7 +303,6 @@ export default function TrackerTab({
      * Make sure the tracker contains the latest:
      *
      * Product Total
-     * Additional Dip Total
      * Final Total
      */
 
@@ -485,8 +316,6 @@ export default function TrackerTab({
           productPrice:
             selectedVariant.price,
 
-          additionalDips:
-            tracker.additionalDips,
         },
       );
 
@@ -536,13 +365,13 @@ export default function TrackerTab({
 
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold">
-          Welcome to Benzi Tracker!
+          Welcome to {brand?.name || "Benzi Tracker"}!
         </h1>
 
         <p className="mt-3 text-amber-100">
           Easily manage your daily orders,
           calculate sales, and keep track of
-          your churros business—all in one
+          your business—all in one
           place.
         </p>
       </div>
@@ -587,17 +416,16 @@ export default function TrackerTab({
       </div>
 
       {/* ======================================================
-          CHURROS ORDER
+          PRODUCT ORDER
       ====================================================== */}
 
       <div className="rounded-2xl border border-gray-200 bg-[#f8f5f2] p-5 dark:border-gray-700 dark:bg-gray-900">
         <h2 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-          🥨 Churros Order
+          Product Order
         </h2>
 
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Select the churros product
-          and variant.
+          Select a product and variant.
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -608,8 +436,7 @@ export default function TrackerTab({
 
             <select
               value={
-                tracker.product ||
-                "Regular Churros"
+                tracker.product || firstProduct
               }
               onChange={
                 handleProductChange
@@ -685,131 +512,8 @@ export default function TrackerTab({
             />
           </label>
 
-          {/* FREE DIP */}
-
-          <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <span>
-              Free Dip
-            </span>
-
-            <select
-              value={
-                tracker.dip ||
-                "Matcha"
-              }
-              onChange={
-                handleFreeDipChange
-              }
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            >
-              {DIPS.map(
-                (dip) => (
-                  <option
-                    key={dip}
-                    value={dip}
-                  >
-                    {dip}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
         </div>
 
-        {/* ====================================================
-            ADDITIONAL DIP
-        ==================================================== */}
-
-        <div className="mt-5 rounded-xl border border-[#d8a66b] bg-white p-4 dark:border-[#8B5E3C] dark:bg-gray-800">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-                🥣 Additional Dip
-              </p>
-
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ₱10.00 per additional
-                dip
-              </p>
-            </div>
-
-            <div className="grid w-full gap-3 sm:grid-cols-2 md:w-auto">
-              {/* DIP FLAVOR */}
-
-              <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <span>
-                  Dip Flavor
-                </span>
-
-                <select
-                  value={
-                    tracker.additionalDipType ||
-                    "Chocolate"
-                  }
-                  onChange={
-                    handleAdditionalDipTypeChange
-                  }
-                  disabled={
-                    additionalDips <=
-                    0
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                >
-                  {DIPS.map(
-                    (dip) => (
-                      <option
-                        key={dip}
-                        value={dip}
-                      >
-                        {dip}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
-
-              {/* DIP QUANTITY */}
-
-              <label className="space-y-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <span>
-                  Quantity
-                </span>
-
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={
-                    tracker.additionalDips ===
-                    ""
-                      ? ""
-                      : tracker.additionalDips ??
-                        ""
-                  }
-                  onChange={
-                    handleAdditionalDipsChange
-                  }
-                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                />
-              </label>
-            </div>
-          </div>
-
-          {additionalDips > 0 && (
-            <p className="mt-3 text-sm text-[#5A3A2E] dark:text-[#e8bd85]">
-              {additionalDips}{" "}
-              additional{" "}
-              {additionalDips === 1
-                ? "dip"
-                : "dips"}{" "}
-              —{" "}
-              {tracker.additionalDipType ||
-                "Chocolate"}{" "}
-              · ₱
-              {dipTotal.toFixed(2)}
-            </p>
-          )}
-        </div>
       </div>
 
       {/* ======================================================
@@ -871,8 +575,7 @@ export default function TrackerTab({
 
           <div className="flex justify-between text-gray-600 dark:text-gray-300">
             <span>
-              {tracker.product ||
-                "Regular Churros"}{" "}
+              {tracker.product || firstProduct}{" "}
               ({selectedVariant.pcs} pcs)
             </span>
 
@@ -893,43 +596,6 @@ export default function TrackerTab({
             <span>
               ₱
               {productTotal.toFixed(2)}
-            </span>
-          </div>
-
-          {/* FREE DIP */}
-
-          <div className="flex justify-between text-gray-600 dark:text-gray-300">
-            <span>
-              Free Dip
-              {tracker.dip
-                ? ` (${tracker.dip})`
-                : ""}
-            </span>
-
-            <span className="text-green-600 dark:text-green-400">
-              Included
-            </span>
-          </div>
-
-          {/* ADDITIONAL DIP */}
-
-          <div className="flex justify-between text-gray-600 dark:text-gray-300">
-            <span>
-              Additional Dip
-              {additionalDips > 0 && (
-                <>
-                  {" "}
-                  (
-                  {tracker.additionalDipType ||
-                    "Chocolate"}
-                  )
-                </>
-              )}
-            </span>
-
-            <span>
-              ₱
-              {dipTotal.toFixed(2)}
             </span>
           </div>
 

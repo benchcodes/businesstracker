@@ -46,7 +46,7 @@ export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
           }`}
         >
           <img
-            src={brand?.logo || "/churrozi-logo.jpg"}
+            src={brand?.logo || "/benzi-logo.svg"}
             alt={`${brand?.name || "Benzi Tracker"} Logo`}
             className="h-64 w-64 rounded-full object-cover shadow-2xl ring-4 ring-[#d8a66b]/50 transition-transform duration-500 hover:scale-105 sm:h-72 sm:w-72"
           />
