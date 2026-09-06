@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import AdminTab from "./AdminTab";
 
@@ -23,6 +23,9 @@ export default function InventoryTab({
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newPackagingName, setNewPackagingName] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminPasswordConfirmation, setAdminPasswordConfirmation] = useState("");
   const [hasAdminPassword, setHasAdminPassword] = useState(() => {
@@ -106,7 +109,36 @@ export default function InventoryTab({
         throw error;
       }
 
-      setInventoryRows(data || []);
+      const loadedRows = data || [];
+      const defaultNames = [
+        "example packaging",
+        "regular size pack",
+        "bites pack",
+        "dip pack",
+        "plastic",
+        "sticker",
+      ];
+      const hasOnlyDefaultRows =
+        loadedRows.length > 0 &&
+        loadedRows.every((item) =>
+          defaultNames.includes(
+            String(item.name)
+              .trim()
+              .toLowerCase(),
+          ),
+        );
+
+      setInventoryRows(
+        hasOnlyDefaultRows
+          ? loadedRows.filter(
+              (item) =>
+                String(item.name)
+                  .trim()
+                  .toLowerCase() ===
+                "example packaging",
+            )
+          : loadedRows,
+      );
       setErrorMessage("");
     } catch (error) {
       console.error("Inventory load error:", error);
@@ -117,9 +149,66 @@ export default function InventoryTab({
     }
   }, [setErrorMessage, setInventoryRows]);
 
-  useEffect(() => {
-    loadInventory();
-  }, [loadInventory]);
+  const handleAddPackaging = async (event) => {
+    event.preventDefault();
+
+    const name = newPackagingName.trim();
+
+    if (!name) {
+      setErrorMessage("Enter a packaging name first.");
+      return;
+    }
+
+    const alreadyExists = inventoryRows.some(
+      (item) =>
+        String(item.name).trim().toLowerCase() ===
+        name.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      setErrorMessage("That packaging item already exists.");
+      return;
+    }
+
+    setIsAdding(true);
+    setErrorMessage("");
+
+    try {
+      const { data, error } = await supabase
+        .from("inventory")
+        .insert([
+          {
+            name,
+            stock: 0,
+            minimum_stock: 5,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setInventoryRows((previous) => [
+          ...previous,
+          data,
+        ]);
+      }
+
+      setNewPackagingName("");
+      setShowAddForm(false);
+      setErrorMessage("");
+    } catch (error) {
+      console.error("Packaging insert error:", error);
+      setErrorMessage(
+        `Unable to add packaging: ${error.message}`,
+      );
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   // =====================================================
   // OPEN EDIT
@@ -251,6 +340,44 @@ export default function InventoryTab({
     }
   };
 
+  const handleDeletePackaging = async (item) => {
+    const confirmed = window.confirm(
+      `Delete "${item.name}" from inventory?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setInventoryRows((previous) =>
+        previous.filter(
+          (currentItem) =>
+            currentItem.id !== item.id,
+        ),
+      );
+    } catch (error) {
+      console.error("Packaging delete error:", error);
+      setErrorMessage(
+        `Unable to delete packaging: ${error.message}`,
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // =====================================================
   // STOCK STATUS
   // =====================================================
@@ -294,14 +421,55 @@ export default function InventoryTab({
       ================================================= */}
 
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-6 text-white shadow-lg">
-        <h1 className="text-2xl font-bold">
-          Packaging Inventory
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              Packaging Inventory
+            </h1>
 
-        <p className="mt-2 text-amber-100">
-          Manage your packaging stocks and monitor
-          which items need to be restocked.
-        </p>
+            <p className="mt-2 text-amber-100">
+              Manage your packaging stocks and monitor
+              which items need to be restocked.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAddForm((previous) => !previous)}
+            className="rounded-xl bg-[#f4d7a3] px-4 py-2 text-sm font-semibold text-[#4b3028] transition hover:bg-[#e9c58a]"
+          >
+            {showAddForm ? "Cancel" : "Add Packaging"}
+          </button>
+        </div>
+
+        {showAddForm && (
+          <form
+            onSubmit={handleAddPackaging}
+            className="mt-5 flex flex-col gap-3 rounded-2xl bg-white/10 p-4 sm:flex-row sm:items-end"
+          >
+            <label className="flex-1 text-sm font-medium text-amber-100">
+              Packaging name
+              <input
+                type="text"
+                value={newPackagingName}
+                onChange={(event) =>
+                  setNewPackagingName(event.target.value)
+                }
+                placeholder="Example: Box, Bag, Cup"
+                className="mt-1 w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
+                autoFocus
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={isAdding || !newPackagingName.trim()}
+              className="rounded-xl bg-[#f4d7a3] px-4 py-2 text-sm font-semibold text-[#4b3028] transition hover:bg-[#e9c58a] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Add Item
+            </button>
+          </form>
+        )}
 
         {!adminUnlocked && (
           <form onSubmit={handleAdminUnlock} className="mt-5 max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
@@ -381,15 +549,7 @@ export default function InventoryTab({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {inventoryRows
-            .filter(
-              (item) =>
-                ![
-                  "Plastic",
-                  "Bites Pack",
-                ].includes(item.name),
-            )
-            .map((item) => {
+          {inventoryRows.map((item) => {
               const status = getStockStatus(item);
 
               return (
@@ -474,14 +634,25 @@ export default function InventoryTab({
 
                 {/* EDIT BUTTON */}
 
-                <button
-                  type="button"
-                  onClick={() => handleEdit(item)}
-                  disabled={isSaving}
-                  className="mt-3 w-full rounded-lg bg-[#d8a66b] px-4 py-2 font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Edit Stock
-                </button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(item)}
+                    disabled={isSaving}
+                    className="rounded-lg bg-[#d8a66b] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#c9944d] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Edit Stock
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePackaging(item)}
+                    disabled={isSaving}
+                    className="rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             );
           })}

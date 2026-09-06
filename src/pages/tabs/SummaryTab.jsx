@@ -813,10 +813,6 @@ export default function SummaryTab({
                     </th>
 
                     <th className="px-4 py-3 text-left font-semibold text-gray-200">
-                      Extra Dip
-                    </th>
-
-                    <th className="px-4 py-3 text-left font-semibold text-gray-200">
                       Total
                     </th>
 
@@ -834,7 +830,7 @@ export default function SummaryTab({
                   {isLoading ? (
                     <tr>
                       <td
-                        colSpan="8"
+                        colSpan="7"
                         className="px-4 py-3 text-gray-300"
                       >
                         Loading records...
@@ -853,15 +849,6 @@ export default function SummaryTab({
                           getDisplayUnitPrice(
                             row,
                           );
-
-                        const additionalDips =
-                          getAdditionalDips(
-                            row,
-                          );
-
-                        const additionalDipTotal =
-                          additionalDips *
-                          ADDITIONAL_DIP_PRICE;
 
                         const orderTotal =
                           getOrderTotal(
@@ -892,15 +879,6 @@ export default function SummaryTab({
                               {unitPrice.toFixed(
                                 2,
                               )}
-                            </td>
-
-                            <td className="px-4 py-3 text-gray-300">
-                              {additionalDips >
-                              0
-                                ? `+${additionalDips} (₱${additionalDipTotal.toFixed(
-                                    2,
-                                  )})`
-                                : "—"}
                             </td>
 
                             <td className="px-4 py-3 font-semibold text-[#e8bd85]">
@@ -938,7 +916,7 @@ export default function SummaryTab({
                   ) : (
                     <tr>
                       <td
-                        colSpan="8"
+                        colSpan="7"
                         className="px-4 py-3 text-gray-300"
                       >
                         No completed
@@ -949,7 +927,7 @@ export default function SummaryTab({
 
                   <tr className="bg-gray-800">
                     <td
-                      colSpan="8"
+                      colSpan="7"
                       className="px-4 py-3 font-semibold text-gray-300"
                     >
                       <div className="flex justify-between">

@@ -111,10 +111,6 @@ export default function PendingOrdersTab({
                         </th>
 
                         <th className="px-4 py-3 text-left">
-                          Extra Dip
-                        </th>
-
-                        <th className="px-4 py-3 text-left">
                           Total
                         </th>
 
@@ -134,15 +130,6 @@ export default function PendingOrdersTab({
 
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       {orders.map((row) => {
-                        const additionalDips =
-                          getAdditionalDips(row);
-
-                        const productTotal =
-                          getProductTotal(row);
-
-                        const extraDipTotal =
-                          getExtraDipTotal(row);
-
                         const finalTotal =
                           getFinalTotal(row);
 
@@ -178,33 +165,6 @@ export default function PendingOrdersTab({
                                   row.price ??
                                   0,
                               ).toFixed(2)}
-                            </td>
-
-                            {/* EXTRA DIP */}
-                            <td className="px-4 py-3">
-                              {additionalDips > 0 ? (
-                              <div>
-                                <span className="font-semibold">
-                                  {additionalDips}
-                                </span>
-
-                                {row.additionalDipType ||
-                                row.additional_dip_type ? (
-                                  <span className="ml-1 text-gray-500 dark:text-gray-400">
-                                    (
-                                    {row.additionalDipType ??
-                                      row.additional_dip_type}
-                                    )
-                                  </span>
-                                ) : null}
-
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  ₱{extraDipTotal.toFixed(2)}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )}
                             </td>
 
                             {/* TOTAL */}
@@ -263,7 +223,7 @@ export default function PendingOrdersTab({
                       {/* DATE TOTAL */}
                       <tr className="bg-[#f8f5f2] dark:bg-gray-800">
                         <td
-                          colSpan="9"
+                          colSpan="8"
                           className="px-4 py-3 text-right font-semibold text-gray-800 dark:text-gray-200"
                         >
                           Date Total: ₱

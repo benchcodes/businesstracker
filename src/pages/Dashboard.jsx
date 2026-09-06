@@ -236,6 +236,95 @@ export default function Dashboard({
         throw firstError;
       }
 
+      let loadedInventoryRows =
+        inventoryResult.data || [];
+
+      const defaultInventoryNames = [
+        "example packaging",
+        "regular size pack",
+        "bites pack",
+        "dip pack",
+        "plastic",
+        "sticker",
+      ];
+
+      const containsOnlyDefaultInventory =
+        loadedInventoryRows.length > 0 &&
+        loadedInventoryRows.every((item) =>
+          defaultInventoryNames.includes(
+            String(item.name)
+              .trim()
+              .toLowerCase(),
+          ),
+        );
+
+      if (containsOnlyDefaultInventory) {
+        const defaultInventoryNamesToDelete = [
+          "Example Packaging",
+          "Regular Size Pack",
+          "Bites Pack",
+          "Dip Pack",
+          "Plastic",
+          "Sticker",
+        ];
+
+        const { error: deleteError } =
+          await supabase
+            .from("inventory")
+            .delete()
+            .in(
+              "name",
+              defaultInventoryNamesToDelete,
+            );
+
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        loadedInventoryRows = [];
+      }
+
+      if (loadedInventoryRows.length === 0) {
+        const { error: insertError } =
+          await supabase
+            .from("inventory")
+            .insert([
+              {
+                name: "Example Packaging",
+                stock: 0,
+                minimum_stock: 5,
+              },
+            ]);
+
+        if (
+          insertError &&
+          insertError.code !== "23505"
+        ) {
+          throw insertError;
+        }
+
+        const { data: refreshedInventory, error: refreshError } =
+          await supabase
+            .from("inventory")
+            .select("*")
+            .order("id", {
+              ascending: true,
+            });
+
+        if (refreshError) {
+          throw refreshError;
+        }
+
+        loadedInventoryRows =
+          (refreshedInventory || []).filter(
+            (item) =>
+              String(item.name)
+                .trim()
+                .toLowerCase() ===
+              "example packaging",
+          );
+      }
+
       setTrackerRows(
         trackerResult.data || [],
       );
@@ -245,7 +334,7 @@ export default function Dashboard({
       );
 
       setInventoryRows(
-        inventoryResult.data || [],
+        loadedInventoryRows,
       );
 
       setSavingsRows(
@@ -902,6 +991,17 @@ export default function Dashboard({
       const product =
         order.product || "";
 
+      const regularPackName =
+        inventoryRows.some(
+          (item) =>
+            String(item.name)
+              .trim()
+              .toLowerCase() ===
+            "regular pack",
+        )
+          ? "Regular Pack"
+          : "Regular Size Pack";
+
       const deductions = [];
 
       if (
@@ -909,7 +1009,7 @@ export default function Dashboard({
         "Regular Churros"
       ) {
         deductions.push({
-          name: "Regular Size Pack",
+          name: regularPackName,
           quantity,
         });
       }
@@ -919,7 +1019,7 @@ export default function Dashboard({
         "Premium Churros w/ Alcapone"
       ) {
         deductions.push({
-          name: "Regular Size Pack",
+          name: regularPackName,
           quantity,
         });
       }
@@ -934,7 +1034,7 @@ export default function Dashboard({
       }
 
       return deductions;
-    }, []);
+    }, [inventoryRows]);
 
   // =====================================================
   // CHECK INVENTORY

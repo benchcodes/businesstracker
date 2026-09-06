@@ -16,14 +16,8 @@ const LEGACY_DEFAULT_LOGOS = new Set([
 ]);
 
 const DEFAULT_MENU = {
-  "Regular Churros": [
-    { label: "4 pcs - ₱49", pcs: 4, price: 49 },
-    { label: "8 pcs - ₱69", pcs: 8, price: 69 },
-  ],
-  "Churros Bites": [{ label: "25 pcs - ₱89", pcs: 25, price: 89 }],
-  "Premium Churros w/ Alcapone": [
-    { label: "5 pcs - ₱69", pcs: 5, price: 69 },
-    { label: "8 pcs - ₱99", pcs: 8, price: 99 },
+  "Example Product": [
+    { label: "Example - ₱0", pcs: 1, price: 0 },
   ],
 };
 
