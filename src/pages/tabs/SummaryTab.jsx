@@ -1,10 +1,20 @@
 import { useCallback, useMemo, useState } from "react";
+import { FileText } from "lucide-react";
 
 // =====================================================
 // CONSTANTS
 // =====================================================
 
 const ADDITIONAL_DIP_PRICE = 10;
+
+function escapeReportText(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 export default function SummaryTab({
   summaryRange,
@@ -37,6 +47,13 @@ export default function SummaryTab({
 
   const [showOlderExpenses, setShowOlderExpenses] =
     useState(false);
+
+  const [reportRange, setReportRange] =
+    useState("14days");
+
+  const [reportDate, setReportDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
 
   // =====================================================
   // NUMBER HELPER
@@ -549,6 +566,170 @@ export default function SummaryTab({
       finalSavingsTotal,
     ]);
 
+  const generateSummaryReport = useCallback(() => {
+    const selectedDate = reportDate ||
+      new Date().toISOString().slice(0, 10);
+    const rangeStart = new Date(
+      `${selectedDate}T00:00:00`,
+    );
+
+    if (reportRange === "14days") {
+      rangeStart.setDate(rangeStart.getDate() - 13);
+    }
+
+    const isInReportRange = (row) => {
+      if (reportRange === "overall") {
+        return true;
+      }
+
+      if (!row?.date) {
+        return false;
+      }
+
+      const rowDate = new Date(
+        `${String(row.date).slice(0, 10)}T00:00:00`,
+      );
+
+      if (reportRange === "date") {
+        return (
+          String(row.date).slice(0, 10) ===
+          selectedDate
+        );
+      }
+
+      return rowDate >= rangeStart && rowDate <=
+        new Date(`${selectedDate}T23:59:59`);
+    };
+
+    const reportSalesRows =
+      completedTrackerRows.filter(isInReportRange);
+    const reportExpenseRows =
+      displayedExpenseRows.filter(isInReportRange);
+    const reportSavingsRows =
+      (displayedSavingsRows || []).filter(isInReportRange);
+    const reportSalesTotal = reportSalesRows.reduce(
+      (total, row) => total + getOrderTotal(row),
+      0,
+    );
+    const reportExpensesTotal = reportExpenseRows.reduce(
+      (total, row) => total + toNumber(row.price),
+      0,
+    );
+    const reportSavingsTotal = reportSavingsRows.reduce(
+      (total, row) => total + toNumber(row.amount),
+      0,
+    );
+    const reportProfit =
+      reportSalesTotal - reportExpensesTotal;
+    const reportAvailableMoney = Math.max(
+      0,
+      reportProfit - reportSavingsTotal,
+    );
+    const reportPeriod = reportRange === "overall"
+      ? "Overall"
+      : reportRange === "date"
+        ? selectedDate
+        : `14 days ending ${selectedDate}`;
+    const salesDetails = reportSalesRows.length > 0
+      ? reportSalesRows.map((row) => `
+              <tr>
+                <td>${escapeReportText(row.date)}</td>
+                <td>${escapeReportText(row.name || row.product || "—")}</td>
+                <td>${getOrderQuantity(row)}</td>
+                <td>₱${getDisplayUnitPrice(row).toFixed(2)}</td>
+                <td>₱${getOrderTotal(row).toFixed(2)}</td>
+              </tr>
+            `).join("")
+      : '<tr><td colspan="5">No sales for this period.</td></tr>';
+    const expenseDetails = reportExpenseRows.length > 0
+      ? reportExpenseRows.map((row) => `
+              <tr>
+                <td>${escapeReportText(row.date)}</td>
+                <td>${escapeReportText(row.product || "—")}</td>
+                <td>₱${toNumber(row.price).toFixed(2)}</td>
+              </tr>
+            `).join("")
+      : '<tr><td colspan="3">No expenses for this period.</td></tr>';
+    const printWindow = window.open(
+      "",
+      "_blank",
+      "width=850,height=900",
+    );
+
+    if (!printWindow) {
+      return;
+    }
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>Churros Tracker Report</title>
+          <style>
+            body { color: #202020; font-family: Arial, sans-serif; margin: 40px; }
+            h1 { margin-bottom: 4px; }
+            .period { color: #555; margin-bottom: 28px; }
+            .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+            .item { border: 1px solid #ddd; padding: 14px; }
+            .label { color: #555; font-size: 13px; }
+            .value { font-size: 22px; font-weight: 700; margin-top: 5px; }
+            table { border-collapse: collapse; margin-top: 24px; width: 100%; }
+            th, td { border-bottom: 1px solid #ddd; padding: 9px 6px; text-align: left; }
+            th { background: #f3f3f3; }
+            h2 { border-bottom: 2px solid #202020; margin-top: 32px; padding-bottom: 6px; }
+            .profit { color: ${reportProfit < 0 ? "#b42318" : "#18794e"}; }
+            @media print { body { margin: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>Churros Tracker Financial Report</h1>
+          <div class="period">Report period: ${reportPeriod}<br />Generated: ${new Date().toLocaleString()}</div>
+          <div class="summary">
+            <div class="item"><div class="label">Total Sales</div><div class="value">₱${reportSalesTotal.toFixed(2)}</div></div>
+            <div class="item"><div class="label">Total Expenses</div><div class="value">₱${reportExpensesTotal.toFixed(2)}</div></div>
+            <div class="item"><div class="label">Net Profit</div><div class="value profit">₱${reportProfit.toFixed(2)}</div></div>
+            <div class="item"><div class="label">Total Savings</div><div class="value">₱${reportSavingsTotal.toFixed(2)}</div></div>
+            <div class="item"><div class="label">Available Money</div><div class="value">₱${reportAvailableMoney.toFixed(2)}</div></div>
+            <div class="item"><div class="label">Completed Orders</div><div class="value">${reportSalesRows.length}</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Metric</th><th>Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Total Sales</td><td>₱${reportSalesTotal.toFixed(2)}</td></tr>
+              <tr><td>Total Expenses</td><td>₱${reportExpensesTotal.toFixed(2)}</td></tr>
+              <tr><td>Net Profit</td><td>₱${reportProfit.toFixed(2)}</td></tr>
+            </tbody>
+          </table>
+          <h2>Sales Products</h2>
+          <table>
+            <thead><tr><th>Date</th><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+            <tbody>${salesDetails}</tbody>
+          </table>
+          <h2>Expense Products</h2>
+          <table>
+            <thead><tr><th>Date</th><th>Product</th><th>Amount</th></tr></thead>
+            <tbody>${expenseDetails}</tbody>
+          </table>
+          <p>Net Profit = Total Sales - Total Expenses</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  }, [
+    reportRange,
+    reportDate,
+    completedTrackerRows,
+    displayedExpenseRows,
+    displayedSavingsRows,
+    getOrderTotal,
+    getOrderQuantity,
+    getDisplayUnitPrice,
+    toNumber,
+  ]);
+
   return (
     <div className="space-y-6">
       {/* =====================================================
@@ -657,7 +838,68 @@ export default function SummaryTab({
           FILTER
       ===================================================== */}
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg bg-gray-800 p-1">
+            <button
+              type="button"
+              onClick={() => setReportRange("date")}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                reportRange === "date"
+                  ? "bg-[#d8a66b] text-white"
+                  : "text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              Report by Date
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setReportRange("14days")}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                reportRange === "14days"
+                  ? "bg-[#d8a66b] text-white"
+                  : "text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              Last 14 Days
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setReportRange("overall")}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition ${
+                reportRange === "overall"
+                  ? "bg-[#d8a66b] text-white"
+                  : "text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              Overall
+            </button>
+          </div>
+
+          {reportRange !== "overall" && (
+            <input
+              type="date"
+              value={reportDate}
+              onChange={(event) =>
+                setReportDate(event.target.value)
+              }
+              className="rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white outline-none focus:border-[#d8a66b]"
+            />
+          )}
+
+          <button
+            type="button"
+            onClick={generateSummaryReport}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#c38f54]"
+          >
+            <FileText size={16} aria-hidden="true" />
+            Generate PDF
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="inline-flex rounded-lg bg-gray-800 p-1">
           <button
             type="button"
@@ -717,6 +959,7 @@ export default function SummaryTab({
               Clear
             </button>
           )}
+        </div>
       </div>
 
       {/* =====================================================

@@ -112,14 +112,45 @@ export default function AdminTab({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      const maxDimension = 800;
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(image.width, image.height),
+      );
+      const canvas = document.createElement("canvas");
+
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d").drawImage(
+        image,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+
+      const compressedLogo = canvas.toDataURL(
+        "image/webp",
+        0.85,
+      );
+
       setBrandForm((previous) => ({
         ...previous,
-        logo: String(reader.result),
+        logo: compressedLogo,
       }));
+      URL.revokeObjectURL(objectUrl);
     };
-    reader.readAsDataURL(file);
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setErrorMessage("Unable to read this image file.");
+    };
+
+    image.src = objectUrl;
   };
 
   const handleDrop = (event) => {
