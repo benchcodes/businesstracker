@@ -213,40 +213,23 @@ export default function Dashboard({
           .select("*"),
       ]);
 
-      const failedTable = [
-        ["tracker", trackerResult.error],
-        ["expenses", expenseResult.error],
-        ["inventory", inventoryResult.error],
-        ["savings", savingsResult.error],
-      ].find(([, error]) => error);
-
-      if (failedTable?.[0] === "savings" && isMissingSavingsTable(failedTable[1])) {
+      if (
+        savingsResult.error &&
+        isMissingSavingsTable(savingsResult.error)
+      ) {
         savingsResult.data = [];
         savingsResult.error = null;
       }
 
-      if (failedTable && failedTable[0] !== "savings") {
-        const [tableName, error] = failedTable;
-        const details = [error.code, error.details, error.hint]
-          .filter(Boolean)
-          .join(" | ");
-        throw new Error(
-          `${tableName}: ${error.message}${details ? ` (${details})` : ""}`,
-        );
-      }
-
-      if (failedTable?.[0] === "savings" && savingsResult.error) {
-        const error = savingsResult.error;
-        const details = [error.code, error.details, error.hint]
-          .filter(Boolean)
-          .join(" | ");
-        throw new Error(
-          `savings: ${error.message}${details ? ` (${details})` : ""}`,
-        );
-      }
+      const failedTables = [
+        ["tracker", trackerResult.error],
+        ["expenses", expenseResult.error],
+        ["inventory", inventoryResult.error],
+        ["savings", savingsResult.error],
+      ].filter(([, error]) => error);
 
       let loadedInventoryRows =
-        inventoryResult.data || [];
+        inventoryResult.error ? [] : inventoryResult.data || [];
 
       const defaultInventoryNames = [
         "example packaging",
@@ -267,7 +250,7 @@ export default function Dashboard({
           ),
         );
 
-      if (containsOnlyDefaultInventory) {
+      if (!inventoryResult.error && containsOnlyDefaultInventory) {
         const defaultInventoryNamesToDelete = [
           "Example Packaging",
           "Regular Size Pack",
@@ -293,7 +276,7 @@ export default function Dashboard({
         loadedInventoryRows = [];
       }
 
-      if (loadedInventoryRows.length === 0) {
+      if (!inventoryResult.error && loadedInventoryRows.length === 0) {
         const { error: insertError } =
           await supabase
             .from("inventory")
@@ -358,7 +341,15 @@ export default function Dashboard({
         ),
       );
 
-      setErrorMessage("");
+      const loadWarnings = failedTables.map(
+        ([tableName, error]) => `${tableName}: ${error.message}`,
+      );
+
+      setErrorMessage(
+        loadWarnings.length > 0
+          ? `Some data could not be loaded. ${loadWarnings.join("; ")}`
+          : "",
+      );
     } catch (error) {
       console.error(error);
 
