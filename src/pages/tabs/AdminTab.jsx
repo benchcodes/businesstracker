@@ -116,7 +116,7 @@ export default function AdminTab({
     const objectUrl = URL.createObjectURL(file);
 
     image.onload = () => {
-      const maxDimension = 800;
+      const maxDimension = 512;
       const scale = Math.min(
         1,
         maxDimension / Math.max(image.width, image.height),
@@ -133,10 +133,7 @@ export default function AdminTab({
         canvas.height,
       );
 
-      const compressedLogo = canvas.toDataURL(
-        "image/webp",
-        0.85,
-      );
+      const compressedLogo = canvas.toDataURL("image/webp", 0.65);
 
       setBrandForm((previous) => ({
         ...previous,
@@ -395,6 +392,7 @@ export default function AdminTab({
                   if (file) {
                     handleLogoFile(file);
                   }
+                  event.target.value = "";
                 }}
               />
               <button

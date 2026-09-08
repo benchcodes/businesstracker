@@ -51,7 +51,7 @@ const getInitialBrand = (session) => ({
 });
 
 export default function App() {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(undefined);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [activeView, setActiveView] = useState("summary");
   const [sidebarOpen, setSidebarOpen] = useState(false);
