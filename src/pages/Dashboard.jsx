@@ -198,28 +198,19 @@ export default function Dashboard({
       ] = await Promise.all([
         supabase
           .from("tracker")
-          .select("*"),
+          .select("id,user_id,created_at,date,name,order_quantity,price,notes,status"),
 
         supabase
           .from("expenses")
-          .select("*")
-          .order("date", {
-            ascending: false,
-          }),
+          .select("*"),
 
         supabase
           .from("inventory")
-          .select("*")
-          .order("id", {
-            ascending: true,
-          }),
+          .select("*"),
 
         supabase
           .from("savings")
-          .select("*")
-          .order("date", {
-            ascending: false,
-          }),
+          .select("*"),
       ]);
 
       const failedTable = [
@@ -350,15 +341,21 @@ export default function Dashboard({
       );
 
       setExpenseRows(
-        expenseResult.data || [],
+        [...(expenseResult.data || [])].sort((left, right) =>
+          String(right.date || "").localeCompare(String(left.date || "")),
+        ),
       );
 
       setInventoryRows(
-        loadedInventoryRows,
+        [...loadedInventoryRows].sort((left, right) =>
+          String(left.id || "").localeCompare(String(right.id || "")),
+        ),
       );
 
       setSavingsRows(
-        savingsResult.data || [],
+        [...(savingsResult.data || [])].sort((left, right) =>
+          String(right.date || "").localeCompare(String(left.date || "")),
+        ),
       );
 
       setErrorMessage("");
