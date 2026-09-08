@@ -34,16 +34,17 @@ const hasStoredValue = (key) => localStorage.getItem(key) !== null;
 
 const normalizeBrand = (brand, session) => {
   const accountMetadata = session?.user?.user_metadata || {};
+  const hasSavedBrand = Boolean(brand && typeof brand === "object");
   const nextBrand = {
     ...getInitialBrand(session),
     ...(brand || {}),
   };
 
-  if (accountMetadata.business_name?.trim()) {
+  if (!hasSavedBrand && accountMetadata.business_name?.trim()) {
     nextBrand.name = accountMetadata.business_name.trim();
   }
 
-  if (accountMetadata.business_logo) {
+  if (!hasSavedBrand && accountMetadata.business_logo) {
     nextBrand.logo = accountMetadata.business_logo;
   }
 

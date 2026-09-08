@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 const createVariant = () => ({
@@ -68,7 +68,6 @@ export default function AdminTab({
   setInventoryRows,
   setErrorMessage,
 }) {
-  const fileInputRef = useRef(null);
   const [brandForm, setBrandForm] = useState({
     name: brand?.name || "Benzi Tracker",
     logo: brand?.logo || "/benzi-logo.svg",
@@ -396,7 +395,7 @@ export default function AdminTab({
                 or click to browse
               </p>
               <input
-                ref={fileInputRef}
+                id="business-logo-upload"
                 type="file"
                 accept="image/*"
                 className="hidden"
@@ -408,13 +407,12 @@ export default function AdminTab({
                   event.target.value = "";
                 }}
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-3 rounded-xl bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#c38f54]"
+              <label
+                htmlFor="business-logo-upload"
+                className="mt-3 inline-block rounded-xl bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#c38f54]"
               >
                 Choose Image
-              </button>
+              </label>
             </div>
 
             <div className="rounded-xl border border-dashed border-gray-300 p-3 dark:border-gray-600">
