@@ -52,23 +52,13 @@ export default function Welcome({ onStart, darkMode, brand }) {
           {brand?.name || "Benzi Tracker"}
         </h1>
 
-        {/* SUBTITLE */}
-        <p
-          className={`mt-3 text-lg transition-all delay-500 duration-700 ${
-            loaded ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
-          } ${darkMode ? "text-gray-300" : "text-gray-600"}`}
-        >
-          Churros Business &amp; Financial Tracker
-        </p>
-
         {/* DESCRIPTION */}
         <p
           className={`mt-2 max-w-md text-sm leading-relaxed transition-all delay-700 duration-700 ${
             loaded ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
           } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
         >
-          Manage your orders, expenses, sales, savings, and tuition fee goals in
-          one place.
+          Manage your business, track finances, and stay organized in one place.
         </p>
 
         {/* START BUTTON */}
