@@ -48,6 +48,7 @@ const normalizeBrand = (brand, session) => {
 const getInitialBrand = (session) => ({
   ...DEFAULT_BRAND,
   name: session?.user?.user_metadata?.business_name?.trim() || DEFAULT_BRAND.name,
+  logo: session?.user?.user_metadata?.business_logo || DEFAULT_BRAND.logo,
 });
 
 export default function App() {
@@ -77,9 +78,22 @@ export default function App() {
       return undefined;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      let nextSession = data.session;
+
+      if (nextSession) {
+        const { data: userData } = await supabase.auth.getUser();
+
+        if (userData.user) {
+          nextSession = {
+            ...nextSession,
+            user: userData.user,
+          };
+        }
+      }
+
       startTransition(() => {
-        setSession(data.session);
+        setSession(nextSession);
         setAuthLoading(false);
       });
     });

@@ -87,7 +87,7 @@ export default function AdminTab({
     setMenuDraft(toMenuDraft(menuConfig));
   }, [brand, menuConfig]);
 
-  const handleBrandSave = (event) => {
+  const handleBrandSave = async (event) => {
     event.preventDefault();
     setIsSavingBrand(true);
     setErrorMessage("");
@@ -97,6 +97,19 @@ export default function AdminTab({
         name: brandForm.name.trim() || "Benzi Tracker",
         logo: brandForm.logo.trim() || "/benzi-logo.svg",
       };
+
+      if (supabase) {
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            business_name: nextBrand.name,
+            business_logo: nextBrand.logo,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+      }
 
       setBrand(nextBrand);
     } catch (error) {
