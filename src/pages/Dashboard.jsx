@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  startTransition,
 } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -58,12 +59,6 @@ const DEFAULT_EXPENSES = {
   price: "",
 };
 
-const DEFAULT_SAVINGS = {
-  date: "",
-  amount: "",
-  notes: "",
-};
-
 // =====================================================
 // DASHBOARD
 // =====================================================
@@ -84,36 +79,36 @@ export default function Dashboard({
     getTrackerDefaults(menuConfig),
   );
   const [expenses, setExpenses] = useState(DEFAULT_EXPENSES);
-  const [savings, setSavings] = useState(DEFAULT_SAVINGS);
-
   useEffect(() => {
     const products = Object.keys(menuConfig || {});
     const firstProduct = products[0] || "";
 
-    setTracker((previous) => {
-      const product = products.includes(previous.product)
-        ? previous.product
-        : firstProduct;
-      const variants = menuConfig?.[product] || [];
-      const selectedVariant = variants.find(
-        (variant) =>
-          Number(variant.pcs) === Number(previous.variantPcs) &&
-          Number(variant.price) === Number(previous.productPrice),
-      );
+    startTransition(() => {
+      setTracker((previous) => {
+        const product = products.includes(previous.product)
+          ? previous.product
+          : firstProduct;
+        const variants = menuConfig?.[product] || [];
+        const selectedVariant = variants.find(
+          (variant) =>
+            Number(variant.pcs) === Number(previous.variantPcs) &&
+            Number(variant.price) === Number(previous.productPrice),
+        );
 
-      if (selectedVariant || (!product && !previous.product)) {
-        return previous;
-      }
+        if (selectedVariant || (!product && !previous.product)) {
+          return previous;
+        }
 
-      const firstVariant = variants[0];
+        const firstVariant = variants[0];
 
-      return {
-        ...previous,
-        product,
-        variantPcs: firstVariant?.pcs ?? "",
-        productPrice: firstVariant?.price ?? "",
-        price: firstVariant?.price ?? "",
-      };
+        return {
+          ...previous,
+          product,
+          variantPcs: firstVariant?.pcs ?? "",
+          productPrice: firstVariant?.price ?? "",
+          price: firstVariant?.price ?? "",
+        };
+      });
     });
   }, [menuConfig]);
 
@@ -354,7 +349,9 @@ export default function Dashboard({
   }, []);
 
   useEffect(() => {
-    loadData();
+    startTransition(() => {
+      void loadData();
+    });
   }, [loadData]);
 
   // =====================================================
@@ -435,80 +432,6 @@ export default function Dashboard({
 
     return number;
   }, []);
-
-  // =====================================================
-  // GET PRODUCT TOTAL
-  // =====================================================
-
-  const getProductTotal = useCallback(
-    (row) => {
-      const quantity =
-        getOrderQuantity(row);
-
-      const productPrice =
-        getProductPrice(row);
-
-      return (
-        quantity * productPrice
-      );
-    },
-    [
-      getOrderQuantity,
-      getProductPrice,
-    ],
-  );
-
-  // =====================================================
-  // GET EXTRA DIP TOTAL
-  // =====================================================
-
-  const getAdditionalDipTotal =
-    useCallback(
-      (row) => {
-        const additionalDips =
-          getAdditionalDips(row);
-
-        return (
-          additionalDips *
-          ADDITIONAL_DIP_PRICE
-        );
-      },
-      [getAdditionalDips],
-    );
-
-  // =====================================================
-  // GET COMPLETE ORDER TOTAL
-  //
-  // PRODUCT TOTAL
-  // +
-  // EXTRA DIP TOTAL
-  // =
-  // FINAL TOTAL
-  // =====================================================
-
-  const getOrderTotal = useCallback(
-    (row) => {
-      const productTotal =
-        getProductTotal(row);
-
-      const additionalDipTotal =
-        getAdditionalDipTotal(row);
-
-      const calculatedTotal =
-        productTotal +
-        additionalDipTotal;
-
-      return Number.isFinite(
-        calculatedTotal,
-      )
-        ? calculatedTotal
-        : 0;
-    },
-    [
-      getProductTotal,
-      getAdditionalDipTotal,
-    ],
-  );
 
   // =====================================================
   // NORMALIZE TRACKER ROW
@@ -643,20 +566,6 @@ export default function Dashboard({
   }, [expenses.price]);
 
   // =====================================================
-  // SAVINGS FORM TOTAL
-  // =====================================================
-
-  const savingsTotal = useMemo(() => {
-    const value = Number(
-      savings.amount || 0,
-    );
-
-    return Number.isFinite(value)
-      ? value
-      : 0;
-  }, [savings.amount]);
-
-  // =====================================================
   // DATE FILTER
   // =====================================================
 
@@ -787,148 +696,6 @@ export default function Dashboard({
         0,
       );
     }, [pendingTrackerRows]);
-
-  // =====================================================
-  // SUMMARY TOTAL SALES
-  //
-  // PRODUCT + EXTRA DIPS
-  // =====================================================
-
-  const summaryTrackerTotal =
-    useMemo(() => {
-      return completedTrackerRows.reduce(
-        (total, row) => {
-          return (
-            total +
-            getOrderTotal(row)
-          );
-        },
-        0,
-      );
-    }, [
-      completedTrackerRows,
-      getOrderTotal,
-    ]);
-
-  // =====================================================
-  // SUMMARY TOTAL EXPENSES
-  // =====================================================
-
-  const summaryExpensesTotal =
-    useMemo(() => {
-      return displayedExpenseRows.reduce(
-        (total, row) => {
-          const amount =
-            Number(
-              row.price || 0,
-            );
-
-          return (
-            total +
-            (Number.isFinite(amount)
-              ? amount
-              : 0)
-          );
-        },
-        0,
-      );
-    }, [displayedExpenseRows]);
-
-  // =====================================================
-  // SUMMARY TOTAL SAVINGS
-  // =====================================================
-
-  const summarySavingsTotal =
-    useMemo(() => {
-      return displayedSavingsRows.reduce(
-        (total, row) => {
-          const amount =
-            Number(
-              row.amount || 0,
-            );
-
-          return (
-            total +
-            (Number.isFinite(amount)
-              ? amount
-              : 0)
-          );
-        },
-        0,
-      );
-    }, [displayedSavingsRows]);
-
-  // =====================================================
-  // NET PROFIT
-  //
-  // SALES - EXPENSES
-  // =====================================================
-
-  const summaryProfit =
-    useMemo(() => {
-      const sales =
-        Number(
-          summaryTrackerTotal || 0,
-        );
-
-      const expenses =
-        Number(
-          summaryExpensesTotal || 0,
-        );
-
-      const profit =
-        sales - expenses;
-
-      return Number.isFinite(profit)
-        ? profit
-        : 0;
-    }, [
-      summaryTrackerTotal,
-      summaryExpensesTotal,
-    ]);
-
-  // =====================================================
-  // AVAILABLE MONEY
-  //
-  // PROFIT - SAVINGS
-  // =====================================================
-
-  const availableMoney =
-    useMemo(() => {
-      const profit =
-        Number(
-          summaryProfit || 0,
-        );
-
-      const savings =
-        Number(
-          summarySavingsTotal || 0,
-        );
-
-      return Math.max(
-        0,
-        profit - savings,
-      );
-    }, [
-      summaryProfit,
-      summarySavingsTotal,
-    ]);
-
-  // =====================================================
-  // BUSINESS CAPITAL
-  // =====================================================
-
-  const availableCapital =
-    useMemo(() => {
-      const profit =
-        Number(
-          summaryProfit || 0,
-        );
-
-      return Number.isFinite(profit)
-        ? Math.max(0, profit)
-        : 0;
-    }, [summaryProfit]);
 
   // =====================================================
   // COUNTS
@@ -1414,103 +1181,6 @@ export default function Dashboard({
     };
 
   // =====================================================
-  // SAVINGS SUBMIT
-  // =====================================================
-
-  const handleSavingsSubmit =
-    async (event) => {
-      event.preventDefault();
-
-      if (!supabase) {
-        setErrorMessage(
-          "Supabase is not configured yet.",
-        );
-
-        return;
-      }
-
-      if (
-        !savings.date ||
-        !savings.amount
-      ) {
-        setErrorMessage(
-          "Enter a date and savings amount before saving.",
-        );
-
-        return;
-      }
-
-      const amount =
-        Number(
-          savings.amount,
-        );
-
-      if (
-        !Number.isFinite(amount) ||
-        amount <= 0
-      ) {
-        setErrorMessage(
-          "Savings amount must be greater than 0.",
-        );
-
-        return;
-      }
-
-      if (
-        amount >
-        availableMoney
-      ) {
-        setErrorMessage(
-          `You only have ₱${availableMoney.toFixed(
-            2,
-          )} available money.`,
-        );
-
-        return;
-      }
-
-      setIsSubmitting(true);
-      setErrorMessage("");
-
-      try {
-        const payload = {
-          date: savings.date,
-
-          amount,
-
-          notes:
-            savings.notes?.trim() ||
-            null,
-        };
-
-        const { error } =
-          await supabase
-            .from("savings")
-            .insert([
-              payload,
-            ]);
-
-        if (error) {
-          throw error;
-        }
-
-        setSavings({
-          ...DEFAULT_SAVINGS,
-        });
-
-        await loadData();
-      } catch (error) {
-        console.error(error);
-
-        setErrorMessage(
-          `Unable to save savings: ${error.message}`,
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-  // =====================================================
   // DELETE GENERIC ROW
   // =====================================================
 
@@ -1571,14 +1241,6 @@ export default function Dashboard({
         "expenses",
         rowId,
         "Unable to delete expense entry",
-      );
-
-  const handleDeleteSavingsRow =
-    (rowId) =>
-      deleteRow(
-        "savings",
-        rowId,
-        "Unable to delete savings entry",
       );
 
   // =====================================================
@@ -1712,26 +1374,6 @@ export default function Dashboard({
       }
     };
 
-  const confirmDeleteSavingsRow =
-    (row) => {
-      const label = row?.amount
-        ? ` of ₱${Number(
-            row.amount,
-          ).toFixed(2)}`
-        : "";
-
-      const confirmed =
-        window.confirm(
-          `Are you sure you want to remove this savings entry${label}?`,
-        );
-
-      if (confirmed) {
-        handleDeleteSavingsRow(
-          row.id,
-        );
-      }
-    };
-
   // =====================================================
   // VIEW META
   // =====================================================
@@ -1850,27 +1492,6 @@ export default function Dashboard({
           }
           onDeleteExpense={
             confirmDeleteExpenseRow
-          }
-          onDeleteSavings={
-            confirmDeleteSavingsRow
-          }
-          summaryTrackerTotal={
-            summaryTrackerTotal
-          }
-          summaryExpensesTotal={
-            summaryExpensesTotal
-          }
-          summarySavingsTotal={
-            summarySavingsTotal
-          }
-          summaryProfit={
-            summaryProfit
-          }
-          availableCapital={
-            availableCapital
-          }
-          availableMoney={
-            availableMoney
           }
           pendingOrdersCount={
             pendingOrdersCount

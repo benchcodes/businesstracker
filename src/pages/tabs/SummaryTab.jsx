@@ -1,10 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { FileText } from "lucide-react";
 
-// =====================================================
-// CONSTANTS
-// =====================================================
-
 const ADDITIONAL_DIP_PRICE = 10;
 
 function escapeReportText(value) {
@@ -28,19 +24,11 @@ export default function SummaryTab({
   isSubmitting,
   onDeleteTracker,
   onDeleteExpense,
-  onDeleteSavings,
-  summaryTrackerTotal,
-  summaryExpensesTotal,
-  summarySavingsTotal,
-  summaryProfit,
-  availableCapital,
-  availableMoney,
   pendingOrdersCount,
   completedOrdersCount,
 }) {
   const [showSales, setShowSales] = useState(true);
   const [showExpenses, setShowExpenses] = useState(true);
-  const [showSavings, setShowSavings] = useState(true);
 
   const [showOlderSales, setShowOlderSales] =
     useState(false);
@@ -492,25 +480,6 @@ export default function SummaryTab({
     ]);
 
   // =====================================================
-  // SAVINGS TOTAL
-  // =====================================================
-
-  const finalSavingsTotal =
-    useMemo(() => {
-      return (
-        displayedSavingsRows || []
-      ).reduce(
-        (total, row) =>
-          total +
-          toNumber(row.amount),
-        0,
-      );
-    }, [
-      displayedSavingsRows,
-      toNumber,
-    ]);
-
-  // =====================================================
   // NET PROFIT
   //
   // SALES - EXPENSES
@@ -530,41 +499,6 @@ export default function SummaryTab({
     finalSalesTotal,
     finalExpensesTotal,
   ]);
-
-  // =====================================================
-  // BUSINESS CAPITAL
-  //
-  // Business Capital = Net Profit
-  // =====================================================
-
-  const businessCapital =
-    useMemo(() => {
-      return Math.max(
-        0,
-        netProfit,
-      );
-    }, [netProfit]);
-
-  // =====================================================
-  // AVAILABLE MONEY
-  //
-  // Available Money =
-  // Business Capital - Total Savings
-  // =====================================================
-
-  const calculatedAvailableMoney =
-    useMemo(() => {
-      const value =
-        businessCapital -
-        finalSavingsTotal;
-
-      return Number.isFinite(value)
-        ? Math.max(0, value)
-        : 0;
-    }, [
-      businessCapital,
-      finalSavingsTotal,
-    ]);
 
   const generateSummaryReport = useCallback(() => {
     const selectedDate = reportDate ||
@@ -736,15 +670,15 @@ export default function SummaryTab({
           DASHBOARD CARDS
       ===================================================== */}
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {/* TOTAL SALES */}
 
-        <div className="rounded-xl border border-green-800 bg-green-950 p-5 shadow-sm">
+        <div className="rounded-xl border border-green-800 bg-green-950 p-4 shadow-sm sm:p-5">
           <p className="text-sm text-gray-300">
             Total Sales
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-green-400">
+          <h2 className="mt-2 text-2xl font-bold text-green-400 sm:text-3xl">
             ₱
             {finalSalesTotal.toFixed(2)}
           </h2>
@@ -756,12 +690,12 @@ export default function SummaryTab({
 
         {/* TOTAL EXPENSES */}
 
-        <div className="rounded-xl border border-red-800 bg-red-950 p-5 shadow-sm">
+        <div className="rounded-xl border border-red-800 bg-red-950 p-4 shadow-sm sm:p-5">
           <p className="text-sm text-gray-300">
             Total Expenses
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-red-400">
+          <h2 className="mt-2 text-2xl font-bold text-red-400 sm:text-3xl">
             ₱
             {finalExpensesTotal.toFixed(2)}
           </h2>
@@ -769,13 +703,13 @@ export default function SummaryTab({
 
         {/* NET PROFIT */}
 
-        <div className="rounded-xl border border-blue-800 bg-blue-950 p-5 shadow-sm">
+        <div className="rounded-xl border border-blue-800 bg-blue-950 p-4 shadow-sm sm:p-5">
           <p className="text-sm text-gray-300">
             Net Profit
           </p>
 
           <h2
-            className={`mt-2 text-3xl font-bold ${
+            className={`mt-2 text-2xl font-bold sm:text-3xl ${
               netProfit < 0
                 ? "text-red-400"
                 : "text-blue-400"
@@ -788,50 +722,28 @@ export default function SummaryTab({
 
         {/* PENDING ORDERS */}
 
-        <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-5 shadow-sm">
+        <div className="rounded-xl border border-yellow-800 bg-yellow-950 p-4 shadow-sm sm:p-5">
           <p className="text-sm text-gray-300">
             Pending Orders
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-yellow-400">
+          <h2 className="mt-2 text-2xl font-bold text-yellow-400 sm:text-3xl">
             {pendingOrdersCount}
           </h2>
         </div>
 
         {/* COMPLETED ORDERS */}
 
-        <div className="rounded-xl border border-purple-800 bg-purple-950 p-5 shadow-sm">
+        <div className="rounded-xl border border-purple-800 bg-purple-950 p-4 shadow-sm sm:p-5">
           <p className="text-sm text-gray-300">
             Completed Orders
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-purple-400">
+          <h2 className="mt-2 text-2xl font-bold text-purple-400 sm:text-3xl">
             {completedOrdersCount}
           </h2>
         </div>
 
-        {/* BUSINESS CAPITAL */}
-
-        <div className="rounded-xl border border-cyan-800 bg-cyan-950 p-5 shadow-sm">
-          <p className="text-sm text-gray-300">
-            Business Capital
-          </p>
-
-          <h2
-            className={`mt-2 text-3xl font-bold ${
-              businessCapital < 0
-                ? "text-red-400"
-                : "text-cyan-400"
-            }`}
-          >
-            ₱
-            {businessCapital.toFixed(2)}
-          </h2>
-
-          <p className="mt-2 text-xs text-gray-400">
-            Business Capital = Net Profit
-          </p>
-        </div>
       </div>
 
       {/* =====================================================
@@ -967,8 +879,11 @@ export default function SummaryTab({
       ===================================================== */}
 
       <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 p-5">
-        <div
-          className="flex cursor-pointer items-center justify-between"
+        <button
+          type="button"
+          aria-expanded={showSales}
+          aria-controls="summary-sales-content"
+          className="flex w-full cursor-pointer items-center justify-between rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8a66b]"
           onClick={() =>
             setShowSales(
               (previous) =>
@@ -993,10 +908,10 @@ export default function SummaryTab({
           <span className="text-2xl font-bold text-[#e8bd85]">
             {showSales ? "−" : "+"}
           </span>
-        </div>
+        </button>
 
         {showSales && (
-          <div className="mt-4">
+          <div id="summary-sales-content" className="mt-4">
             {summaryRange ===
               "overall" &&
               olderSales.length > 0 && (
@@ -1035,7 +950,7 @@ export default function SummaryTab({
                 </div>
               )}
 
-            <div className="overflow-x-auto rounded-xl border border-gray-700">
+            <div className="hidden overflow-x-auto rounded-xl border border-gray-700 sm:block">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-800">
                   <tr>
@@ -1194,6 +1109,74 @@ export default function SummaryTab({
                 </tbody>
               </table>
             </div>
+
+            <div className="space-y-3 sm:hidden">
+              {isLoading ? (
+                <p className="rounded-xl border border-gray-700 bg-gray-800 p-4 text-sm text-gray-300">
+                  Loading records...
+                </p>
+              ) : displayedSalesRows.length > 0 ? (
+                displayedSalesRows.map((row) => {
+                  const quantity = getOrderQuantity(row);
+                  const unitPrice = getDisplayUnitPrice(row);
+                  const orderTotal = getOrderTotal(row);
+
+                  return (
+                    <article
+                      key={row.id}
+                      className="rounded-xl border border-gray-700 bg-gray-800 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-100">
+                            {row.name || "—"}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-400">
+                            {row.date || "—"} · {row.status || "Completed"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 font-semibold text-[#e8bd85]">
+                          ₱{orderTotal.toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-400">Quantity</p>
+                          <p className="mt-1 text-gray-200">{quantity}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Unit price</p>
+                          <p className="mt-1 text-gray-200">₱{unitPrice.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onDeleteTracker(row)}
+                        disabled={isSubmitting}
+                        className="mt-4 w-full rounded-lg border border-red-700 px-3 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Delete
+                      </button>
+                    </article>
+                  );
+                })
+              ) : (
+                <p className="rounded-xl border border-gray-700 bg-gray-800 p-4 text-sm text-gray-300">
+                  No completed orders yet.
+                </p>
+              )}
+
+              <div className="flex justify-between rounded-xl bg-gray-800 p-4 text-sm font-semibold">
+                <span className="text-gray-300">
+                  Showing: {displayedSalesRows.length} entries
+                </span>
+                <span className="text-green-400">
+                  ₱{finalSalesTotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1203,8 +1186,11 @@ export default function SummaryTab({
       ===================================================== */}
 
       <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 p-5">
-        <div
-          className="flex cursor-pointer items-center justify-between"
+        <button
+          type="button"
+          aria-expanded={showExpenses}
+          aria-controls="summary-expenses-content"
+          className="flex w-full cursor-pointer items-center justify-between rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8a66b]"
           onClick={() =>
             setShowExpenses(
               (previous) =>
@@ -1229,10 +1215,10 @@ export default function SummaryTab({
           <span className="text-2xl font-bold text-[#e8bd85]">
             {showExpenses ? "−" : "+"}
           </span>
-        </div>
+        </button>
 
         {showExpenses && (
-          <div className="mt-4">
+          <div id="summary-expenses-content" className="mt-4">
             {summaryRange ===
               "overall" &&
               olderExpenses.length > 0 && (
@@ -1271,7 +1257,7 @@ export default function SummaryTab({
                 </div>
               )}
 
-            <div className="overflow-x-auto rounded-xl border border-gray-700">
+            <div className="hidden overflow-x-auto rounded-xl border border-gray-700 sm:block">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-800">
                   <tr>
@@ -1403,6 +1389,61 @@ export default function SummaryTab({
                 </tbody>
               </table>
             </div>
+
+            <div className="space-y-3 sm:hidden">
+              {isLoading ? (
+                <p className="rounded-xl border border-gray-700 bg-gray-800 p-4 text-sm text-gray-300">
+                  Loading records...
+                </p>
+              ) : displayedExpenses.length > 0 ? (
+                displayedExpenses.map((row) => {
+                  const expensePrice = toNumber(row.price);
+
+                  return (
+                    <article
+                      key={row.id}
+                      className="rounded-xl border border-gray-700 bg-gray-800 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-gray-100">
+                            {row.product || "—"}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-400">
+                            {row.date || "—"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 font-semibold text-[#e8bd85]">
+                          ₱{expensePrice.toFixed(2)}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onDeleteExpense(row)}
+                        disabled={isSubmitting}
+                        className="mt-4 w-full rounded-lg border border-red-700 px-3 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Delete
+                      </button>
+                    </article>
+                  );
+                })
+              ) : (
+                <p className="rounded-xl border border-gray-700 bg-gray-800 p-4 text-sm text-gray-300">
+                  No expense rows yet.
+                </p>
+              )}
+
+              <div className="flex justify-between rounded-xl bg-gray-800 p-4 text-sm font-semibold">
+                <span className="text-gray-300">
+                  Showing: {displayedExpenses.length} entries
+                </span>
+                <span className="text-red-400">
+                  ₱{finalExpensesTotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1466,216 +1507,6 @@ export default function SummaryTab({
         </div>
       </div>
 
-      {/* =====================================================
-          SAVINGS
-      ===================================================== */}
-
-      <div className="rounded-2xl border border-gray-700 bg-gray-900 p-5">
-        <div
-          className="flex cursor-pointer items-center justify-between"
-          onClick={() =>
-            setShowSavings(
-              (previous) =>
-                !previous,
-            )
-          }
-        >
-          <h2 className="text-xl font-semibold text-[#e8bd85]">
-            Savings
-          </h2>
-
-          <span className="text-2xl font-bold text-[#e8bd85]">
-            {showSavings ? "−" : "+"}
-          </span>
-        </div>
-
-        {showSavings && (
-          <div className="mt-4 overflow-x-auto rounded-xl border border-gray-700">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-200">
-                    Date
-                  </th>
-
-                  <th className="px-4 py-3 text-left font-semibold text-gray-200">
-                    Amount
-                  </th>
-
-                  <th className="px-4 py-3 text-left font-semibold text-gray-200">
-                    Notes
-                  </th>
-
-                  <th className="px-4 py-3 text-left font-semibold text-gray-200">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-gray-900">
-                {displayedSavingsRows?.length >
-                0 ? (
-                  displayedSavingsRows.map(
-                    (row) => (
-                      <tr
-                        key={row.id}
-                        className="border-t border-gray-700"
-                      >
-                        <td className="px-4 py-3 text-gray-300">
-                          {row.date || "—"}
-                        </td>
-
-                        <td className="px-4 py-3 font-semibold text-cyan-400">
-                          ₱
-                          {toNumber(
-                            row.amount,
-                          ).toFixed(2)}
-                        </td>
-
-                        <td className="px-4 py-3 text-gray-300">
-                          {row.notes || "—"}
-                        </td>
-
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onDeleteSavings(
-                                row,
-                              )
-                            }
-                            disabled={
-                              isSubmitting
-                            }
-                            className="rounded-lg border border-red-700 px-3 py-1 text-xs font-semibold text-red-400 transition hover:bg-red-950 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ),
-                  )
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-4 py-3 text-gray-300"
-                    >
-                      No savings records
-                      yet.
-                    </td>
-                  </tr>
-                )}
-
-                <tr className="bg-gray-800">
-                  <td
-                    colSpan="4"
-                    className="px-4 py-3"
-                  >
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-gray-300">
-                        Total Savings
-                      </span>
-
-                      <span className="text-cyan-400">
-                        ₱
-                        {finalSavingsTotal.toFixed(
-                          2,
-                        )}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* =====================================================
-          BUSINESS CAPITAL
-      ===================================================== */}
-
-      <div className="rounded-2xl border border-cyan-800 bg-gray-900 p-5">
-        <h2 className="text-xl font-semibold text-[#e8bd85]">
-          Business Capital
-        </h2>
-
-        <div className="mt-4 space-y-4">
-          {/* BUSINESS CAPITAL */}
-
-          <div className="rounded-xl border border-cyan-800 bg-cyan-950 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-medium text-gray-300">
-                Business Capital
-              </span>
-
-              <span
-                className={`text-2xl font-bold ${
-                  businessCapital < 0
-                    ? "text-red-400"
-                    : "text-cyan-400"
-                }`}
-              >
-                ₱
-                {businessCapital.toFixed(
-                  2,
-                )}
-              </span>
-            </div>
-
-            <p className="mt-2 text-xs text-gray-400">
-              Business Capital = Net Profit
-            </p>
-          </div>
-
-          {/* SAVINGS DEDUCTION */}
-
-          <div className="rounded-xl border border-purple-800 bg-purple-950 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-medium text-gray-300">
-                Less: Total Savings
-              </span>
-
-              <span className="text-2xl font-bold text-purple-400">
-                −₱
-                {finalSavingsTotal.toFixed(
-                  2,
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* AVAILABLE MONEY */}
-
-          <div className="rounded-xl border border-green-800 bg-green-950 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-medium text-gray-300">
-                Available Money
-              </span>
-
-              <span
-                className={`text-2xl font-bold ${
-                  calculatedAvailableMoney <
-                  0
-                    ? "text-red-400"
-                    : "text-green-400"
-                }`}
-              >
-                ₱
-                {calculatedAvailableMoney.toFixed(
-                  2,
-                )}
-              </span>
-            </div>
-
-            <p className="mt-2 text-xs text-gray-400">
-              Available Money = Business
-              Capital − Total Savings
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
