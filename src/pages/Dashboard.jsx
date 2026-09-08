@@ -20,6 +20,11 @@ import AdminTab from "./tabs/AdminTab";
 
 const ADDITIONAL_DIP_PRICE = 10;
 
+const isMissingSavingsTable = (error) =>
+  error?.code === "42P01" ||
+  error?.status === 404 ||
+  /relation .*savings.* does not exist/i.test(error?.message || "");
+
 // =====================================================
 // DEFAULT VALUES
 // =====================================================
@@ -193,10 +198,7 @@ export default function Dashboard({
       ] = await Promise.all([
         supabase
           .from("tracker")
-          .select("*")
-          .order("date", {
-            ascending: false,
-          }),
+          .select("*"),
 
         supabase
           .from("expenses")
@@ -220,15 +222,36 @@ export default function Dashboard({
           }),
       ]);
 
-      const firstError = [
-        trackerResult.error,
-        expenseResult.error,
-        inventoryResult.error,
-        savingsResult.error,
-      ].find(Boolean);
+      const failedTable = [
+        ["tracker", trackerResult.error],
+        ["expenses", expenseResult.error],
+        ["inventory", inventoryResult.error],
+        ["savings", savingsResult.error],
+      ].find(([, error]) => error);
 
-      if (firstError) {
-        throw firstError;
+      if (failedTable?.[0] === "savings" && isMissingSavingsTable(failedTable[1])) {
+        savingsResult.data = [];
+        savingsResult.error = null;
+      }
+
+      if (failedTable && failedTable[0] !== "savings") {
+        const [tableName, error] = failedTable;
+        const details = [error.code, error.details, error.hint]
+          .filter(Boolean)
+          .join(" | ");
+        throw new Error(
+          `${tableName}: ${error.message}${details ? ` (${details})` : ""}`,
+        );
+      }
+
+      if (failedTable?.[0] === "savings" && savingsResult.error) {
+        const error = savingsResult.error;
+        const details = [error.code, error.details, error.hint]
+          .filter(Boolean)
+          .join(" | ");
+        throw new Error(
+          `savings: ${error.message}${details ? ` (${details})` : ""}`,
+        );
       }
 
       let loadedInventoryRows =
@@ -321,7 +344,9 @@ export default function Dashboard({
       }
 
       setTrackerRows(
-        trackerResult.data || [],
+        [...(trackerResult.data || [])].sort((left, right) =>
+          String(right.date || "").localeCompare(String(left.date || "")),
+        ),
       );
 
       setExpenseRows(

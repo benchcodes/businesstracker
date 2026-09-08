@@ -41,6 +41,9 @@ create table if not exists public.inventory (
 );
 
 alter table public.tracker add column if not exists notes text;
+alter table public.tracker add column if not exists product text;
+alter table public.tracker add column if not exists product_price numeric;
+alter table public.tracker add column if not exists variant_pcs numeric;
 alter table public.tracker add column if not exists user_id uuid references auth.users(id) on delete cascade;
 alter table public.expenses add column if not exists user_id uuid references auth.users(id) on delete cascade;
 alter table public.savings add column if not exists user_id uuid references auth.users(id) on delete cascade;
