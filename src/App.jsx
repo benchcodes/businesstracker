@@ -107,9 +107,12 @@ export default function App() {
         setAuthLoading(false);
       });
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      setStarted(false);
+
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        setStarted(false);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
