@@ -236,7 +236,7 @@ export default function App() {
 
         {/* MAIN */}
         <main
-          className={`min-h-screen flex-1 transition-colors duration-300 md:pl-64 ${
+          className={`min-w-0 min-h-screen flex-1 transition-colors duration-300 md:pl-64 ${
             darkMode ? "bg-[#080d18]" : "bg-[#faf8f5]"
           }`}
         >

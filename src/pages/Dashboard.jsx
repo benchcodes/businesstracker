@@ -1996,7 +1996,7 @@ export default function Dashboard({
       }`}
     >
       <div
-        className={`mx-auto max-w-4xl rounded-3xl border p-5 shadow-sm transition-colors duration-300 sm:p-6 md:p-8 ${
+        className={`mx-auto min-w-0 max-w-4xl rounded-3xl border p-5 shadow-sm transition-colors duration-300 sm:p-6 md:p-8 ${
           darkMode
             ? "border-gray-700 bg-gray-900"
             : "border-gray-200 bg-white"

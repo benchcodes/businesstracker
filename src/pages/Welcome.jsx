@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
+export default function Welcome({ onStart, darkMode, brand }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -23,15 +23,6 @@ export default function Welcome({ onStart, darkMode, setDarkMode, brand }) {
           darkMode ? "bg-[#d8a66b]/10" : "bg-[#d8a66b]/20"
         }`}
       />
-
-      {/* DARK / LIGHT BUTTON */}
-      <button
-        type="button"
-        onClick={() => setDarkMode((previous) => !previous)}
-        className="absolute right-6 top-6 rounded-xl bg-[#d8a66b] px-4 py-2 font-semibold text-white shadow-lg transition duration-200 hover:scale-105 hover:bg-[#c38f54]"
-      >
-        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-      </button>
 
       {/* CONTENT */}
       <div
