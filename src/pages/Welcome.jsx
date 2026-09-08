@@ -71,15 +71,6 @@ export default function Welcome({ onStart, darkMode, brand }) {
         >
           Start
         </button>
-
-        {/* TAGLINE */}
-        <p
-          className={`mt-6 text-xs tracking-widest transition-all delay-[1200ms] duration-700 ${
-            loaded ? "opacity-100" : "opacity-0"
-          } ${darkMode ? "text-gray-500" : "text-gray-400"}`}
-        >
-          CRISPY OUTSIDE, SWEET INSIDE
-        </p>
       </div>
     </div>
   );
