@@ -25,6 +25,21 @@ const isMissingSavingsTable = (error) =>
   error?.status === 404 ||
   /relation .*savings.* does not exist/i.test(error?.message || "");
 
+const formatSupabaseError = (error) => {
+  if (!error) {
+    return "Unknown Supabase error";
+  }
+
+  const details = [
+    error.message,
+    error.code ? `code ${error.code}` : "",
+    error.status ? `status ${error.status}` : "",
+    error.details || "",
+  ].filter(Boolean);
+
+  return details.join(" | ");
+};
+
 // =====================================================
 // DEFAULT VALUES
 // =====================================================
@@ -198,7 +213,7 @@ export default function Dashboard({
       ] = await Promise.all([
         supabase
           .from("tracker")
-          .select("id,user_id,created_at,date,name,order_quantity,price,notes,status"),
+          .select("*"),
 
         supabase
           .from("expenses")
@@ -342,7 +357,8 @@ export default function Dashboard({
       );
 
       const loadWarnings = failedTables.map(
-        ([tableName, error]) => `${tableName}: ${error.message}`,
+        ([tableName, error]) =>
+          `${tableName}: ${formatSupabaseError(error)}`,
       );
 
       setErrorMessage(
