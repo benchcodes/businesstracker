@@ -98,10 +98,16 @@ export default function AdminTab({
       };
 
       if (supabase) {
+        // Auth metadata is included in each access token. Keep image data out
+        // of it: a base64 logo can make the token exceed API header limits.
+        const businessLogo = nextBrand.logo.startsWith("data:")
+          ? null
+          : nextBrand.logo;
+
         const { error } = await supabase.auth.updateUser({
           data: {
             business_name: nextBrand.name,
-            business_logo: nextBrand.logo,
+            business_logo: businessLogo,
           },
         });
 
