@@ -13,8 +13,6 @@ export default function InventoryTab({
   setInventoryRows,
   isLoading,
   setErrorMessage,
-  brand,
-  setBrand,
   menuConfig,
   setMenuConfig,
 }) {
@@ -525,8 +523,6 @@ export default function InventoryTab({
 
       {adminUnlocked && (
         <AdminTab
-          brand={brand}
-          setBrand={setBrand}
           menuConfig={menuConfig}
           setMenuConfig={setMenuConfig}
           inventoryRows={inventoryRows}

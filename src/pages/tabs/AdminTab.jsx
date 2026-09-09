@@ -60,145 +60,19 @@ const normalizeMenuConfig = (draftProducts) => {
 };
 
 export default function AdminTab({
-  userId,
-  brand,
-  setBrand,
   menuConfig,
   setMenuConfig,
   inventoryRows,
   setInventoryRows,
   setErrorMessage,
 }) {
-  const [brandForm, setBrandForm] = useState({
-    name: brand?.name || "Benzi Tracker",
-    logo: brand?.logo || "/benzi-logo.svg",
-  });
   const [menuDraft, setMenuDraft] = useState(() => toMenuDraft(menuConfig));
-  const [isDraggingImage, setIsDraggingImage] = useState(false);
-  const [isSavingBrand, setIsSavingBrand] = useState(false);
   const [isSavingMenu, setIsSavingMenu] = useState(false);
   const [isSavingInventory, setIsSavingInventory] = useState(false);
 
   useEffect(() => {
-    setBrandForm({
-      name: brand?.name || "Benzi Tracker",
-      logo: brand?.logo || "/benzi-logo.svg",
-    });
     setMenuDraft(toMenuDraft(menuConfig));
-  }, [brand, menuConfig]);
-
-  const handleBrandSave = async (event) => {
-    event.preventDefault();
-    setIsSavingBrand(true);
-    setErrorMessage("");
-
-    try {
-      const nextBrand = {
-        name: brandForm.name.trim() || "Benzi Tracker",
-        logo: brandForm.logo.trim() || "/benzi-logo.svg",
-      };
-
-      if (supabase) {
-        if (!userId) {
-          throw new Error("Your account is not available. Please sign in again.");
-        }
-
-        if (nextBrand.logo.startsWith("data:")) {
-          const imageBlob = await (await fetch(nextBrand.logo)).blob();
-          const logoPath = `${userId}/logo.webp`;
-          const { error: uploadError } = await supabase.storage
-            .from("business-logos")
-            .upload(logoPath, imageBlob, {
-              contentType: "image/webp",
-              upsert: true,
-              cacheControl: "3600",
-            });
-
-          if (uploadError) {
-            throw uploadError;
-          }
-
-          const { data: publicUrl } = supabase.storage
-            .from("business-logos")
-            .getPublicUrl(logoPath);
-          nextBrand.logo = `${publicUrl.publicUrl}?v=${Date.now()}`;
-        }
-
-        const { error } = await supabase.from("business_settings").upsert(
-          {
-            user_id: userId,
-            business_name: nextBrand.name,
-            logo_url: nextBrand.logo,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" },
-        );
-
-        if (error) {
-          throw error;
-        }
-      }
-
-      setBrand(nextBrand);
-    } catch (error) {
-      setErrorMessage(`Unable to save business details: ${error.message}`);
-    } finally {
-      setIsSavingBrand(false);
-    }
-  };
-
-  const handleLogoFile = (file) => {
-    if (!file || !file.type.startsWith("image/")) {
-      setErrorMessage("Please choose a valid image file.");
-      return;
-    }
-
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      const maxDimension = 512;
-      const scale = Math.min(
-        1,
-        maxDimension / Math.max(image.width, image.height),
-      );
-      const canvas = document.createElement("canvas");
-
-      canvas.width = Math.max(1, Math.round(image.width * scale));
-      canvas.height = Math.max(1, Math.round(image.height * scale));
-      canvas.getContext("2d").drawImage(
-        image,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
-
-      const compressedLogo = canvas.toDataURL("image/webp", 0.65);
-
-      setBrandForm((previous) => ({
-        ...previous,
-        logo: compressedLogo,
-      }));
-      URL.revokeObjectURL(objectUrl);
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      setErrorMessage("Unable to read this image file.");
-    };
-
-    image.src = objectUrl;
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    setIsDraggingImage(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      handleLogoFile(file);
-    }
-  };
+  }, [menuConfig]);
 
   const handleMenuSave = (event) => {
     event.preventDefault();
@@ -375,104 +249,11 @@ export default function AdminTab({
       <div className="rounded-2xl bg-gradient-to-r from-[#5A3A2E] via-[#8B5E3C] to-[#D8A66B] p-6 text-white shadow-lg">
         <h2 className="text-2xl font-bold">Admin Settings</h2>
         <p className="mt-2 text-amber-100">
-          Update your business identity, available menu, and packaging inventory.
+          Manage the available menu and packaging inventory.
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <form
-          onSubmit={handleBrandSave}
-          className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900"
-        >
-          <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">
-            Business Info
-          </h3>
-
-          <div className="mt-4 space-y-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Business Name
-              <input
-                type="text"
-                value={brandForm.name}
-                onChange={(event) =>
-                  setBrandForm((previous) => ({
-                    ...previous,
-                    name: event.target.value,
-                  }))
-                }
-                className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none ring-0 focus:border-[#d8a66b] dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-              />
-            </label>
-
-            <div
-              onDragOver={(event) => {
-                event.preventDefault();
-                setIsDraggingImage(true);
-              }}
-              onDragLeave={() => setIsDraggingImage(false)}
-              onDrop={handleDrop}
-              className={`rounded-2xl border-2 border-dashed p-4 text-center transition ${
-                isDraggingImage
-                  ? "border-[#d8a66b] bg-[#fff6eb] dark:bg-[#2a1f16]"
-                  : "border-gray-300 dark:border-gray-600"
-              }`}
-            >
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Drag and drop your logo here
-              </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                or click to browse
-              </p>
-              <input
-                id="business-logo-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) {
-                    handleLogoFile(file);
-                  }
-                  event.target.value = "";
-                }}
-              />
-              <label
-                htmlFor="business-logo-upload"
-                className="mt-3 inline-block rounded-xl bg-[#d8a66b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#c38f54]"
-              >
-                Choose Image
-              </label>
-            </div>
-
-            <div className="rounded-xl border border-dashed border-gray-300 p-3 dark:border-gray-600">
-              <p className="mb-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Preview
-              </p>
-              <div className="flex items-center gap-3">
-                <img
-                  src={brandForm.logo || "/benzi-logo.svg"}
-                  alt="Brand logo preview"
-                  className="h-14 w-14 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-lg font-bold text-[#5A3A2E] dark:text-[#e8bd85]">
-                    {brandForm.name || "Benzi Tracker"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSavingBrand}
-            className="mt-5 rounded-xl bg-[#d8a66b] px-4 py-2 font-semibold text-white transition hover:bg-[#c38f54] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSavingBrand ? "Saving..." : "Save Business Info"}
-          </button>
-        </form>
-
-        <form
+      <form
           onSubmit={handleMenuSave}
           className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900"
         >
@@ -599,8 +380,7 @@ export default function AdminTab({
           >
             {isSavingMenu ? "Saving..." : "Save Menu"}
           </button>
-        </form>
-      </div>
+      </form>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <h3 className="text-xl font-semibold text-[#5A3A2E] dark:text-[#e8bd85]">

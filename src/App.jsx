@@ -10,11 +10,6 @@ const DEFAULT_BRAND = {
   logo: "/benzi-logo.svg",
 };
 
-const LEGACY_DEFAULT_LOGOS = new Set([
-  "/churrozi-logo.jpg",
-  "churrozi-logo.jpg",
-]);
-
 const DEFAULT_MENU = {
   "Example Product": [
     { label: "Example - ₱0", pcs: 1, price: 0 },
@@ -31,35 +26,6 @@ const readStoredJson = (key, fallback) => {
 };
 
 const hasStoredValue = (key) => localStorage.getItem(key) !== null;
-
-const normalizeBrand = (brand, session) => {
-  const accountMetadata = session?.user?.user_metadata || {};
-  const hasSavedBrand = Boolean(brand && typeof brand === "object");
-  const nextBrand = {
-    ...getInitialBrand(session),
-    ...(brand || {}),
-  };
-
-  if (!hasSavedBrand && accountMetadata.business_name?.trim()) {
-    nextBrand.name = accountMetadata.business_name.trim();
-  }
-
-  if (!hasSavedBrand && accountMetadata.business_logo) {
-    nextBrand.logo = accountMetadata.business_logo;
-  }
-
-  if (LEGACY_DEFAULT_LOGOS.has(nextBrand.logo)) {
-    nextBrand.logo = DEFAULT_BRAND.logo;
-  }
-
-  return nextBrand;
-};
-
-const getInitialBrand = (session) => ({
-  ...DEFAULT_BRAND,
-  name: session?.user?.user_metadata?.business_name?.trim() || DEFAULT_BRAND.name,
-  logo: session?.user?.user_metadata?.business_logo || DEFAULT_BRAND.logo,
-});
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -143,7 +109,7 @@ export default function App() {
     });
   }, [session, storageKey]);
 
-  const [brand, setBrand] = useState(() => getInitialBrand(session));
+  const brand = DEFAULT_BRAND;
   const [menuConfig, setMenuConfig] = useState(DEFAULT_MENU);
   const [settingsOwner, setSettingsOwner] = useState(null);
 
@@ -152,86 +118,14 @@ export default function App() {
       return;
     }
 
-    let cancelled = false;
-
-    const loadSettings = async () => {
-      const savedBrand = readStoredJson(storageKey("churrozi-brand"), null);
-      let sharedBrand = null;
-
-      if (supabase && session?.user?.id) {
-        const { data, error } = await supabase
-          .from("business_settings")
-          .select("business_name, logo_url")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-
-        // Keep existing local settings working until the SQL migration is run.
-        if (!error && data) {
-          sharedBrand = {
-            name: data.business_name,
-            logo: data.logo_url,
-          };
-        }
-      }
-
-      if (cancelled) {
-        return;
-      }
-
-      startTransition(() => {
-        setBrand(normalizeBrand(sharedBrand || savedBrand, session));
-        const menuKey = storageKey("churrozi-menu");
-        setMenuConfig(
-          hasStoredValue(menuKey)
-            ? readStoredJson(menuKey, {})
-            : DEFAULT_MENU,
-        );
-        setSettingsOwner(session?.user?.id || "guest");
-      });
-    };
-
-    loadSettings();
-
-    return () => {
-      cancelled = true;
-    };
+    startTransition(() => {
+      const menuKey = storageKey("churrozi-menu");
+      setMenuConfig(
+        hasStoredValue(menuKey) ? readStoredJson(menuKey, {}) : DEFAULT_MENU,
+      );
+      setSettingsOwner(session?.user?.id || "guest");
+    });
   }, [session, storageKey]);
-
-  useEffect(() => {
-    if (!supabase || !session?.user?.id) {
-      return undefined;
-    }
-
-    const channel = supabase
-      .channel(`business-settings-${session.user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "business_settings",
-          filter: `user_id=eq.${session.user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType !== "DELETE") {
-            setBrand(
-              normalizeBrand(
-                {
-                  name: payload.new.business_name,
-                  logo: payload.new.logo_url,
-                },
-                session,
-              ),
-            );
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session]);
 
   // =========================
   // APPLY DARK MODE
@@ -251,9 +145,8 @@ export default function App() {
     }
 
     localStorage.setItem(storageKey("darkMode"), String(darkMode));
-    localStorage.setItem(storageKey("churrozi-brand"), JSON.stringify(brand));
     localStorage.setItem(storageKey("churrozi-menu"), JSON.stringify(menuConfig));
-  }, [brand, darkMode, menuConfig, session, settingsOwner, storageKey]);
+  }, [darkMode, menuConfig, session, settingsOwner, storageKey]);
 
   // =========================
   // START WEBSITE
@@ -350,7 +243,6 @@ export default function App() {
             setDarkMode={setDarkMode}
             userId={session.user.id}
             brand={brand}
-            setBrand={setBrand}
             menuConfig={menuConfig}
             setMenuConfig={setMenuConfig}
           />
