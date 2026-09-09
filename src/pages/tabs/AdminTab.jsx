@@ -60,6 +60,7 @@ const normalizeMenuConfig = (draftProducts) => {
 };
 
 export default function AdminTab({
+  userId,
   brand,
   setBrand,
   menuConfig,
@@ -98,18 +99,40 @@ export default function AdminTab({
       };
 
       if (supabase) {
-        // Auth metadata is included in each access token. Keep image data out
-        // of it: a base64 logo can make the token exceed API header limits.
-        const businessLogo = nextBrand.logo.startsWith("data:")
-          ? null
-          : nextBrand.logo;
+        if (!userId) {
+          throw new Error("Your account is not available. Please sign in again.");
+        }
 
-        const { error } = await supabase.auth.updateUser({
-          data: {
+        if (nextBrand.logo.startsWith("data:")) {
+          const imageBlob = await (await fetch(nextBrand.logo)).blob();
+          const logoPath = `${userId}/logo.webp`;
+          const { error: uploadError } = await supabase.storage
+            .from("business-logos")
+            .upload(logoPath, imageBlob, {
+              contentType: "image/webp",
+              upsert: true,
+              cacheControl: "3600",
+            });
+
+          if (uploadError) {
+            throw uploadError;
+          }
+
+          const { data: publicUrl } = supabase.storage
+            .from("business-logos")
+            .getPublicUrl(logoPath);
+          nextBrand.logo = `${publicUrl.publicUrl}?v=${Date.now()}`;
+        }
+
+        const { error } = await supabase.from("business_settings").upsert(
+          {
+            user_id: userId,
             business_name: nextBrand.name,
-            business_logo: businessLogo,
+            logo_url: nextBrand.logo,
+            updated_at: new Date().toISOString(),
           },
-        });
+          { onConflict: "user_id" },
+        );
 
         if (error) {
           throw error;

@@ -91,6 +91,21 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data }) => {
       let nextSession = data.session;
 
+      if (
+        nextSession?.expires_at &&
+        nextSession.expires_at <= Math.floor(Date.now() / 1000) + 60
+      ) {
+        const { data: refreshedData, error: refreshError } =
+          await supabase.auth.refreshSession();
+
+        if (!refreshError && refreshedData.session) {
+          nextSession = refreshedData.session;
+        } else {
+          await supabase.auth.signOut();
+          nextSession = null;
+        }
+      }
+
       if (nextSession) {
         const { data: userData } = await supabase.auth.getUser();
 
@@ -107,11 +122,11 @@ export default function App() {
         setAuthLoading(false);
       });
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (_event === "SIGNED_IN" || _event === "SIGNED_OUT") {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, nextSession) => {
         setSession(nextSession);
-      }
-    });
+      },
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -137,22 +152,86 @@ export default function App() {
       return;
     }
 
-    startTransition(() => {
-      setBrand(
-        normalizeBrand(
-          readStoredJson(storageKey("churrozi-brand"), null),
-          session,
-        ),
-      );
-      const menuKey = storageKey("churrozi-menu");
-      setMenuConfig(
-        hasStoredValue(menuKey)
-          ? readStoredJson(menuKey, {})
-          : DEFAULT_MENU,
-      );
-      setSettingsOwner(session?.user?.id || "guest");
-    });
+    let cancelled = false;
+
+    const loadSettings = async () => {
+      const savedBrand = readStoredJson(storageKey("churrozi-brand"), null);
+      let sharedBrand = null;
+
+      if (supabase && session?.user?.id) {
+        const { data, error } = await supabase
+          .from("business_settings")
+          .select("business_name, logo_url")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        // Keep existing local settings working until the SQL migration is run.
+        if (!error && data) {
+          sharedBrand = {
+            name: data.business_name,
+            logo: data.logo_url,
+          };
+        }
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      startTransition(() => {
+        setBrand(normalizeBrand(sharedBrand || savedBrand, session));
+        const menuKey = storageKey("churrozi-menu");
+        setMenuConfig(
+          hasStoredValue(menuKey)
+            ? readStoredJson(menuKey, {})
+            : DEFAULT_MENU,
+        );
+        setSettingsOwner(session?.user?.id || "guest");
+      });
+    };
+
+    loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session, storageKey]);
+
+  useEffect(() => {
+    if (!supabase || !session?.user?.id) {
+      return undefined;
+    }
+
+    const channel = supabase
+      .channel(`business-settings-${session.user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "business_settings",
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType !== "DELETE") {
+            setBrand(
+              normalizeBrand(
+                {
+                  name: payload.new.business_name,
+                  logo: payload.new.logo_url,
+                },
+                session,
+              ),
+            );
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
 
   // =========================
   // APPLY DARK MODE

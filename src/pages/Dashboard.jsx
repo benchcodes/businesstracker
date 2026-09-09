@@ -1473,6 +1473,7 @@ export default function Dashboard({
     if (activeView === "admin") {
       return (
         <AdminTab
+          userId={userId}
           brand={brand}
           setBrand={setBrand}
           menuConfig={menuConfig}
