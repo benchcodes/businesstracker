@@ -58,7 +58,7 @@ export default function AuthPage({ darkMode, setDarkMode }) {
       <section className="w-full max-w-md">
         <div className="mb-8 text-center">
           <img
-            src="/benzi-logo.svg"
+            src="/benzi-logo.png"
             alt="Benzi Tracker logo"
             className="mx-auto h-24 w-24 rounded-full object-cover shadow-xl ring-4 ring-[#d8a66b]/40"
           />

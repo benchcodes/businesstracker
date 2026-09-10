@@ -7,7 +7,7 @@ import { supabase } from "./lib/supabase";
 
 const DEFAULT_BRAND = {
   name: "Benzi Tracker",
-  logo: "/benzi-logo.svg",
+  logo: "/benzi-logo.png",
 };
 
 const DEFAULT_MENU = {
