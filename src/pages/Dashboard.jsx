@@ -102,7 +102,6 @@ const getTrackerDefaults = (menuConfig) => {
 
 export default function Dashboard({
   activeView,
-  userId,
   brand,
   menuConfig,
   setMenuConfig,
@@ -1524,7 +1523,7 @@ export default function Dashboard({
   // =====================================================
 
   const deleteRow =
-    async (
+    useCallback(async (
       table,
       rowId,
       message,
@@ -1565,7 +1564,7 @@ export default function Dashboard({
       } finally {
         setIsSubmitting(false);
       }
-    };
+    }, [loadData]);
 
   // =====================================================
   // DELETE TRACKER
@@ -1579,7 +1578,7 @@ export default function Dashboard({
           rowId,
           "Unable to delete tracker entry",
         ),
-      [],
+      [deleteRow],
     );
 
   // =====================================================
@@ -1594,7 +1593,7 @@ export default function Dashboard({
           rowId,
           "Unable to delete expense entry",
         ),
-      [],
+      [deleteRow],
     );
 
   // =====================================================
@@ -1609,7 +1608,7 @@ export default function Dashboard({
           rowId,
           "Unable to delete savings entry",
         ),
-      [],
+      [deleteRow],
     );
 
   // =====================================================
@@ -1859,6 +1858,7 @@ export default function Dashboard({
       ) {
         return (
           <AdminTab
+            key={JSON.stringify(menuConfig)}
             menuConfig={
               menuConfig
             }
@@ -1966,6 +1966,10 @@ export default function Dashboard({
             completedOrdersCount={
               completedOrdersCount
             }
+
+            inventoryRows={
+              inventoryRows
+            }
           />
         );
       }
@@ -2052,13 +2056,6 @@ export default function Dashboard({
       ) {
         return (
           <InventoryTab
-            userId={userId}
-            menuConfig={
-              menuConfig
-            }
-            setMenuConfig={
-              setMenuConfig
-            }
             inventoryRows={
               inventoryRows
             }

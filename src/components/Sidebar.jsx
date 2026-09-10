@@ -99,7 +99,7 @@ export default function Sidebar({
             Expenses
           </button>
 
-          {/* INVENTORY */}
+          {/* PACKAGING INVENTORY */}
           <button
             type="button"
             onClick={() => handleSelect("inventory")}
@@ -109,7 +109,20 @@ export default function Sidebar({
                 : "hover:bg-[#5d3c32]"
             }`}
           >
-            Inventory
+            Packaging Inventory
+          </button>
+
+          {/* ADMIN SETTINGS */}
+          <button
+            type="button"
+            onClick={() => handleSelect("admin")}
+            className={`w-full rounded-lg px-4 py-3 text-left transition ${
+              activeView === "admin"
+                ? "bg-[#d8a66b] text-white"
+                : "hover:bg-[#5d3c32]"
+            }`}
+          >
+            Admin Settings
           </button>
         </nav>
 

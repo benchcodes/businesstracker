@@ -26,6 +26,7 @@ export default function SummaryTab({
   onDeleteExpense,
   pendingOrdersCount,
   completedOrdersCount,
+  inventoryRows,
 }) {
   const [showSales, setShowSales] = useState(true);
   const [showExpenses, setShowExpenses] = useState(true);
@@ -500,6 +501,17 @@ export default function SummaryTab({
     finalExpensesTotal,
   ]);
 
+  const lowStockRows = useMemo(
+    () =>
+      (inventoryRows || []).filter((item) => {
+        const stock = Number(item.stock) || 0;
+        const minimum = Number(item.minimum_stock) || 0;
+
+        return stock <= minimum;
+      }),
+    [inventoryRows],
+  );
+
   const generateSummaryReport = useCallback(() => {
     const selectedDate = reportDate ||
       new Date().toISOString().slice(0, 10);
@@ -742,6 +754,18 @@ export default function SummaryTab({
           <h2 className="mt-2 text-2xl font-bold text-purple-400 sm:text-3xl">
             {completedOrdersCount}
           </h2>
+        </div>
+
+        <div className="rounded-xl border border-orange-800 bg-orange-950 p-4 shadow-sm sm:p-5">
+          <p className="text-sm text-gray-300">Stock alerts</p>
+          <h2 className="mt-2 text-2xl font-bold text-orange-400 sm:text-3xl">
+            {lowStockRows.length}
+          </h2>
+          <p className="mt-2 text-xs text-gray-400">
+            {lowStockRows.length === 1
+              ? `${lowStockRows[0].name} needs attention`
+              : "Items at or below their minimum stock"}
+          </p>
         </div>
 
       </div>

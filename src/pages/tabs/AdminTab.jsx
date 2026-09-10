@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 const createVariant = () => ({
@@ -69,10 +69,6 @@ export default function AdminTab({
   const [menuDraft, setMenuDraft] = useState(() => toMenuDraft(menuConfig));
   const [isSavingMenu, setIsSavingMenu] = useState(false);
   const [isSavingInventory, setIsSavingInventory] = useState(false);
-
-  useEffect(() => {
-    setMenuDraft(toMenuDraft(menuConfig));
-  }, [menuConfig]);
 
   const handleMenuSave = (event) => {
     event.preventDefault();

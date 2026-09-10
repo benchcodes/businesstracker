@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import AdminTab from "./AdminTab";
 
 const INITIAL_FORM = {
   stock: "",
@@ -8,81 +7,17 @@ const INITIAL_FORM = {
 };
 
 export default function InventoryTab({
-  userId,
   inventoryRows,
   setInventoryRows,
   isLoading,
   setErrorMessage,
-  menuConfig,
-  setMenuConfig,
 }) {
-  const adminPasswordKey = `benzi-admin-password-${userId || "guest"}`;
-  const adminUnlockedKey = `benzi-admin-unlocked-${userId || "guest"}`;
   const [selectedItem, setSelectedItem] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newPackagingName, setNewPackagingName] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminPasswordConfirmation, setAdminPasswordConfirmation] = useState("");
-  const [hasAdminPassword, setHasAdminPassword] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return Boolean(window.localStorage.getItem(adminPasswordKey));
-  });
-  const [adminUnlocked, setAdminUnlocked] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return window.localStorage.getItem(adminUnlockedKey) === "true";
-  });
-
-  const handleAdminUnlock = (event) => {
-    event.preventDefault();
-
-    if (!hasAdminPassword) {
-      if (adminPassword.length < 6) {
-        setErrorMessage("Admin password must be at least 6 characters.");
-        return;
-      }
-
-      if (adminPassword !== adminPasswordConfirmation) {
-        setErrorMessage("Admin passwords do not match.");
-        return;
-      }
-
-      window.localStorage.setItem(adminPasswordKey, adminPassword);
-      setHasAdminPassword(true);
-      setAdminUnlocked(true);
-      window.localStorage.setItem(adminUnlockedKey, "true");
-      setAdminPassword("");
-      setAdminPasswordConfirmation("");
-      setErrorMessage("");
-      return;
-    }
-
-    if (adminPassword === window.localStorage.getItem(adminPasswordKey)) {
-      setAdminUnlocked(true);
-      window.localStorage.setItem(adminUnlockedKey, "true");
-      setErrorMessage("");
-      return;
-    }
-
-    setErrorMessage("Incorrect admin password.");
-  };
-
-  const handleAdminLock = () => {
-    setAdminUnlocked(false);
-    setAdminPassword("");
-    setAdminPasswordConfirmation("");
-    window.localStorage.setItem(adminUnlockedKey, "false");
-    setErrorMessage("");
-  };
-
   // =====================================================
   // LOAD INVENTORY
   // =====================================================
@@ -469,67 +404,7 @@ export default function InventoryTab({
           </form>
         )}
 
-        {!adminUnlocked && (
-          <form onSubmit={handleAdminUnlock} className="mt-5 max-w-md rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-            <p className="text-sm font-medium text-amber-100">
-              {hasAdminPassword ? "Admin access" : "Create your Admin password"}
-            </p>
-
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(event) => setAdminPassword(event.target.value)}
-                placeholder={hasAdminPassword ? "Enter password" : "Create password"}
-                className="w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
-              />
-
-              {!hasAdminPassword && (
-                <input
-                  type="password"
-                  value={adminPasswordConfirmation}
-                  onChange={(event) => setAdminPasswordConfirmation(event.target.value)}
-                  placeholder="Confirm password"
-                  className="w-full rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-amber-100/70 focus:border-[#f9d9a6] focus:outline-none"
-                />
-              )}
-
-              <button
-                type="submit"
-                className="rounded-xl bg-[#f4d7a3] px-4 py-2 text-sm font-semibold text-[#4b3028] transition hover:bg-[#e9c58a]"
-              >
-                {hasAdminPassword ? "Unlock" : "Set password"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {adminUnlocked && (
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-100 ring-1 ring-emerald-200/40">
-              Admin unlocked
-            </span>
-
-            <button
-              type="button"
-              onClick={handleAdminLock}
-              className="rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/15"
-            >
-              Lock Admin
-            </button>
-          </div>
-        )}
       </div>
-
-      {adminUnlocked && (
-        <AdminTab
-          menuConfig={menuConfig}
-          setMenuConfig={setMenuConfig}
-          inventoryRows={inventoryRows}
-          setInventoryRows={setInventoryRows}
-          setErrorMessage={setErrorMessage}
-        />
-      )}
 
       {/* =================================================
           INVENTORY CARDS

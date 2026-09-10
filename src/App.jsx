@@ -241,7 +241,6 @@ export default function App() {
             activeView={activeView}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
-            userId={session.user.id}
             brand={brand}
             menuConfig={menuConfig}
             setMenuConfig={setMenuConfig}
