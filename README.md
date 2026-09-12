@@ -9,7 +9,11 @@ Tracker and expenses app backed by Supabase.
 3. In Supabase, open Authentication > Providers and enable Email.
 4. Copy your project URL into [`.env.local`](.env.local) as `VITE_SUPABASE_URL`.
 5. Copy your publishable key into [`.env.local`](.env.local) as `VITE_SUPABASE_ANON_KEY`.
-6. Restart the Vite dev server with `npm run dev`.
+6. Optional: create a Google Form while signed in to the separate account that
+   should receive feedback, then add its share link as `VITE_FEEDBACK_URL` in
+   [`.env.local`](.env.local). The sidebar will show **Send feedback** only
+   when this value is set; responses stay in the form owner's account.
+7. Restart the Vite dev server with `npm run dev`.
 
 Each person creates an account and sees only rows belonging to that account. If
 you already had data before enabling authentication, assign those existing rows

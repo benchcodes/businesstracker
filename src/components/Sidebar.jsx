@@ -5,6 +5,7 @@ export default function Sidebar({
   onClose,
   brand,
   userEmail,
+  feedbackUrl,
   onSignOut,
 }) {
   const handleSelect = (view) => {
@@ -124,6 +125,18 @@ export default function Sidebar({
           >
             Admin Settings
           </button>
+
+          {feedbackUrl && (
+            <a
+              href={feedbackUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={onClose}
+              className="block w-full rounded-lg px-4 py-3 text-left transition hover:bg-[#5d3c32]"
+            >
+              Send feedback
+            </a>
+          )}
         </nav>
 
         <div className="absolute bottom-0 w-full border-t border-[#6b4a3a] p-4">

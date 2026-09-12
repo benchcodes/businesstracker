@@ -16,6 +16,9 @@ const DEFAULT_MENU = {
   ],
 };
 
+// Use a form owned by the account that should receive tester feedback.
+const feedbackUrl = import.meta.env.VITE_FEEDBACK_URL;
+
 const readStoredJson = (key, fallback) => {
   try {
     const saved = localStorage.getItem(key);
@@ -228,6 +231,7 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           brand={brand}
           userEmail={session.user.email}
+          feedbackUrl={feedbackUrl}
           onSignOut={() => supabase.auth.signOut()}
         />
 
